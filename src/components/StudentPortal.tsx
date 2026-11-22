@@ -571,7 +571,7 @@ export function StudentPortal({
               </span>
               Student No.{' '}
               <span className="font-mono tabular-nums text-zinc-800">
-                {user.studentId ?? '2023104819'}
+                {user.studentId ?? '2026104819'}
               </span>
               {activeQuarter && (
                 <>

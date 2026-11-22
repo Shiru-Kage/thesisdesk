@@ -20,7 +20,11 @@ import {
   UserRole,
   ZoomRoom,
 } from '../types/defense';
-import { DEMO_USERS } from '../data/mockTemplateData';
+import {
+  authenticateUser,
+  getDefaultEmailForRole,
+  getDefaultPasswordForRole,
+} from '../services/auth';
 
 interface LoginViewProps {
   slots: DefenseSlot[];
@@ -46,8 +50,8 @@ export function LoginView({
   const [role, setRole] = useState<UserRole>('student');
   const [authMode, setAuthMode] = useState<'signin' | 'register' | 'forgot'>('signin');
   const [name, setName] = useState('');
-  const [email, setEmail] = useState(DEMO_USERS.student.email);
-  const [password, setPassword] = useState('••••••••••••');
+  const [email, setEmail] = useState(() => getDefaultEmailForRole('student'));
+  const [password, setPassword] = useState(() => getDefaultPasswordForRole('student'));
   const [department, setDepartment] = useState('Information Technology');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberSession, setRememberSession] = useState(true);
@@ -109,8 +113,8 @@ export function LoginView({
     setRole(nextRole);
     setErrorMsg('');
     if (authMode === 'signin') {
-      setEmail(nextRole === 'student' ? DEMO_USERS.student.email : DEMO_USERS.admin.email);
-      setPassword('••••••••••••');
+      setEmail(getDefaultEmailForRole(nextRole));
+      setPassword(getDefaultPasswordForRole(nextRole));
     }
   };
 
@@ -119,8 +123,8 @@ export function LoginView({
     setErrorMsg('');
     setResetSent(false);
     if (nextMode === 'signin') {
-      setEmail(role === 'student' ? DEMO_USERS.student.email : DEMO_USERS.admin.email);
-      setPassword('••••••••••••');
+      setEmail(getDefaultEmailForRole(role));
+      setPassword(getDefaultPasswordForRole(role));
     } else if (nextMode === 'register') {
       setEmail('');
       setPassword('');
@@ -142,8 +146,8 @@ export function LoginView({
       return;
     }
 
-    if (password.trim().length < 6) {
-      setErrorMsg('Password must contain at least 6 characters.');
+    if (password.trim().length < 1) {
+      setErrorMsg('Please enter your account password.');
       return;
     }
 
@@ -163,8 +167,8 @@ export function LoginView({
         program: role === 'student' ? `B.S. ${department} · Mapúa UOx` : undefined,
         avatarUrl:
           role === 'student'
-            ? DEMO_USERS.student.avatarUrl
-            : DEMO_USERS.admin.avatarUrl,
+            ? '/src/assets/images/avatar_student_1_1794880237648.jpg'
+            : '/src/assets/images/avatar_admin_1_1794880238289.jpg',
       };
       if (onRegister) {
         onRegister(newUser);
@@ -173,22 +177,18 @@ export function LoginView({
       return;
     }
 
-    // Match registered users first
-    const existing = registeredUsers.find(
-      (u) => u.email.toLowerCase() === trimmedEmail.toLowerCase()
+    // Authenticate using configured environment credentials or registered account
+    const authResult = authenticateUser(
+      { email: trimmedEmail, password: password.trim(), role },
+      registeredUsers
     );
-    if (existing) {
-      onLogin(existing, null);
+
+    if (!authResult.success || !authResult.user) {
+      setErrorMsg(authResult.errorMessage || 'Invalid credentials.');
       return;
     }
 
-    const baseUser = DEMO_USERS[role];
-    const loggedUser: UserAccount = {
-      ...baseUser,
-      email: trimmedEmail,
-      name: baseUser.email.toLowerCase() === trimmedEmail.toLowerCase() ? baseUser.name : trimmedEmail.split('@')[0],
-    };
-    onLogin(loggedUser, null);
+    onLogin(authResult.user, null);
   };
 
   const transitionFast = prefersReducedMotion
@@ -524,42 +524,6 @@ export function LoginView({
                 </button>
               </>
             )}
-          </div>
-
-          {/* Instant Demo Quick Launch */}
-          <div className="mt-5 pt-4 border-t border-stone-900/15">
-            <p className="text-[11px] font-medium text-zinc-700 mb-2">
-              Quick Template Preview
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => onLogin(DEMO_USERS.student, null)}
-                className="py-2 px-3 bg-white/55 hover:bg-white/85 backdrop-blur-xs border border-stone-400/50 rounded-lg text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6192E]"
-              >
-                <span className="flex items-center gap-1.5 text-xs font-semibold text-zinc-950 whitespace-nowrap">
-                  <UserCheck className="w-3.5 h-3.5 text-[#A6192E] shrink-0" />
-                  <span>Demo Student</span>
-                </span>
-                <span className="block text-[11px] text-zinc-700 mt-0.5 truncate">
-                  Maya Patel
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onLogin(DEMO_USERS.admin, null)}
-                className="py-2 px-3 bg-white/55 hover:bg-white/85 backdrop-blur-xs border border-stone-400/50 rounded-lg text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6192E]"
-              >
-                <span className="flex items-center gap-1.5 text-xs font-semibold text-zinc-950 whitespace-nowrap">
-                  <KeyRound className="w-3.5 h-3.5 text-[#9A6E00] shrink-0" />
-                  <span>Demo Admin</span>
-                </span>
-                <span className="block text-[11px] text-zinc-700 mt-0.5 truncate">
-                  Dr. Elena Alvarez
-                </span>
-              </button>
-            </div>
           </div>
           </section>
 

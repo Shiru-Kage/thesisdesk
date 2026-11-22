@@ -133,7 +133,7 @@ service cloud.firestore {
         (
           hasAuthEmail() &&
           'email_verified' in request.auth.token &&
-          request.auth.token.email == 'e.alvarez@mapua.edu.ph' &&
+          request.auth.token.email == 'pvcabalag@mapua.edu.ph' &&
           request.auth.token.email_verified == true
         ) ||
         (

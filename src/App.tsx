@@ -7,14 +7,11 @@ import { useEffect, useState, useRef } from 'react';
 import {
   buildQuartermPeriod,
   createStarterSlotsForQuarterm,
-  DEMO_USERS,
+  DEFAULT_ADMIN_USER,
+  DEFAULT_STUDENT_USER,
   INITIAL_ACTIVE_QUARTER,
-  INITIAL_APPOINTMENTS,
-  INITIAL_ARCHIVED_QUARTERS,
   INITIAL_CHECKLIST,
   INITIAL_FACULTY,
-  INITIAL_FILE_SUBMISSIONS,
-  INITIAL_SLOTS,
   INITIAL_ZOOM_ROOMS,
   REQUIRED_DOCUMENTS,
 } from './data/mockTemplateData';
@@ -48,7 +45,7 @@ import {
 } from './services/firebase';
 
 const TODAY_ISO = new Date().toISOString().split('T')[0];
-const STORAGE_KEY = 'thesisdesk_soit_state_v1';
+const STORAGE_KEY = 'thesisdesk_portal_state_v2';
 
 interface PersistedPortalState {
   slots: DefenseSlot[];
@@ -64,6 +61,8 @@ interface PersistedPortalState {
 
 function loadPersistedState(): Partial<PersistedPortalState> | null {
   try {
+    // Clear out legacy demo state if present
+    window.localStorage.removeItem('thesisdesk_soit_state_v1');
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<PersistedPortalState>;
@@ -82,10 +81,10 @@ export default function App() {
   const [isFirebaseConnected, setIsFirebaseConnected] = useState(false);
 
   const [slots, setSlots] = useState<DefenseSlot[]>(
-    () => persisted?.slots ?? INITIAL_SLOTS
+    () => persisted?.slots ?? []
   );
   const [appointments, setAppointments] = useState<DefenseAppointment[]>(
-    () => persisted?.appointments ?? INITIAL_APPOINTMENTS
+    () => persisted?.appointments ?? []
   );
   const [zoomRooms, setZoomRooms] = useState<ZoomRoom[]>(
     () => persisted?.zoomRooms ?? INITIAL_ZOOM_ROOMS
@@ -97,7 +96,7 @@ export default function App() {
     () => persisted?.checklist ?? INITIAL_CHECKLIST
   );
   const [fileSubmissions, setFileSubmissions] = useState<StudentFileSubmission[]>(
-    () => persisted?.fileSubmissions ?? INITIAL_FILE_SUBMISSIONS
+    () => persisted?.fileSubmissions ?? []
   );
   const [activeQuarter, setActiveQuarter] = useState<QuartermPeriod | null>(() =>
     persisted && 'activeQuarter' in persisted
@@ -105,10 +104,10 @@ export default function App() {
       : INITIAL_ACTIVE_QUARTER
   );
   const [archivedQuarters, setArchivedQuarters] = useState<ArchivedQuarterm[]>(
-    () => persisted?.archivedQuarters ?? INITIAL_ARCHIVED_QUARTERS
+    () => persisted?.archivedQuarters ?? []
   );
   const [registeredUsers, setRegisteredUsers] = useState<UserAccount[]>(
-    () => persisted?.registeredUsers ?? [DEMO_USERS.student, DEMO_USERS.admin]
+    () => persisted?.registeredUsers ?? [DEFAULT_STUDENT_USER, DEFAULT_ADMIN_USER]
   );
 
   const initialSeededRef = useRef(false);
@@ -127,26 +126,21 @@ export default function App() {
 
     // 1. Subscribe to Slots
     const unsubSlots = subscribeToCollection<DefenseSlot>('slots', (records) => {
-      if (records && records.length > 0) {
+      if (records) {
         setSlots(records);
-      } else if (!initialSeededRef.current) {
-        // First boot seeding
-        batchSaveDocuments('slots', INITIAL_SLOTS);
       }
     });
 
     // 2. Subscribe to Appointments
     const unsubAppointments = subscribeToCollection<DefenseAppointment>('appointments', (records) => {
-      if (records && records.length > 0) {
+      if (records) {
         setAppointments(records);
-      } else if (!initialSeededRef.current) {
-        batchSaveDocuments('appointments', INITIAL_APPOINTMENTS);
       }
     });
 
     // 3. Subscribe to File Submissions & recover object URLs from IndexedDB if needed
     const unsubFiles = subscribeToCollection<StudentFileSubmission>('fileSubmissions', async (records) => {
-      if (records && records.length > 0) {
+      if (records) {
         const enriched = await Promise.all(
           records.map(async (sub) => {
             if (!sub.objectUrl) {
@@ -157,8 +151,6 @@ export default function App() {
           })
         );
         setFileSubmissions(enriched);
-      } else if (!initialSeededRef.current) {
-        batchSaveDocuments('fileSubmissions', INITIAL_FILE_SUBMISSIONS);
       }
     });
 
@@ -177,10 +169,8 @@ export default function App() {
 
     // 5. Subscribe to Archives
     const unsubArchives = subscribeToCollection<ArchivedQuarterm>('archivedQuarterms', (records) => {
-      if (records && records.length > 0) {
+      if (records) {
         setArchivedQuarters(records);
-      } else if (!initialSeededRef.current) {
-        batchSaveDocuments('archivedQuarterms', INITIAL_ARCHIVED_QUARTERS);
       }
     });
 
@@ -189,7 +179,7 @@ export default function App() {
       if (records && records.length > 0) {
         setRegisteredUsers(records);
       } else if (!initialSeededRef.current) {
-        batchSaveDocuments('users', [DEMO_USERS.student, DEMO_USERS.admin]);
+        batchSaveDocuments('users', [DEFAULT_STUDENT_USER, DEFAULT_ADMIN_USER]);
       }
     });
 
@@ -800,9 +790,13 @@ export default function App() {
   const handleSwitchRole = () => {
     if (!currentUser) return;
     setPreSelectedSlot(null);
-    setCurrentUser(
-      currentUser.role === 'student' ? DEMO_USERS.admin : DEMO_USERS.student
-    );
+    if (currentUser.role === 'student') {
+      const adminAcc = registeredUsers.find((u) => u.role === 'admin') || DEFAULT_ADMIN_USER;
+      setCurrentUser(adminAcc);
+    } else {
+      const studentAcc = registeredUsers.find((u) => u.role === 'student') || DEFAULT_STUDENT_USER;
+      setCurrentUser(studentAcc);
+    }
   };
 
   const handleLogin = (user: UserAccount, pendingSlot?: DefenseSlot | null) => {
@@ -819,24 +813,19 @@ export default function App() {
   const handleResetDemoData = () => {
     try {
       window.localStorage.removeItem(STORAGE_KEY);
+      window.localStorage.removeItem('thesisdesk_soit_state_v1');
     } catch {
       // Ignore storage access errors
     }
-    setSlots(INITIAL_SLOTS);
-    setAppointments(INITIAL_APPOINTMENTS);
+    setSlots([]);
+    setAppointments([]);
     setZoomRooms(INITIAL_ZOOM_ROOMS);
     setFaculty(INITIAL_FACULTY);
     setChecklist(INITIAL_CHECKLIST);
-    setFileSubmissions(INITIAL_FILE_SUBMISSIONS);
+    setFileSubmissions([]);
     setActiveQuarter(INITIAL_ACTIVE_QUARTER);
-    setArchivedQuarters(INITIAL_ARCHIVED_QUARTERS);
+    setArchivedQuarters([]);
     setPreSelectedSlot(null);
-
-    // Sync reset to Firestore
-    batchSaveDocuments('slots', INITIAL_SLOTS);
-    batchSaveDocuments('appointments', INITIAL_APPOINTMENTS);
-    batchSaveDocuments('fileSubmissions', INITIAL_FILE_SUBMISSIONS);
-    saveActiveQuarter(INITIAL_ACTIVE_QUARTER);
   };
 
   if (!currentUser) {
