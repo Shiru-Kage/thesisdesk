@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   buildQuartermPeriod,
   createStarterSlotsForQuarterm,
@@ -34,8 +34,20 @@ import {
 import { LoginView } from './components/LoginView';
 import { StudentPortal } from './components/StudentPortal';
 import { AdminPortal } from './components/AdminPortal';
+import {
+  getDb,
+  subscribeToCollection,
+  subscribeToDoc,
+  saveDocument,
+  removeDocument,
+  saveActiveQuarter,
+  batchSaveDocuments,
+  uploadSubmissionFile,
+  retrieveFileFromIdb,
+  registerOrUpdateUser,
+} from './services/firebase';
 
-const TODAY_ISO = '2026-11-16';
+const TODAY_ISO = new Date().toISOString().split('T')[0];
 const STORAGE_KEY = 'thesisdesk_soit_state_v1';
 
 interface PersistedPortalState {
@@ -47,6 +59,7 @@ interface PersistedPortalState {
   fileSubmissions: StudentFileSubmission[];
   activeQuarter: QuartermPeriod | null;
   archivedQuarters: ArchivedQuarterm[];
+  registeredUsers?: UserAccount[];
 }
 
 function loadPersistedState(): Partial<PersistedPortalState> | null {
@@ -66,6 +79,8 @@ export default function App() {
   );
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [preSelectedSlot, setPreSelectedSlot] = useState<DefenseSlot | null>(null);
+  const [isFirebaseConnected, setIsFirebaseConnected] = useState(false);
+
   const [slots, setSlots] = useState<DefenseSlot[]>(
     () => persisted?.slots ?? INITIAL_SLOTS
   );
@@ -92,27 +107,123 @@ export default function App() {
   const [archivedQuarters, setArchivedQuarters] = useState<ArchivedQuarterm[]>(
     () => persisted?.archivedQuarters ?? INITIAL_ARCHIVED_QUARTERS
   );
+  const [registeredUsers, setRegisteredUsers] = useState<UserAccount[]>(
+    () => persisted?.registeredUsers ?? [DEMO_USERS.student, DEMO_USERS.admin]
+  );
 
+  const initialSeededRef = useRef(false);
+
+  // --------------------------------------------------------------------------
+  // Firebase Real-time Subscriptions & Cloud Persistence
+  // --------------------------------------------------------------------------
+  useEffect(() => {
+    const db = getDb();
+    if (!db) {
+      console.log('Running in local offline mode (Firebase DB not yet initialized).');
+      return;
+    }
+
+    setIsFirebaseConnected(true);
+
+    // 1. Subscribe to Slots
+    const unsubSlots = subscribeToCollection<DefenseSlot>('slots', (records) => {
+      if (records && records.length > 0) {
+        setSlots(records);
+      } else if (!initialSeededRef.current) {
+        // First boot seeding
+        batchSaveDocuments('slots', INITIAL_SLOTS);
+      }
+    });
+
+    // 2. Subscribe to Appointments
+    const unsubAppointments = subscribeToCollection<DefenseAppointment>('appointments', (records) => {
+      if (records && records.length > 0) {
+        setAppointments(records);
+      } else if (!initialSeededRef.current) {
+        batchSaveDocuments('appointments', INITIAL_APPOINTMENTS);
+      }
+    });
+
+    // 3. Subscribe to File Submissions & recover object URLs from IndexedDB if needed
+    const unsubFiles = subscribeToCollection<StudentFileSubmission>('fileSubmissions', async (records) => {
+      if (records && records.length > 0) {
+        const enriched = await Promise.all(
+          records.map(async (sub) => {
+            if (!sub.objectUrl) {
+              const localUrl = await retrieveFileFromIdb(sub.id);
+              if (localUrl) return { ...sub, objectUrl: localUrl };
+            }
+            return sub;
+          })
+        );
+        setFileSubmissions(enriched);
+      } else if (!initialSeededRef.current) {
+        batchSaveDocuments('fileSubmissions', INITIAL_FILE_SUBMISSIONS);
+      }
+    });
+
+    // 4. Subscribe to Active Quarter
+    const unsubQuarter = subscribeToDoc<{ quarter: QuartermPeriod | null }>(
+      'settings',
+      'active_quarterm',
+      (data) => {
+        if (data && 'quarter' in data) {
+          setActiveQuarter(data.quarter);
+        } else if (!initialSeededRef.current) {
+          saveActiveQuarter(INITIAL_ACTIVE_QUARTER);
+        }
+      }
+    );
+
+    // 5. Subscribe to Archives
+    const unsubArchives = subscribeToCollection<ArchivedQuarterm>('archivedQuarterms', (records) => {
+      if (records && records.length > 0) {
+        setArchivedQuarters(records);
+      } else if (!initialSeededRef.current) {
+        batchSaveDocuments('archivedQuarterms', INITIAL_ARCHIVED_QUARTERS);
+      }
+    });
+
+    // 6. Subscribe to Registered Users
+    const unsubUsers = subscribeToCollection<UserAccount>('users', (records) => {
+      if (records && records.length > 0) {
+        setRegisteredUsers(records);
+      } else if (!initialSeededRef.current) {
+        batchSaveDocuments('users', [DEMO_USERS.student, DEMO_USERS.admin]);
+      }
+    });
+
+    initialSeededRef.current = true;
+
+    return () => {
+      unsubSlots?.();
+      unsubAppointments?.();
+      unsubFiles?.();
+      unsubQuarter?.();
+      unsubArchives?.();
+      unsubUsers?.();
+    };
+  }, []);
+
+  // --------------------------------------------------------------------------
+  // Local Backup Sync
+  // --------------------------------------------------------------------------
   useEffect(() => {
     try {
-      const serializableFiles = fileSubmissions.map(({ objectUrl: _omit, ...rest }) => rest);
-      const serializableArchives = archivedQuarters.map((arc) => ({
-        ...arc,
-        fileSubmissions: arc.fileSubmissions.map(({ objectUrl: _omit, ...rest }) => rest),
-      }));
       const payload: PersistedPortalState = {
         slots,
         appointments,
         zoomRooms,
         faculty,
         checklist,
-        fileSubmissions: serializableFiles,
+        fileSubmissions,
         activeQuarter,
-        archivedQuarters: serializableArchives,
+        archivedQuarters,
+        registeredUsers,
       };
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     } catch {
-      // Ignore storage quota or private-browsing errors
+      // Ignore quota errors
     }
   }, [
     slots,
@@ -123,6 +234,7 @@ export default function App() {
     fileSubmissions,
     activeQuarter,
     archivedQuarters,
+    registeredUsers,
   ]);
 
   const isQuarterOpen = activeQuarter?.status === 'Open';
@@ -139,12 +251,48 @@ export default function App() {
     );
   };
 
-  const handleUploadStudentFile = (
+  // --------------------------------------------------------------------------
+  // Real File Upload to Firebase Storage & IndexedDB
+  // --------------------------------------------------------------------------
+  const handleUploadStudentFile = async (
     requirementId: string,
-    fileMeta: { fileName: string; fileSize: string; objectUrl?: string }
+    fileMeta: { fileName: string; fileSize: string; objectUrl?: string; rawFile?: File }
   ) => {
     if (!currentUser || !isQuarterOpen) return;
     const studentId = currentUser.studentId ?? '2026108914';
+    const submissionId = `SUB-${Math.floor(910 + Math.random() * 880)}`;
+
+    let resolvedUrl = fileMeta.objectUrl;
+
+    if (fileMeta.rawFile) {
+      try {
+        const uploadResult = await uploadSubmissionFile(submissionId, fileMeta.rawFile);
+        if (uploadResult.downloadUrl) {
+          resolvedUrl = uploadResult.downloadUrl;
+        }
+      } catch (err) {
+        console.warn('File upload handler error:', err);
+      }
+    }
+
+    const nextRecord: StudentFileSubmission = {
+      id: submissionId,
+      requirementId,
+      studentId,
+      studentName: currentUser.name,
+      studentEmail: currentUser.email,
+      program: currentUser.program ?? `B.S. ${currentUser.department} · Mapúa UOx`,
+      department: currentUser.department,
+      fileName: fileMeta.fileName,
+      fileSize: fileMeta.fileSize,
+      uploadedAt: TODAY_ISO,
+      status: 'Pending Review',
+      facultyNote: undefined,
+      reviewedBy: undefined,
+      reviewedAt: undefined,
+      objectUrl: resolvedUrl,
+    };
+
     setFileSubmissions((prev) => {
       const existingIndex = prev.findIndex(
         (sub) =>
@@ -152,39 +300,20 @@ export default function App() {
           (sub.studentEmail.toLowerCase() === currentUser.email.toLowerCase() ||
             sub.studentId === studentId)
       );
-
-      const nextRecord: StudentFileSubmission = {
-        id:
-          existingIndex >= 0
-            ? prev[existingIndex].id
-            : `SUB-${Math.floor(910 + Math.random() * 880)}`,
-        requirementId,
-        studentId,
-        studentName: currentUser.name,
-        studentEmail: currentUser.email,
-        program: currentUser.program ?? `B.S. ${currentUser.department} · UOx`,
-        department: currentUser.department,
-        fileName: fileMeta.fileName,
-        fileSize: fileMeta.fileSize,
-        uploadedAt: TODAY_ISO,
-        status: 'Pending Review',
-        facultyNote: undefined,
-        reviewedBy: undefined,
-        reviewedAt: undefined,
-        objectUrl: fileMeta.objectUrl,
-      };
-
       if (existingIndex >= 0) {
         const copy = [...prev];
-        copy[existingIndex] = nextRecord;
+        copy[existingIndex] = { ...nextRecord, id: prev[existingIndex].id };
+        saveDocument('fileSubmissions', copy[existingIndex]);
         return copy;
       }
+      saveDocument('fileSubmissions', nextRecord);
       return [nextRecord, ...prev];
     });
   };
 
   const handleRemoveStudentFile = (submissionId: string) => {
     setFileSubmissions((prev) => prev.filter((sub) => sub.id !== submissionId));
+    removeDocument('fileSubmissions', submissionId);
   };
 
   const handleReviewStudentFile = (
@@ -194,38 +323,49 @@ export default function App() {
   ) => {
     if (!currentUser) return;
     setFileSubmissions((prev) =>
-      prev.map((sub) =>
-        sub.id === submissionId
-          ? {
-              ...sub,
-              status,
-              facultyNote: facultyNote !== undefined ? facultyNote : sub.facultyNote,
-              reviewedBy: currentUser.name,
-              reviewedAt: TODAY_ISO,
-            }
-          : sub
-      )
+      prev.map((sub) => {
+        if (sub.id === submissionId) {
+          const updated: StudentFileSubmission = {
+            ...sub,
+            status,
+            facultyNote: facultyNote !== undefined ? facultyNote : sub.facultyNote,
+            reviewedBy: currentUser.name,
+            reviewedAt: TODAY_ISO,
+          };
+          saveDocument('fileSubmissions', updated);
+          return updated;
+        }
+        return sub;
+      })
     );
   };
 
   const handleApproveAllStudentFiles = (studentEmail: string) => {
     if (!currentUser) return;
     setFileSubmissions((prev) =>
-      prev.map((sub) =>
-        sub.studentEmail.toLowerCase() === studentEmail.toLowerCase() &&
-        sub.status !== 'Approved'
-          ? {
-              ...sub,
-              status: 'Approved',
-              facultyNote: sub.facultyNote || 'Verified and approved by faculty.',
-              reviewedBy: currentUser.name,
-              reviewedAt: TODAY_ISO,
-            }
-          : sub
-      )
+      prev.map((sub) => {
+        if (
+          sub.studentEmail.toLowerCase() === studentEmail.toLowerCase() &&
+          sub.status !== 'Approved'
+        ) {
+          const updated: StudentFileSubmission = {
+            ...sub,
+            status: 'Approved',
+            facultyNote: sub.facultyNote || 'Verified and approved by faculty.',
+            reviewedBy: currentUser.name,
+            reviewedAt: TODAY_ISO,
+          };
+          saveDocument('fileSubmissions', updated);
+          return updated;
+        }
+        return sub;
+      })
     );
   };
 
+  // --------------------------------------------------------------------------
+  // Real Defense Appointments & Booking
+  // --------------------------------------------------------------------------
   const handleBookSlot = (
     slot: DefenseSlot,
     payload: {
@@ -245,7 +385,7 @@ export default function App() {
       studentId: currentUser.studentId ?? '2026108914',
       studentName: currentUser.name,
       studentEmail: currentUser.email,
-      program: currentUser.program ?? `B.S. ${currentUser.department} · UOx`,
+      program: currentUser.program ?? `B.S. ${currentUser.department} · Mapúa UOx`,
       department: slot.department,
       thesisTitle: payload.thesisTitle,
       abstract: payload.abstract,
@@ -263,17 +403,22 @@ export default function App() {
       createdAt: TODAY_ISO,
     };
 
+    saveDocument('appointments', newAppointment);
+
     setAppointments((prev) => {
       const updated = rescheduleFromId
-        ? prev.map((a) =>
-            a.id === rescheduleFromId
-              ? {
-                  ...a,
-                  status: 'Cancelled' as AppointmentStatus,
-                  adminFeedback: 'Superseded by student reschedule request.',
-                }
-              : a
-          )
+        ? prev.map((a) => {
+            if (a.id === rescheduleFromId) {
+              const reschedUpdated: DefenseAppointment = {
+                ...a,
+                status: 'Cancelled' as AppointmentStatus,
+                adminFeedback: 'Superseded by student reschedule request.',
+              };
+              saveDocument('appointments', reschedUpdated);
+              return reschedUpdated;
+            }
+            return a;
+          })
         : prev;
       return [newAppointment, ...updated];
     });
@@ -282,15 +427,18 @@ export default function App() {
 
   const handleCancelAppointment = (id: string) => {
     setAppointments((prev) =>
-      prev.map((a) =>
-        a.id === id
-          ? {
-              ...a,
-              status: 'Cancelled',
-              adminFeedback: 'Withdrawn by candidate.',
-            }
-          : a
-      )
+      prev.map((a) => {
+        if (a.id === id) {
+          const cancelled: DefenseAppointment = {
+            ...a,
+            status: 'Cancelled',
+            adminFeedback: 'Withdrawn by candidate.',
+          };
+          saveDocument('appointments', cancelled);
+          return cancelled;
+        }
+        return a;
+      })
     );
   };
 
@@ -301,18 +449,21 @@ export default function App() {
     zoomDetails?: { zoomLink: string; zoomPasscode?: string }
   ) => {
     setAppointments((prev) =>
-      prev.map((a) =>
-        a.id === id
-          ? {
-              ...a,
-              status,
-              adminFeedback: feedback !== undefined ? feedback : a.adminFeedback,
-              zoomLink: zoomDetails !== undefined ? zoomDetails.zoomLink : a.zoomLink,
-              zoomPasscode:
-                zoomDetails !== undefined ? zoomDetails.zoomPasscode : a.zoomPasscode,
-            }
-          : a
-      )
+      prev.map((a) => {
+        if (a.id === id) {
+          const updated: DefenseAppointment = {
+            ...a,
+            status,
+            adminFeedback: feedback !== undefined ? feedback : a.adminFeedback,
+            zoomLink: zoomDetails !== undefined ? zoomDetails.zoomLink : a.zoomLink,
+            zoomPasscode:
+              zoomDetails !== undefined ? zoomDetails.zoomPasscode : a.zoomPasscode,
+          };
+          saveDocument('appointments', updated);
+          return updated;
+        }
+        return a;
+      })
     );
   };
 
@@ -321,23 +472,30 @@ export default function App() {
     zoomDetails: { zoomLink: string; zoomPasscode?: string }
   ) => {
     setAppointments((prev) =>
-      prev.map((a) =>
-        a.id === id
-          ? {
-              ...a,
-              zoomLink: zoomDetails.zoomLink,
-              zoomPasscode: zoomDetails.zoomPasscode,
-            }
-          : a
-      )
+      prev.map((a) => {
+        if (a.id === id) {
+          const updated: DefenseAppointment = {
+            ...a,
+            zoomLink: zoomDetails.zoomLink,
+            zoomPasscode: zoomDetails.zoomPasscode,
+          };
+          saveDocument('appointments', updated);
+          return updated;
+        }
+        return a;
+      })
     );
   };
 
+  // --------------------------------------------------------------------------
+  // Defense Slot Management
+  // --------------------------------------------------------------------------
   const handleAddSlot = (slotData: Omit<DefenseSlot, 'id'>) => {
     const newSlot: DefenseSlot = {
       ...slotData,
       id: `SLOT-${Math.floor(200 + Math.random() * 799)}`,
     };
+    saveDocument('slots', newSlot);
     setSlots((prev) => [...prev, newSlot]);
   };
 
@@ -346,27 +504,32 @@ export default function App() {
     zoomDetails: { zoomLink: string; zoomPasscode?: string }
   ) => {
     setSlots((prev) =>
-      prev.map((s) =>
-        s.id === slotId
-          ? {
-              ...s,
-              zoomLink: zoomDetails.zoomLink,
-              zoomPasscode: zoomDetails.zoomPasscode,
-            }
-          : s
-      )
+      prev.map((s) => {
+        if (s.id === slotId) {
+          const updated: DefenseSlot = {
+            ...s,
+            zoomLink: zoomDetails.zoomLink,
+            zoomPasscode: zoomDetails.zoomPasscode,
+          };
+          saveDocument('slots', updated);
+          return updated;
+        }
+        return s;
+      })
     );
-    // Keep any active non-cancelled appointment tied to this slot synchronized
     setAppointments((prev) =>
-      prev.map((a) =>
-        a.slotId === slotId && a.status !== 'Cancelled'
-          ? {
-              ...a,
-              zoomLink: zoomDetails.zoomLink,
-              zoomPasscode: zoomDetails.zoomPasscode,
-            }
-          : a
-      )
+      prev.map((a) => {
+        if (a.slotId === slotId && a.status !== 'Cancelled') {
+          const updated: DefenseAppointment = {
+            ...a,
+            zoomLink: zoomDetails.zoomLink,
+            zoomPasscode: zoomDetails.zoomPasscode,
+          };
+          saveDocument('appointments', updated);
+          return updated;
+        }
+        return a;
+      })
     );
   };
 
@@ -400,7 +563,7 @@ export default function App() {
       const created: DefenseSlot[] = [];
       standardBlocks.forEach((blk, idx) => {
         if (!existingTimes.has(`${blk.startTime}-${blk.room.name}`)) {
-          created.push({
+          const newSlot: DefenseSlot = {
             id: `SLOT-${Date.now().toString().slice(-4)}-${idx}`,
             date,
             startTime: blk.startTime,
@@ -412,7 +575,9 @@ export default function App() {
             department: 'Information Technology',
             chairName: blk.chairName,
             isBlocked: false,
-          });
+          };
+          created.push(newSlot);
+          saveDocument('slots', newSlot);
         }
       });
       return [...prev, ...created];
@@ -421,23 +586,45 @@ export default function App() {
 
   const handleToggleBlockSlot = (slotId: string) => {
     setSlots((prev) =>
-      prev.map((s) => (s.id === slotId ? { ...s, isBlocked: !s.isBlocked } : s))
+      prev.map((s) => {
+        if (s.id === slotId) {
+          const updated: DefenseSlot = { ...s, isBlocked: !s.isBlocked };
+          saveDocument('slots', updated);
+          return updated;
+        }
+        return s;
+      })
     );
   };
 
   const handleDeleteSlot = (slotId: string) => {
     setSlots((prev) => prev.filter((s) => s.id !== slotId));
+    removeDocument('slots', slotId);
   };
 
   const handleToggleChecklist = (id: string) => {
     setChecklist((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, completed: !item.completed } : item))
+      prev.map((item) => {
+        if (item.id === id) {
+          const updated = { ...item, completed: !item.completed };
+          saveDocument('checklist', updated);
+          return updated;
+        }
+        return item;
+      })
     );
   };
 
   const handleToggleZoomRoomAvailability = (roomId: string) => {
     setZoomRooms((prev) =>
-      prev.map((r) => (r.id === roomId ? { ...r, available: !r.available } : r))
+      prev.map((r) => {
+        if (r.id === roomId) {
+          const updated = { ...r, available: !r.available };
+          saveDocument('zoomRooms', updated);
+          return updated;
+        }
+        return r;
+      })
     );
   };
 
@@ -447,77 +634,102 @@ export default function App() {
   ) => {
     const target = zoomRooms.find((r) => r.id === roomId);
     setZoomRooms((prev) =>
-      prev.map((r) =>
-        r.id === roomId
-          ? {
-              ...r,
-              zoomLink: payload.zoomLink,
-              meetingId: payload.meetingId,
-              passcode: payload.passcode,
-            }
-          : r
-      )
+      prev.map((r) => {
+        if (r.id === roomId) {
+          const updated = {
+            ...r,
+            zoomLink: payload.zoomLink,
+            meetingId: payload.meetingId,
+            passcode: payload.passcode,
+          };
+          saveDocument('zoomRooms', updated);
+          return updated;
+        }
+        return r;
+      })
     );
     if (target) {
       setSlots((prev) =>
-        prev.map((s) =>
-          s.zoomRoomName === target.name
-            ? {
-                ...s,
-                zoomLink: payload.zoomLink,
-                zoomMeetingId: payload.meetingId,
-                zoomPasscode: payload.passcode,
-              }
-            : s
-        )
+        prev.map((s) => {
+          if (s.zoomRoomName === target.name) {
+            const updated = {
+              ...s,
+              zoomLink: payload.zoomLink,
+              zoomMeetingId: payload.meetingId,
+              zoomPasscode: payload.passcode,
+            };
+            saveDocument('slots', updated);
+            return updated;
+          }
+          return s;
+        })
       );
       setAppointments((prev) =>
-        prev.map((a) =>
-          a.zoomRoomName === target.name &&
-          a.status !== 'Completed' &&
-          a.status !== 'Cancelled'
-            ? {
-                ...a,
-                zoomLink: payload.zoomLink,
-                zoomMeetingId: payload.meetingId,
-                zoomPasscode: payload.passcode,
-              }
-            : a
-        )
+        prev.map((a) => {
+          if (
+            a.zoomRoomName === target.name &&
+            a.status !== 'Completed' &&
+            a.status !== 'Cancelled'
+          ) {
+            const updated = {
+              ...a,
+              zoomLink: payload.zoomLink,
+              zoomMeetingId: payload.meetingId,
+              zoomPasscode: payload.passcode,
+            };
+            saveDocument('appointments', updated);
+            return updated;
+          }
+          return a;
+        })
       );
     }
   };
 
   const handleToggleFacultyAvailability = (facultyId: string) => {
     setFaculty((prev) =>
-      prev.map((f) => (f.id === facultyId ? { ...f, available: !f.available } : f))
+      prev.map((f) => {
+        if (f.id === facultyId) {
+          const updated = { ...f, available: !f.available };
+          saveDocument('faculty', updated);
+          return updated;
+        }
+        return f;
+      })
     );
   };
 
+  // --------------------------------------------------------------------------
+  // Quarterm Period Lifecycle
+  // --------------------------------------------------------------------------
   const handleCloseQuarterm = (closingNote: string) => {
-    setActiveQuarter((prev) =>
-      prev
+    setActiveQuarter((prev) => {
+      const updated: QuartermPeriod | null = prev
         ? {
             ...prev,
             status: 'Closed',
             closedAt: TODAY_ISO,
             closingNote,
           }
-        : prev
-    );
+        : null;
+      saveActiveQuarter(updated);
+      return updated;
+    });
   };
 
   const handleReopenQuarterm = () => {
-    setActiveQuarter((prev) =>
-      prev
+    setActiveQuarter((prev) => {
+      const updated: QuartermPeriod | null = prev
         ? {
             ...prev,
             status: 'Open',
             closedAt: undefined,
             closingNote: undefined,
           }
-        : prev
-    );
+        : null;
+      saveActiveQuarter(updated);
+      return updated;
+    });
   };
 
   const handleArchiveQuarterm = (archiveNote: string) => {
@@ -538,6 +750,9 @@ export default function App() {
       fileSubmissions: [...fileSubmissions],
     };
 
+    saveDocument('archivedQuarterms', snapshot);
+    saveActiveQuarter(null);
+
     setArchivedQuarters((prev) => [snapshot, ...prev]);
     setSlots([]);
     setAppointments([]);
@@ -557,14 +772,29 @@ export default function App() {
       TODAY_ISO
     );
     setActiveQuarter(nextQuarter);
+    saveActiveQuarter(nextQuarter);
+
     setAppointments([]);
     setFileSubmissions([]);
-    setSlots(
-      payload.seedStarterSlots
-        ? createStarterSlotsForQuarterm(nextQuarter.code, TODAY_ISO, zoomRooms)
-        : []
-    );
+    const starterSlots = payload.seedStarterSlots
+      ? createStarterSlotsForQuarterm(nextQuarter.code, TODAY_ISO, zoomRooms)
+      : [];
+    setSlots(starterSlots);
+    if (starterSlots.length > 0) {
+      batchSaveDocuments('slots', starterSlots);
+    }
     setPreSelectedSlot(null);
+  };
+
+  // --------------------------------------------------------------------------
+  // Authentication & Demo State
+  // --------------------------------------------------------------------------
+  const handleRegisterUser = async (user: UserAccount) => {
+    await registerOrUpdateUser(user);
+    setRegisteredUsers((prev) => {
+      const filtered = prev.filter((u) => u.email.toLowerCase() !== user.email.toLowerCase());
+      return [user, ...filtered];
+    });
   };
 
   const handleSwitchRole = () => {
@@ -578,6 +808,7 @@ export default function App() {
   const handleLogin = (user: UserAccount, pendingSlot?: DefenseSlot | null) => {
     setPreSelectedSlot(pendingSlot ?? null);
     setCurrentUser(user);
+    registerOrUpdateUser(user);
   };
 
   const handleSignOut = () => {
@@ -600,6 +831,12 @@ export default function App() {
     setActiveQuarter(INITIAL_ACTIVE_QUARTER);
     setArchivedQuarters(INITIAL_ARCHIVED_QUARTERS);
     setPreSelectedSlot(null);
+
+    // Sync reset to Firestore
+    batchSaveDocuments('slots', INITIAL_SLOTS);
+    batchSaveDocuments('appointments', INITIAL_APPOINTMENTS);
+    batchSaveDocuments('fileSubmissions', INITIAL_FILE_SUBMISSIONS);
+    saveActiveQuarter(INITIAL_ACTIVE_QUARTER);
   };
 
   if (!currentUser) {
@@ -609,7 +846,9 @@ export default function App() {
         appointments={appointments}
         zoomRooms={zoomRooms}
         activeQuarter={activeQuarter}
+        registeredUsers={registeredUsers}
         onLogin={handleLogin}
+        onRegister={handleRegisterUser}
       />
     );
   }

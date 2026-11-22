@@ -64,7 +64,7 @@ interface StudentPortalProps {
   initialSlot?: DefenseSlot | null;
   onUploadFile: (
     requirementId: string,
-    fileMeta: { fileName: string; fileSize: string; objectUrl?: string }
+    fileMeta: { fileName: string; fileSize: string; objectUrl?: string; rawFile?: File }
   ) => void;
   onRemoveFile: (submissionId: string) => void;
   onBookSlot: (
@@ -413,6 +413,7 @@ export function StudentPortal({
       fileName: file.name,
       fileSize: formatFileSize(file.size),
       objectUrl,
+      rawFile: file,
     });
     showToast(`Uploaded "${file.name}" for faculty review.`, 'success');
   };

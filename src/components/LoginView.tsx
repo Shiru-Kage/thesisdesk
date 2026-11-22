@@ -27,7 +27,9 @@ interface LoginViewProps {
   appointments: DefenseAppointment[];
   zoomRooms: ZoomRoom[];
   activeQuarter: QuartermPeriod | null;
+  registeredUsers?: UserAccount[];
   onLogin: (user: UserAccount, pendingSlot?: DefenseSlot | null) => void;
+  onRegister?: (user: UserAccount) => void;
 }
 
 export function LoginView({
@@ -35,7 +37,9 @@ export function LoginView({
   appointments,
   zoomRooms,
   activeQuarter,
+  registeredUsers = [],
   onLogin,
+  onRegister,
 }: LoginViewProps) {
   const prefersReducedMotion = useReducedMotion();
 
@@ -149,33 +153,42 @@ export function LoginView({
     }
 
     if (authMode === 'register') {
-      onLogin(
-        {
-          id: `usr-${Date.now()}`,
-          name: name.trim(),
-          email: trimmedEmail,
-          role,
-          department,
-          studentId: role === 'student' ? '2026108914' : undefined,
-          program: role === 'student' ? `B.S. ${department}` : undefined,
-          avatarUrl:
-            role === 'student'
-              ? DEMO_USERS.student.avatarUrl
-              : DEMO_USERS.admin.avatarUrl,
-        },
-        null
-      );
+      const newUser: UserAccount = {
+        id: `usr-${Date.now()}`,
+        name: name.trim(),
+        email: trimmedEmail,
+        role,
+        department,
+        studentId: role === 'student' ? `2026${Math.floor(100000 + Math.random() * 900000)}` : undefined,
+        program: role === 'student' ? `B.S. ${department} · Mapúa UOx` : undefined,
+        avatarUrl:
+          role === 'student'
+            ? DEMO_USERS.student.avatarUrl
+            : DEMO_USERS.admin.avatarUrl,
+      };
+      if (onRegister) {
+        onRegister(newUser);
+      }
+      onLogin(newUser, null);
+      return;
+    }
+
+    // Match registered users first
+    const existing = registeredUsers.find(
+      (u) => u.email.toLowerCase() === trimmedEmail.toLowerCase()
+    );
+    if (existing) {
+      onLogin(existing, null);
       return;
     }
 
     const baseUser = DEMO_USERS[role];
-    onLogin(
-      {
-        ...baseUser,
-        email: trimmedEmail,
-      },
-      null
-    );
+    const loggedUser: UserAccount = {
+      ...baseUser,
+      email: trimmedEmail,
+      name: baseUser.email.toLowerCase() === trimmedEmail.toLowerCase() ? baseUser.name : trimmedEmail.split('@')[0],
+    };
+    onLogin(loggedUser, null);
   };
 
   const transitionFast = prefersReducedMotion

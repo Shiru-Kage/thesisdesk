@@ -1,0 +1,676 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =========================================================================
+    // Assumed Data Model (ThesisDesk — SOIT UOx Thesis Defense Scheduling)
+    // =========================================================================
+    //
+    // Collection: slots
+    // Document ID: slotId (e.g., 'SLOT-101', 'SLOT-1Q2627-01')
+    // Fields:
+    //   - id: string (required, immutable, == slotId, 1..64 chars)
+    //   - date: string (required, YYYY-MM-DD)
+    //   - startTime: string (required, HH:mm 24h, < endTime)
+    //   - endTime: string (required, HH:mm 24h)
+    //   - zoomRoomName: string (required, 1..120 chars)
+    //   - zoomLink: string (required, '' or http/https URL, <= 500 chars)
+    //   - zoomMeetingId: string | null (optional, <= 50 chars)
+    //   - zoomPasscode: string | null (optional, <= 50 chars)
+    //   - department: string (required, 1..120 chars)
+    //   - chairName: string (required, 1..120 chars)
+    //   - isBlocked: bool (required)
+    //
+    // Collection: appointments
+    // Document ID: appointmentId (e.g., 'DEF-2601')
+    // Fields:
+    //   - id: string (required, immutable, == appointmentId, 1..64 chars)
+    //   - slotId: string (required, immutable for students, 1..64 chars)
+    //   - studentId: string (required, immutable, 1..40 chars)
+    //   - studentName: string (required, 1..120 chars)
+    //   - studentEmail: string (required, immutable, valid email, <= 160 chars)
+    //   - program: string (required, 1..160 chars)
+    //   - department: string (required, 1..120 chars)
+    //   - thesisTitle: string (required, 3..300 chars)
+    //   - abstract: string (required, 1..5000 chars)
+    //   - advisorName: string (required, 1..120 chars)
+    //   - committeeMembers: list<string> (required, 1..10 items, each 1..120 chars)
+    //   - status: string (required, enum: 'Pending Review' | 'Confirmed' | 'Reschedule Requested' | 'Completed' | 'Cancelled')
+    //   - date: string (required, immutable for students, YYYY-MM-DD)
+    //   - startTime: string (required, immutable for students, HH:mm 24h, < endTime)
+    //   - endTime: string (required, immutable for students, HH:mm 24h)
+    //   - zoomRoomName: string (required, immutable for students, 1..120 chars)
+    //   - zoomLink: string (required, immutable for students, '' or http/https URL, <= 500 chars)
+    //   - zoomMeetingId: string | null (optional, immutable for students, <= 50 chars)
+    //   - zoomPasscode: string | null (optional, immutable for students, <= 50 chars)
+    //   - notes: string | null (optional, <= 2000 chars)
+    //   - adminFeedback: string | null (optional, <= 2000 chars)
+    //   - createdAt: string (required, immutable, YYYY-MM-DD or ISO-8601)
+    //
+    // Collection: users
+    // Document ID: userId (matches Firebase Auth UID)
+    // Fields:
+    //   - id: string (required, immutable, == userId, 1..128 chars)
+    //   - name: string (required, 1..120 chars)
+    //   - email: string (required, immutable for non-admins, valid email, <= 160 chars)
+    //   - role: string (required, immutable for non-admins, enum: 'student' | 'admin')
+    //   - department: string (required, 1..120 chars)
+    //   - studentId: string | null (optional, <= 40 chars)
+    //   - program: string | null (optional, <= 160 chars)
+    //   - avatarUrl: string (required, http/https URL or safe relative path, <= 500 chars)
+    //
+    // Collection: fileSubmissions
+    // Document ID: submissionId (e.g., 'SUB-901')
+    // Fields:
+    //   - id: string (required, immutable, == submissionId, 1..64 chars)
+    //   - requirementId: string (required, immutable, 1..64 chars)
+    //   - studentId: string (required, immutable, 1..40 chars)
+    //   - studentName: string (required, 1..120 chars)
+    //   - studentEmail: string (required, immutable, valid email, <= 160 chars)
+    //   - program: string (required, 1..160 chars)
+    //   - department: string (required, 1..120 chars)
+    //   - fileName: string (required, 1..255 chars)
+    //   - fileSize: string (required, 1..40 chars)
+    //   - uploadedAt: string (required, YYYY-MM-DD or ISO-8601)
+    //   - status: string (required, enum: 'Pending Review' | 'Approved' | 'Revision Requested')
+    //   - facultyNote: string | null (optional, <= 2000 chars)
+    //   - reviewedBy: string | null (optional, <= 120 chars)
+    //   - reviewedAt: string | null (optional, YYYY-MM-DD or ISO-8601)
+    //   - objectUrl: string | null (optional, http/https URL, <= 2000 chars)
+    //
+    // Collection: archivedQuarterms
+    // Document ID: archiveId (e.g., 'ARC-4Q2526')
+    // Fields:
+    //   - id: string (required, immutable, == archiveId, 1..64 chars)
+    //   - quarterm: map (required, QuartermPeriod object)
+    //   - archivedAt: string (required, immutable, YYYY-MM-DD or ISO-8601)
+    //   - archivedBy: string (required, immutable, 1..120 chars)
+    //   - archiveNote: string | null (optional, <= 2000 chars)
+    //   - slots: list (required, <= 500 items)
+    //   - appointments: list (required, <= 500 items)
+    //   - fileSubmissions: list (required, <= 1000 items)
+    //
+    // Collection: settings
+    // Documents:
+    //   - active_quarterm: { quarter: QuartermPeriod | null }
+    //   - zoom_rooms: { items | rooms | zoomRooms: list (<= 100 items) }
+    //   - faculty_chairs: { items | chairs | faculty | facultyChairs: list (<= 200 items) }
+    //   - checklist: { items | checklist: list (<= 100 items) }
+    //
+    // =========================================================================
+
+    // =========================================================================
+    // Default Deny
+    // =========================================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
+    // Helper Functions
+    // =========================================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function hasAuthEmail() {
+      return isAuthenticated() &&
+             'email' in request.auth.token &&
+             request.auth.token.email is string &&
+             request.auth.token.email.size() > 0;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        ('role' in request.auth.token && request.auth.token.role == 'admin') ||
+        ('admin' in request.auth.token && request.auth.token.admin == true) ||
+        (
+          hasAuthEmail() &&
+          'email_verified' in request.auth.token &&
+          request.auth.token.email == 'e.alvarez@mapua.edu.ph' &&
+          request.auth.token.email_verified == true
+        ) ||
+        (
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'admin'
+        )
+      );
+    }
+
+    function isAppointmentOwner(data) {
+      return hasAuthEmail() && data.studentEmail == request.auth.token.email;
+    }
+
+    function isSubmissionOwner(data) {
+      return hasAuthEmail() && data.studentEmail == request.auth.token.email;
+    }
+
+    function uidUnchanged() {
+      return !('uid' in request.resource.data) ||
+             request.resource.data.uid == request.auth.uid;
+    }
+
+    function uidNotModified() {
+      return !('uid' in request.resource.data) ||
+             request.resource.data.uid == resource.data.uid;
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    function validStringValue(val, minLen, maxLen) {
+      return val is string && val.size() >= minLen && val.size() <= maxLen;
+    }
+
+    function validStringLength(field, minLen, maxLen) {
+      return validStringValue(request.resource.data[field], minLen, maxLen);
+    }
+
+    function isValidOptionalString(data, field, minLen, maxLen) {
+      return !(field in data) ||
+             data[field] == null ||
+             validStringValue(data[field], minLen, maxLen);
+    }
+
+    function isValidUrl(url) {
+      return url is string &&
+             url.size() <= 2000 &&
+             (url.matches("^https://.*") || url.matches("^http://.*"));
+    }
+
+    function isValidAvatarUrl(url) {
+      return url is string &&
+             url.size() > 0 &&
+             url.size() <= 500 &&
+             (
+               isValidUrl(url) ||
+               (url.matches("^/[a-zA-Z0-9._/~-]+$") && !url.matches(".*\\.\\..*"))
+             );
+    }
+
+    function isValidEmail(email) {
+      return email is string &&
+             email.size() <= 160 &&
+             email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidDateOnly(dateStr) {
+      return dateStr is string &&
+             dateStr.size() == 10 &&
+             dateStr.matches("^\\d{4}-\\d{2}-\\d{2}$");
+    }
+
+    function isValidDateOrIso(dateStr) {
+      return dateStr is string &&
+             dateStr.size() >= 10 &&
+             dateStr.size() <= 40 &&
+             dateStr.matches("^\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z?)?$");
+    }
+
+    function isValidOptionalDateOrIso(data, field) {
+      return !(field in data) ||
+             data[field] == null ||
+             isValidDateOrIso(data[field]);
+    }
+
+    function isValidTime24(timeStr) {
+      return timeStr is string &&
+             timeStr.size() == 5 &&
+             timeStr.matches("^([01]\\d|2[0-3]):[0-5]\\d$");
+    }
+
+    function isValidList(listVal, maxSize) {
+      return listVal is list && listVal.size() <= maxSize;
+    }
+
+    function isValidMap(mapData, allowedKeys) {
+      return mapData is map && mapData.keys().hasOnly(allowedKeys);
+    }
+
+    function isPositive(field) {
+      return request.resource.data[field] is number && request.resource.data[field] > 0;
+    }
+
+    function isQuarterOpen() {
+      return !exists(/databases/$(database)/documents/settings/active_quarterm) ||
+             (
+               get(/databases/$(database)/documents/settings/active_quarterm).data.get('quarter', null) != null &&
+               get(/databases/$(database)/documents/settings/active_quarterm).data.quarter.get('status', '') == 'Open'
+             );
+    }
+
+    // =========================================================================
+    // Domain Validators
+    // =========================================================================
+
+    function isValidSlot(data, slotId) {
+      return hasOnlyAllowedFields([
+               'id', 'date', 'startTime', 'endTime', 'zoomRoomName',
+               'zoomLink', 'zoomMeetingId', 'zoomPasscode',
+               'department', 'chairName', 'isBlocked'
+             ]) &&
+             hasRequiredFields([
+               'id', 'date', 'startTime', 'endTime', 'zoomRoomName',
+               'zoomLink', 'department', 'chairName', 'isBlocked'
+             ]) &&
+             validStringValue(data.id, 1, 64) &&
+             data.id == slotId &&
+             isValidDateOnly(data.date) &&
+             isValidTime24(data.startTime) &&
+             isValidTime24(data.endTime) &&
+             data.startTime < data.endTime &&
+             validStringValue(data.zoomRoomName, 1, 120) &&
+             data.zoomLink is string &&
+             data.zoomLink.size() <= 500 &&
+             (data.zoomLink == '' || isValidUrl(data.zoomLink)) &&
+             isValidOptionalString(data, 'zoomMeetingId', 0, 50) &&
+             isValidOptionalString(data, 'zoomPasscode', 0, 50) &&
+             validStringValue(data.department, 1, 120) &&
+             validStringValue(data.chairName, 1, 120) &&
+             data.isBlocked is bool;
+    }
+
+    function isValidCommitteeMember(member) {
+      return validStringValue(member, 1, 120);
+    }
+
+    function isValidCommitteeList(members) {
+      return members is list &&
+             members.size() >= 1 &&
+             members.size() <= 10 &&
+             isValidCommitteeMember(members[0]) &&
+             (members.size() < 2 || isValidCommitteeMember(members[1])) &&
+             (members.size() < 3 || isValidCommitteeMember(members[2])) &&
+             (members.size() < 4 || isValidCommitteeMember(members[3])) &&
+             (members.size() < 5 || isValidCommitteeMember(members[4])) &&
+             (members.size() < 6 || isValidCommitteeMember(members[5])) &&
+             (members.size() < 7 || isValidCommitteeMember(members[6])) &&
+             (members.size() < 8 || isValidCommitteeMember(members[7])) &&
+             (members.size() < 9 || isValidCommitteeMember(members[8])) &&
+             (members.size() < 10 || isValidCommitteeMember(members[9]));
+    }
+
+    function isValidAppointment(data, appointmentId) {
+      return hasOnlyAllowedFields([
+               'id', 'slotId', 'studentId', 'studentName', 'studentEmail',
+               'program', 'department', 'thesisTitle', 'abstract',
+               'advisorName', 'committeeMembers', 'status', 'date',
+               'startTime', 'endTime', 'zoomRoomName', 'zoomLink',
+               'zoomMeetingId', 'zoomPasscode', 'notes', 'adminFeedback',
+               'createdAt'
+             ]) &&
+             hasRequiredFields([
+               'id', 'slotId', 'studentId', 'studentName', 'studentEmail',
+               'program', 'department', 'thesisTitle', 'abstract',
+               'advisorName', 'committeeMembers', 'status', 'date',
+               'startTime', 'endTime', 'zoomRoomName', 'zoomLink',
+               'createdAt'
+             ]) &&
+             validStringValue(data.id, 1, 64) &&
+             data.id == appointmentId &&
+             validStringValue(data.slotId, 1, 64) &&
+             validStringValue(data.studentId, 1, 40) &&
+             validStringValue(data.studentName, 1, 120) &&
+             isValidEmail(data.studentEmail) &&
+             validStringValue(data.program, 1, 160) &&
+             validStringValue(data.department, 1, 120) &&
+             validStringValue(data.thesisTitle, 3, 300) &&
+             validStringValue(data.abstract, 1, 5000) &&
+             validStringValue(data.advisorName, 1, 120) &&
+             isValidCommitteeList(data.committeeMembers) &&
+             data.status in [
+               'Pending Review',
+               'Confirmed',
+               'Reschedule Requested',
+               'Completed',
+               'Cancelled'
+             ] &&
+             isValidDateOnly(data.date) &&
+             isValidTime24(data.startTime) &&
+             isValidTime24(data.endTime) &&
+             data.startTime < data.endTime &&
+             validStringValue(data.zoomRoomName, 1, 120) &&
+             data.zoomLink is string &&
+             data.zoomLink.size() <= 500 &&
+             (data.zoomLink == '' || isValidUrl(data.zoomLink)) &&
+             isValidOptionalString(data, 'zoomMeetingId', 0, 50) &&
+             isValidOptionalString(data, 'zoomPasscode', 0, 50) &&
+             isValidOptionalString(data, 'notes', 0, 2000) &&
+             isValidOptionalString(data, 'adminFeedback', 0, 2000) &&
+             isValidDateOrIso(data.createdAt);
+    }
+
+    function isValidAdminAppointmentTransition(prevStatus, nextStatus) {
+      return (prevStatus == nextStatus) ||
+             (prevStatus == 'Pending Review' && nextStatus in ['Confirmed', 'Reschedule Requested', 'Cancelled']) ||
+             (prevStatus == 'Confirmed' && nextStatus in ['Reschedule Requested', 'Completed', 'Cancelled']) ||
+             (prevStatus == 'Reschedule Requested' && nextStatus in ['Pending Review', 'Confirmed', 'Cancelled']);
+    }
+
+    function isValidUser(data, userId) {
+      return hasOnlyAllowedFields([
+               'id', 'name', 'email', 'role', 'department',
+               'studentId', 'program', 'avatarUrl'
+             ]) &&
+             hasRequiredFields([
+               'id', 'name', 'email', 'role', 'department', 'avatarUrl'
+             ]) &&
+             validStringValue(data.id, 1, 128) &&
+             data.id == userId &&
+             validStringValue(data.name, 1, 120) &&
+             isValidEmail(data.email) &&
+             data.role in ['student', 'admin'] &&
+             validStringValue(data.department, 1, 120) &&
+             isValidOptionalString(data, 'studentId', 0, 40) &&
+             isValidOptionalString(data, 'program', 0, 160) &&
+             isValidAvatarUrl(data.avatarUrl);
+    }
+
+    function isValidFileSubmission(data, submissionId) {
+      return hasOnlyAllowedFields([
+               'id', 'requirementId', 'studentId', 'studentName',
+               'studentEmail', 'program', 'department', 'fileName',
+               'fileSize', 'uploadedAt', 'status', 'facultyNote',
+               'reviewedBy', 'reviewedAt', 'objectUrl'
+             ]) &&
+             hasRequiredFields([
+               'id', 'requirementId', 'studentId', 'studentName',
+               'studentEmail', 'program', 'department', 'fileName',
+               'fileSize', 'uploadedAt', 'status'
+             ]) &&
+             validStringValue(data.id, 1, 64) &&
+             data.id == submissionId &&
+             validStringValue(data.requirementId, 1, 64) &&
+             validStringValue(data.studentId, 1, 40) &&
+             validStringValue(data.studentName, 1, 120) &&
+             isValidEmail(data.studentEmail) &&
+             validStringValue(data.program, 1, 160) &&
+             validStringValue(data.department, 1, 120) &&
+             validStringValue(data.fileName, 1, 255) &&
+             validStringValue(data.fileSize, 1, 40) &&
+             isValidDateOrIso(data.uploadedAt) &&
+             data.status in ['Pending Review', 'Approved', 'Revision Requested'] &&
+             isValidOptionalString(data, 'facultyNote', 0, 2000) &&
+             isValidOptionalString(data, 'reviewedBy', 0, 120) &&
+             isValidOptionalDateOrIso(data, 'reviewedAt') &&
+             (
+               !('objectUrl' in data) ||
+               data.objectUrl == null ||
+               isValidUrl(data.objectUrl)
+             );
+    }
+
+    function hasNoReviewMetadata(data) {
+      return (!('facultyNote' in data) || data.facultyNote == null) &&
+             (!('reviewedBy' in data) || data.reviewedBy == null) &&
+             (!('reviewedAt' in data) || data.reviewedAt == null);
+    }
+
+    function isValidQuartermPeriod(q) {
+      return q is map &&
+             q.keys().hasOnly([
+               'code', 'quarterNumber', 'startYear', 'academicYear',
+               'label', 'status', 'openedAt', 'closedAt', 'closingNote'
+             ]) &&
+             q.keys().hasAll([
+               'code', 'quarterNumber', 'startYear', 'academicYear',
+               'label', 'status', 'openedAt'
+             ]) &&
+             validStringValue(q.code, 1, 20) &&
+             q.quarterNumber is int &&
+             q.quarterNumber in [1, 2, 3, 4] &&
+             q.startYear is int &&
+             q.startYear >= 2000 &&
+             q.startYear <= 2100 &&
+             validStringValue(q.academicYear, 1, 30) &&
+             validStringValue(q.label, 1, 80) &&
+             q.status in ['Open', 'Closed'] &&
+             isValidDateOnly(q.openedAt) &&
+             (!('closedAt' in q) || q.closedAt == null || isValidDateOnly(q.closedAt)) &&
+             isValidOptionalString(q, 'closingNote', 0, 2000);
+    }
+
+    function isValidArchivedQuarterm(data, archiveId) {
+      return hasOnlyAllowedFields([
+               'id', 'quarterm', 'archivedAt', 'archivedBy',
+               'archiveNote', 'slots', 'appointments', 'fileSubmissions'
+             ]) &&
+             hasRequiredFields([
+               'id', 'quarterm', 'archivedAt', 'archivedBy',
+               'slots', 'appointments', 'fileSubmissions'
+             ]) &&
+             validStringValue(data.id, 1, 64) &&
+             data.id == archiveId &&
+             isValidQuartermPeriod(data.quarterm) &&
+             isValidDateOrIso(data.archivedAt) &&
+             validStringValue(data.archivedBy, 1, 120) &&
+             isValidOptionalString(data, 'archiveNote', 0, 2000) &&
+             isValidList(data.slots, 500) &&
+             isValidList(data.appointments, 500) &&
+             isValidList(data.fileSubmissions, 1000);
+    }
+
+    function isValidActiveQuarterSetting(data) {
+      return hasOnlyAllowedFields(['quarter']) &&
+             hasRequiredFields(['quarter']) &&
+             (data.quarter == null || isValidQuartermPeriod(data.quarter));
+    }
+
+    function isValidZoomRoomsSetting(data) {
+      return data.keys().size() == 1 && (
+        ('items' in data && isValidList(data.items, 100)) ||
+        ('rooms' in data && isValidList(data.rooms, 100)) ||
+        ('zoomRooms' in data && isValidList(data.zoomRooms, 100))
+      );
+    }
+
+    function isValidFacultyChairsSetting(data) {
+      return data.keys().size() == 1 && (
+        ('items' in data && isValidList(data.items, 200)) ||
+        ('chairs' in data && isValidList(data.chairs, 200)) ||
+        ('faculty' in data && isValidList(data.faculty, 200)) ||
+        ('facultyChairs' in data && isValidList(data.facultyChairs, 200))
+      );
+    }
+
+    function isValidChecklistSetting(data) {
+      return data.keys().size() == 1 && (
+        ('items' in data && isValidList(data.items, 100)) ||
+        ('checklist' in data && isValidList(data.checklist, 100))
+      );
+    }
+
+    // =========================================================================
+    // Collection Rules
+    // =========================================================================
+
+    // 1. slots: Public read ONLY for available (unblocked) slots; authenticated
+    //    users may read all slots; only admins can create/update/delete slots.
+    match /slots/{slotId} {
+      allow read: if isAuthenticated() || resource.data.isBlocked == false;
+      allow create: if isAdmin() && isValidSlot(request.resource.data, slotId);
+      allow update: if isAdmin() &&
+                       isValidSlot(request.resource.data, slotId) &&
+                       areImmutableFieldsUnchanged(['id']);
+      allow delete: if isAdmin();
+    }
+
+    // 2. appointments: Contains student PII (email, studentId, thesis details).
+    //    Readable only by admins or the owning student.
+    //    Students may create 'Pending Review' bookings on unblocked slots while
+    //    quarterm is open, edit pending thesis metadata, or cancel active bookings.
+    match /appointments/{appointmentId} {
+      allow read: if isAdmin() || isAppointmentOwner(resource.data);
+
+      allow create: if isValidAppointment(request.resource.data, appointmentId) &&
+                       (
+                         isAdmin() ||
+                         (
+                           isAppointmentOwner(request.resource.data) &&
+                           request.resource.data.status == 'Pending Review' &&
+                           (!('adminFeedback' in request.resource.data) || request.resource.data.adminFeedback == null) &&
+                           isQuarterOpen() &&
+                           exists(/databases/$(database)/documents/slots/$(request.resource.data.slotId)) &&
+                           get(/databases/$(database)/documents/slots/$(request.resource.data.slotId)).data.isBlocked == false
+                         )
+                       );
+
+      allow update: if isValidAppointment(request.resource.data, appointmentId) &&
+                       areImmutableFieldsUnchanged(['id', 'studentId', 'studentEmail', 'createdAt']) &&
+                       (
+                         (
+                           isAdmin() &&
+                           isValidAdminAppointmentTransition(resource.data.status, request.resource.data.status)
+                         ) ||
+                         (
+                           isAppointmentOwner(resource.data) &&
+                           areImmutableFieldsUnchanged([
+                             'slotId', 'date', 'startTime', 'endTime',
+                             'zoomRoomName', 'zoomLink', 'zoomMeetingId', 'zoomPasscode'
+                           ]) &&
+                           (
+                             (
+                               resource.data.status in ['Pending Review', 'Confirmed', 'Reschedule Requested'] &&
+                               request.resource.data.status == 'Cancelled' &&
+                               request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'adminFeedback'])
+                             ) ||
+                             (
+                               resource.data.status == 'Pending Review' &&
+                               request.resource.data.status == 'Pending Review' &&
+                               areImmutableFieldsUnchanged(['status', 'adminFeedback'])
+                             )
+                           )
+                         )
+                       );
+
+      allow delete: if isAdmin();
+    }
+
+    // 3. users: Strict PII protection. Only the user or an admin may read.
+    //    Non-admins can only self-register as 'student' and cannot escalate role.
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+
+      allow create: if isAuthenticated() &&
+                       isValidUser(request.resource.data, userId) &&
+                       uidUnchanged() &&
+                       (
+                         isAdmin() ||
+                         (
+                           isOwner(userId) &&
+                           request.resource.data.role == 'student' &&
+                           (!hasAuthEmail() || request.resource.data.email == request.auth.token.email)
+                         )
+                       );
+
+      allow update: if isAuthenticated() &&
+                       isValidUser(request.resource.data, userId) &&
+                       uidNotModified() &&
+                       areImmutableFieldsUnchanged(['id']) &&
+                       (
+                         isAdmin() ||
+                         (
+                           isOwner(userId) &&
+                           request.resource.data.role == resource.data.role &&
+                           areImmutableFieldsUnchanged(['role', 'email'])
+                         )
+                       );
+
+      allow delete: if isAdmin();
+    }
+
+    // 4. fileSubmissions: Contains student PII & clearance records.
+    //    Readable only by admins or the owning student.
+    //    Students may upload/replace/remove while not yet Approved and quarterm is open.
+    match /fileSubmissions/{submissionId} {
+      allow read: if isAdmin() || isSubmissionOwner(resource.data);
+
+      allow create: if isValidFileSubmission(request.resource.data, submissionId) &&
+                       (
+                         isAdmin() ||
+                         (
+                           isSubmissionOwner(request.resource.data) &&
+                           request.resource.data.status == 'Pending Review' &&
+                           hasNoReviewMetadata(request.resource.data) &&
+                           isQuarterOpen()
+                         )
+                       );
+
+      allow update: if isValidFileSubmission(request.resource.data, submissionId) &&
+                       areImmutableFieldsUnchanged(['id', 'requirementId', 'studentId', 'studentEmail']) &&
+                       (
+                         (
+                           isAdmin() &&
+                           areImmutableFieldsUnchanged(['uploadedAt'])
+                         ) ||
+                         (
+                           isSubmissionOwner(resource.data) &&
+                           resource.data.status != 'Approved' &&
+                           request.resource.data.status == 'Pending Review' &&
+                           hasNoReviewMetadata(request.resource.data) &&
+                           isQuarterOpen()
+                         )
+                       );
+
+      allow delete: if isAdmin() ||
+                       (
+                         isSubmissionOwner(resource.data) &&
+                         resource.data.status != 'Approved'
+                       );
+    }
+
+    // 5. archivedQuarterms: Full historical term snapshots with student PII.
+    //    Strictly admin-only for all operations.
+    match /archivedQuarterms/{archiveId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() && isValidArchivedQuarterm(request.resource.data, archiveId);
+      allow update: if isAdmin() &&
+                       isValidArchivedQuarterm(request.resource.data, archiveId) &&
+                       areImmutableFieldsUnchanged(['id', 'archivedAt', 'archivedBy']);
+      allow delete: if isAdmin();
+    }
+
+    // 6. settings: General portal configuration docs.
+    //    Public reads for non-PII settings (active_quarterm, zoom_rooms, checklist);
+    //    authenticated reads for faculty_chairs (contains faculty emails);
+    //    strictly admin-only writes with per-document schema validation.
+    match /settings/active_quarterm {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidActiveQuarterSetting(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /settings/zoom_rooms {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidZoomRoomsSetting(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /settings/faculty_chairs {
+      allow read: if isAuthenticated();
+      allow create, update: if isAdmin() && isValidFacultyChairsSetting(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /settings/checklist {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidChecklistSetting(request.resource.data);
+      allow delete: if isAdmin();
+    }
+  }
+}
