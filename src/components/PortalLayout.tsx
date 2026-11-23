@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { ArrowLeftRight, LogOut, Menu, RotateCcw, X } from 'lucide-react';
+import { ArrowLeftRight, LogOut, Menu, RotateCcw, UserCog, X } from 'lucide-react';
 import { UserAccount } from '../types/defense';
 
 export interface NavItem {
@@ -28,6 +28,7 @@ interface PortalLayoutProps {
   onSwitchRole: () => void;
   onSignOut: () => void;
   onResetDemoData?: () => void;
+  onOpenProfileModal?: () => void;
   children: ReactNode;
 }
 
@@ -43,6 +44,7 @@ export function PortalLayout({
   onSwitchRole,
   onSignOut,
   onResetDemoData,
+  onOpenProfileModal,
   children,
 }: PortalLayoutProps) {
   const prefersReducedMotion = useReducedMotion();
@@ -150,28 +152,47 @@ export function PortalLayout({
       </div>
 
       <div className="p-4 border-t border-stone-300/60 space-y-2.5 shrink-0">
-        <div className="flex items-center gap-3">
-          {!avatarError ? (
-            <img
-              src={user.avatarUrl}
-              alt={user.name}
-              referrerPolicy="no-referrer"
-              onError={() => setAvatarError(true)}
-              className="w-9 h-9 rounded-full object-cover border border-stone-300 shrink-0"
-            />
-          ) : (
-            <div className="w-9 h-9 rounded-full bg-stone-200 text-zinc-700 text-xs font-semibold flex items-center justify-center shrink-0">
-              {user.name
-                .split(' ')
-                .map((p) => p[0])
-                .join('')
-                .slice(0, 2)}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-3 min-w-0">
+            {user.avatarUrl && !avatarError ? (
+              <img
+                src={user.avatarUrl}
+                alt={user.name}
+                referrerPolicy="no-referrer"
+                onError={() => setAvatarError(true)}
+                className="w-9 h-9 rounded-full object-cover border border-stone-300 shrink-0 shadow-2xs"
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-[#A6192E] text-white text-xs font-semibold flex items-center justify-center shrink-0 shadow-2xs">
+                {user.name
+                  .split(' ')
+                  .filter(Boolean)
+                  .map((p) => p[0])
+                  .join('')
+                  .slice(0, 2)
+                  .toUpperCase() || 'U'}
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-zinc-900 truncate">{user.name}</p>
+              <p className="text-xs text-zinc-500 truncate">
+                {user.role === 'student' && user.studentId ? `${user.studentId} · ` : ''}
+                {user.department}
+              </p>
             </div>
-          )}
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-zinc-900 truncate">{user.name}</p>
-            <p className="text-xs text-zinc-500 truncate">{user.department}</p>
           </div>
+
+          {onOpenProfileModal && (
+            <button
+              type="button"
+              onClick={onOpenProfileModal}
+              title="Edit Profile"
+              aria-label="Edit Profile"
+              className="p-1.5 text-zinc-500 hover:text-[#A6192E] hover:bg-stone-200/70 rounded-md transition-colors shrink-0 cursor-pointer"
+            >
+              <UserCog className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-1.5 pt-1">

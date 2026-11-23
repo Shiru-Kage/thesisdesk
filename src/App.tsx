@@ -31,6 +31,7 @@ import {
 import { LoginView } from './components/LoginView';
 import { StudentPortal } from './components/StudentPortal';
 import { AdminPortal } from './components/AdminPortal';
+import { ProfileModal } from './components/ProfileModal';
 import {
   getDb,
   subscribeToCollection,
@@ -77,6 +78,7 @@ export default function App() {
     loadPersistedState()
   );
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [preSelectedSlot, setPreSelectedSlot] = useState<DefenseSlot | null>(null);
   const [isFirebaseConnected, setIsFirebaseConnected] = useState(false);
 
@@ -821,6 +823,65 @@ export default function App() {
     setCurrentUser(null);
   };
 
+  const handleUpdateProfile = (updatedData: {
+    name: string;
+    studentId?: string;
+    avatarUrl: string;
+    department: string;
+    program?: string;
+  }) => {
+    if (!currentUser) return;
+    const updatedUser: UserAccount = {
+      ...currentUser,
+      ...updatedData,
+    };
+    setCurrentUser(updatedUser);
+    setRegisteredUsers((prev) => {
+      const exists = prev.some(
+        (u) => u.email.toLowerCase() === updatedUser.email.toLowerCase()
+      );
+      if (exists) {
+        return prev.map((u) =>
+          u.email.toLowerCase() === updatedUser.email.toLowerCase() ? updatedUser : u
+        );
+      }
+      return [...prev, updatedUser];
+    });
+    registerOrUpdateUser(updatedUser);
+
+    if (updatedUser.role === 'student') {
+      setFileSubmissions((prev) =>
+        prev.map((f) => {
+          if (f.studentEmail.toLowerCase() === updatedUser.email.toLowerCase()) {
+            const updated = {
+              ...f,
+              studentName: updatedUser.name,
+              studentId: updatedUser.studentId || f.studentId,
+            };
+            saveDocument('fileSubmissions', updated);
+            return updated;
+          }
+          return f;
+        })
+      );
+      setAppointments((prev) =>
+        prev.map((a) => {
+          if (a.studentEmail.toLowerCase() === updatedUser.email.toLowerCase()) {
+            const updated = {
+              ...a,
+              studentName: updatedUser.name,
+              studentId: updatedUser.studentId || a.studentId,
+            };
+            saveDocument('appointments', updated);
+            return updated;
+          }
+          return a;
+        })
+      );
+    }
+    setIsProfileModalOpen(false);
+  };
+
   const handleResetDemoData = () => {
     try {
       window.localStorage.removeItem(STORAGE_KEY);
@@ -855,59 +916,77 @@ export default function App() {
 
   if (currentUser.role === 'student') {
     return (
-      <StudentPortal
-        user={currentUser}
-        slots={slots}
-        appointments={appointments}
-        checklist={checklist}
-        requiredDocuments={REQUIRED_DOCUMENTS}
-        fileSubmissions={fileSubmissions}
-        activeQuarter={activeQuarter}
-        todayIso={TODAY_ISO}
-        initialSlot={preSelectedSlot}
-        onUploadFile={handleUploadStudentFile}
-        onRemoveFile={handleRemoveStudentFile}
-        onBookSlot={handleBookSlot}
-        onCancelAppointment={handleCancelAppointment}
-        onToggleChecklist={handleToggleChecklist}
-        onSwitchRole={handleSwitchRole}
-        onSignOut={handleSignOut}
-        onResetDemoData={handleResetDemoData}
-      />
+      <>
+        <StudentPortal
+          user={currentUser}
+          slots={slots}
+          appointments={appointments}
+          checklist={checklist}
+          requiredDocuments={REQUIRED_DOCUMENTS}
+          fileSubmissions={fileSubmissions}
+          activeQuarter={activeQuarter}
+          todayIso={TODAY_ISO}
+          initialSlot={preSelectedSlot}
+          onUploadFile={handleUploadStudentFile}
+          onRemoveFile={handleRemoveStudentFile}
+          onBookSlot={handleBookSlot}
+          onCancelAppointment={handleCancelAppointment}
+          onToggleChecklist={handleToggleChecklist}
+          onSwitchRole={handleSwitchRole}
+          onSignOut={handleSignOut}
+          onResetDemoData={handleResetDemoData}
+          onOpenProfileModal={() => setIsProfileModalOpen(true)}
+        />
+        <ProfileModal
+          isOpen={isProfileModalOpen}
+          user={currentUser}
+          onClose={() => setIsProfileModalOpen(false)}
+          onSave={handleUpdateProfile}
+        />
+      </>
     );
   }
 
   return (
-    <AdminPortal
-      user={currentUser}
-      slots={slots}
-      appointments={appointments}
-      zoomRooms={zoomRooms}
-      faculty={faculty}
-      requiredDocuments={REQUIRED_DOCUMENTS}
-      fileSubmissions={fileSubmissions}
-      activeQuarter={activeQuarter}
-      archivedQuarters={archivedQuarters}
-      todayIso={TODAY_ISO}
-      onCloseQuarterm={handleCloseQuarterm}
-      onReopenQuarterm={handleReopenQuarterm}
-      onArchiveQuarterm={handleArchiveQuarterm}
-      onOpenNewQuarterm={handleOpenNewQuarterm}
-      onUpdateAppointmentStatus={handleUpdateAppointmentStatus}
-      onUpdateAppointmentZoom={handleUpdateAppointmentZoom}
-      onReviewStudentFile={handleReviewStudentFile}
-      onApproveAllStudentFiles={handleApproveAllStudentFiles}
-      onAddSlot={handleAddSlot}
-      onUpdateSlotZoomLink={handleUpdateSlotZoomLink}
-      onGenerateDaySlots={handleGenerateDaySlots}
-      onToggleBlockSlot={handleToggleBlockSlot}
-      onDeleteSlot={handleDeleteSlot}
-      onToggleZoomRoomAvailability={handleToggleZoomRoomAvailability}
-      onUpdateZoomRoomLink={handleUpdateZoomRoomLink}
-      onToggleFacultyAvailability={handleToggleFacultyAvailability}
-      onSwitchRole={handleSwitchRole}
-      onSignOut={handleSignOut}
-      onResetDemoData={handleResetDemoData}
-    />
+    <>
+      <AdminPortal
+        user={currentUser}
+        slots={slots}
+        appointments={appointments}
+        zoomRooms={zoomRooms}
+        faculty={faculty}
+        requiredDocuments={REQUIRED_DOCUMENTS}
+        fileSubmissions={fileSubmissions}
+        activeQuarter={activeQuarter}
+        archivedQuarters={archivedQuarters}
+        todayIso={TODAY_ISO}
+        onCloseQuarterm={handleCloseQuarterm}
+        onReopenQuarterm={handleReopenQuarterm}
+        onArchiveQuarterm={handleArchiveQuarterm}
+        onOpenNewQuarterm={handleOpenNewQuarterm}
+        onUpdateAppointmentStatus={handleUpdateAppointmentStatus}
+        onUpdateAppointmentZoom={handleUpdateAppointmentZoom}
+        onReviewStudentFile={handleReviewStudentFile}
+        onApproveAllStudentFiles={handleApproveAllStudentFiles}
+        onAddSlot={handleAddSlot}
+        onUpdateSlotZoomLink={handleUpdateSlotZoomLink}
+        onGenerateDaySlots={handleGenerateDaySlots}
+        onToggleBlockSlot={handleToggleBlockSlot}
+        onDeleteSlot={handleDeleteSlot}
+        onToggleZoomRoomAvailability={handleToggleZoomRoomAvailability}
+        onUpdateZoomRoomLink={handleUpdateZoomRoomLink}
+        onToggleFacultyAvailability={handleToggleFacultyAvailability}
+        onSwitchRole={handleSwitchRole}
+        onSignOut={handleSignOut}
+        onResetDemoData={handleResetDemoData}
+        onOpenProfileModal={() => setIsProfileModalOpen(true)}
+      />
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        user={currentUser}
+        onClose={() => setIsProfileModalOpen(false)}
+        onSave={handleUpdateProfile}
+      />
+    </>
   );
 }

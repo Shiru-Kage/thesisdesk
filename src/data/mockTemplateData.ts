@@ -19,7 +19,7 @@ export const DEFAULT_STUDENT_USER: UserAccount = {
   department: 'Information Technology',
   studentId: '2026104819',
   program: 'B.S. Information Technology · Mapúa UOx',
-  avatarUrl: '/src/assets/images/avatar_student_1_1794880237648.jpg',
+  avatarUrl: '', // Default profile picture removed
 };
 
 export const DEFAULT_ADMIN_USER: UserAccount = {
@@ -28,7 +28,7 @@ export const DEFAULT_ADMIN_USER: UserAccount = {
   email: import.meta.env.VITE_ADMIN_EMAIL || 'pvcabalag@mapua.edu.ph',
   role: 'admin',
   department: 'School of Information Technology · UOx',
-  avatarUrl: '/src/assets/images/avatar_admin_1_1794880238289.jpg',
+  avatarUrl: '', // Default profile picture removed
 };
 
 export const DEMO_USERS: Record<'student' | 'admin', UserAccount> = {

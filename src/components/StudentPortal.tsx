@@ -29,6 +29,7 @@ import {
   Square,
   Trash2,
   Upload,
+  UserCog,
   Video,
   X,
 } from 'lucide-react';
@@ -83,6 +84,7 @@ interface StudentPortalProps {
   onSwitchRole: () => void;
   onSignOut: () => void;
   onResetDemoData: () => void;
+  onOpenProfileModal?: () => void;
 }
 
 function formatFileSize(bytes: number): string {
@@ -122,6 +124,7 @@ export function StudentPortal({
   onSwitchRole,
   onSignOut,
   onResetDemoData,
+  onOpenProfileModal,
 }: StudentPortalProps) {
   const prefersReducedMotion = useReducedMotion();
   const [activeTab, setActiveTab] = useState<
@@ -522,6 +525,7 @@ export function StudentPortal({
       onPrimaryAction={() => setActiveTab(isClearedToSchedule ? 'book' : 'files')}
       onSwitchRole={onSwitchRole}
       onSignOut={onSignOut}
+      onOpenProfileModal={onOpenProfileModal}
       onResetDemoData={() => {
         onResetDemoData();
         showToast('Restored default Mapúa SOIT 1Q2627 demo data.', 'info');
@@ -551,30 +555,42 @@ export function StudentPortal({
       {/* TAB 1: OVERVIEW */}
       {activeTab === 'overview' && (
         <div className="space-y-8">
-          <div className="pb-5 border-b border-stone-300/60">
-            <p className="text-xs font-medium text-zinc-600">
-              {user.program ?? 'SOIT Candidate'}
-              <span className="mx-1.5 text-zinc-400" aria-hidden="true">
-                ·
-              </span>
-              Student No.{' '}
-              <span className="font-mono tabular-nums text-zinc-800">
-                {user.studentId ?? '2026104819'}
-              </span>
-              {activeQuarter && (
-                <>
-                  <span className="mx-1.5 text-zinc-400" aria-hidden="true">
-                    ·
-                  </span>
-                  <span className="font-mono tabular-nums text-[#9A6E00] font-medium">
-                    {activeQuarter.code}
-                  </span>
-                </>
-              )}
-            </p>
-            <h1 className="text-2xl sm:text-3xl font-semibold text-zinc-900 tracking-tight mt-1">
-              Welcome back, {user.name.split(' ')[0]}
-            </h1>
+          <div className="pb-5 border-b border-stone-300/60 flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-medium text-zinc-600">
+                {user.program ?? 'SOIT Candidate'}
+                <span className="mx-1.5 text-zinc-400" aria-hidden="true">
+                  ·
+                </span>
+                Student No.{' '}
+                <span className="font-mono tabular-nums text-zinc-800">
+                  {user.studentId ?? '2026104819'}
+                </span>
+                {activeQuarter && (
+                  <>
+                    <span className="mx-1.5 text-zinc-400" aria-hidden="true">
+                      ·
+                    </span>
+                    <span className="font-mono tabular-nums text-[#9A6E00] font-medium">
+                      {activeQuarter.code}
+                    </span>
+                  </>
+                )}
+              </p>
+              <h1 className="text-2xl sm:text-3xl font-semibold text-zinc-900 tracking-tight mt-1">
+                Welcome back, {user.name.split(' ')[0]}
+              </h1>
+            </div>
+            {onOpenProfileModal && (
+              <button
+                type="button"
+                onClick={onOpenProfileModal}
+                className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-zinc-700 bg-white/80 hover:bg-white border border-stone-300 rounded-lg shadow-xs hover:border-stone-400 transition-colors shrink-0"
+              >
+                <UserCog className="w-4 h-4 text-zinc-600" />
+                Edit Profile
+              </button>
+            )}
           </div>
 
           {/* 4-Step Defense Journey Tracker */}

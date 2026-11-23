@@ -38,7 +38,7 @@ export function createDefaultAccount(role: UserRole, emailOverride?: string): Us
       department: 'Information Technology',
       studentId: '2026104819',
       program: 'B.S. Information Technology · Mapúa UOx',
-      avatarUrl: '/src/assets/images/avatar_student_1_1794880237648.jpg',
+      avatarUrl: '', // Default profile picture removed
     };
   }
 
@@ -48,7 +48,7 @@ export function createDefaultAccount(role: UserRole, emailOverride?: string): Us
     email: (emailOverride || ENV_ADMIN_EMAIL).trim(),
     role: 'admin',
     department: 'School of Information Technology · UOx',
-    avatarUrl: '/src/assets/images/avatar_admin_1_1794880238289.jpg',
+    avatarUrl: '', // Default profile picture removed
   };
 }
 

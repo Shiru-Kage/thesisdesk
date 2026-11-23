@@ -115,6 +115,7 @@ interface AdminPortalProps {
   onSwitchRole: () => void;
   onSignOut: () => void;
   onResetDemoData: () => void;
+  onOpenProfileModal?: () => void;
 }
 
 export function AdminPortal({
@@ -147,6 +148,7 @@ export function AdminPortal({
   onSwitchRole,
   onSignOut,
   onResetDemoData,
+  onOpenProfileModal,
 }: AdminPortalProps) {
   const [activeTab, setActiveTab] = useState<
     'overview' | 'submissions' | 'slots' | 'requests' | 'directory' | 'archives'
@@ -160,7 +162,7 @@ export function AdminPortal({
   >('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [fileStatusFilter, setFileStatusFilter] = useState<
-    'All' | 'Pending Review' | 'Cleared' | 'Revision Requested'
+    'All' | 'Pending Review' | 'Approved Students' | 'Cleared' | 'Revision Requested'
   >('All');
   const [fileSearchQuery, setFileSearchQuery] = useState('');
   const [openFolderKey, setOpenFolderKey] = useState<string | null>(null);
@@ -490,7 +492,7 @@ export function AdminPortal({
     return studentFileGroups
       .filter((group) => {
         if (fileStatusFilter === 'All') return true;
-        if (fileStatusFilter === 'Cleared') return group.isCleared;
+        if (fileStatusFilter === 'Approved Students' || fileStatusFilter === 'Cleared') return group.isCleared;
         if (fileStatusFilter === 'Pending Review') return group.pendingCount > 0;
         if (fileStatusFilter === 'Revision Requested') return group.revisionCount > 0;
         return true;
@@ -696,6 +698,7 @@ export function AdminPortal({
         setFileSearchQuery('');
         showToast('Restored default Mapúa SOIT 1Q2627 demo data.', 'info');
       }}
+      onOpenProfileModal={onOpenProfileModal}
     >
       {/* TAB 1: SCHEDULE OVERVIEW */}
       {activeTab === 'overview' && (
@@ -1149,24 +1152,24 @@ export function AdminPortal({
               type="button"
               onClick={() => {
                 setOpenFolderKey(null);
-                setFileStatusFilter('Cleared');
+                setFileStatusFilter('Approved Students');
               }}
               className="group bg-white/65 hover:bg-white/92 backdrop-blur-md border border-stone-300/70 hover:border-[#A6192E]/40 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-4 sm:p-5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6192E]"
             >
               <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-medium text-zinc-500">Approved PDFs</p>
+                <p className="text-xs font-medium text-zinc-500">Approved Students</p>
                 <ChevronRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-[#A6192E] transition-colors shrink-0" />
               </div>
               <p className="text-2xl sm:text-3xl font-semibold font-mono tabular-nums text-emerald-700 mt-1.5">
-                {approvedFilesCount}
+                {clearedStudentsCount}
               </p>
-              <p className="text-xs text-zinc-500 mt-1">Verified this term</p>
+              <p className="text-xs text-zinc-500 mt-1">Complete approval</p>
             </button>
             <button
               type="button"
               onClick={() => {
                 setOpenFolderKey(null);
-                setFileStatusFilter(revisionFilesCount > 0 ? 'Revision Requested' : 'Cleared');
+                setFileStatusFilter(revisionFilesCount > 0 ? 'Revision Requested' : 'Approved Students');
               }}
               className="group bg-white/65 hover:bg-white/92 backdrop-blur-md border border-stone-300/70 hover:border-[#A6192E]/40 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-4 sm:p-5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6192E]"
             >
@@ -1194,7 +1197,7 @@ export function AdminPortal({
                     [
                       { id: 'All', label: 'All Folders' },
                       { id: 'Pending Review', label: 'Pending Review' },
-                      { id: 'Cleared', label: 'Cleared' },
+                      { id: 'Approved Students', label: 'Approved Students' },
                       { id: 'Revision Requested', label: 'Needs Revision' },
                     ] as const
                   ).map((tab) => (

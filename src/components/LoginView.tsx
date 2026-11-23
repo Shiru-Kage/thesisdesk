@@ -50,6 +50,7 @@ export function LoginView({
   const [role, setRole] = useState<UserRole>('student');
   const [authMode, setAuthMode] = useState<'signin' | 'register' | 'forgot'>('signin');
   const [name, setName] = useState('');
+  const [regStudentId, setRegStudentId] = useState('');
   const [email, setEmail] = useState(() => getDefaultEmailForRole('student'));
   const [password, setPassword] = useState(() => getDefaultPasswordForRole('student'));
   const [department, setDepartment] = useState('Information Technology');
@@ -115,6 +116,11 @@ export function LoginView({
     if (authMode === 'signin') {
       setEmail(getDefaultEmailForRole(nextRole));
       setPassword(getDefaultPasswordForRole(nextRole));
+    } else if (authMode === 'register') {
+      setEmail('');
+      setPassword('');
+      setName('');
+      setRegStudentId('');
     }
   };
 
@@ -126,8 +132,11 @@ export function LoginView({
       setEmail(getDefaultEmailForRole(role));
       setPassword(getDefaultPasswordForRole(role));
     } else if (nextMode === 'register') {
+      // In register mode, never automatically fill email and password
       setEmail('');
       setPassword('');
+      setName('');
+      setRegStudentId('');
     }
   };
 
@@ -163,12 +172,9 @@ export function LoginView({
         email: trimmedEmail,
         role,
         department,
-        studentId: role === 'student' ? `2026${Math.floor(100000 + Math.random() * 900000)}` : undefined,
+        studentId: role === 'student' ? (regStudentId.trim() || `2026${Math.floor(100000 + Math.random() * 900000)}`) : undefined,
         program: role === 'student' ? `B.S. ${department} · Mapúa UOx` : undefined,
-        avatarUrl:
-          role === 'student'
-            ? '/src/assets/images/avatar_student_1_1794880237648.jpg'
-            : '/src/assets/images/avatar_admin_1_1794880238289.jpg',
+        avatarUrl: '', // Default profile picture removed
       };
       if (onRegister) {
         onRegister(newUser);
@@ -358,8 +364,29 @@ export function LoginView({
                         type="text"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder="Jordan Rivera"
+                        placeholder="Juan Dela Cruz"
+                        autoComplete="off"
                         className="w-full px-3.5 py-2 text-sm bg-white/70 backdrop-blur-xs border border-stone-400/55 rounded-lg text-zinc-950 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#A6192E] focus:border-[#A6192E]"
+                      />
+                    </div>
+                  )}
+
+                  {authMode === 'register' && role === 'student' && (
+                    <div>
+                      <label
+                        htmlFor="auth-student-id"
+                        className="block text-xs font-medium text-zinc-900 mb-1"
+                      >
+                        Student Number
+                      </label>
+                      <input
+                        id="auth-student-id"
+                        type="text"
+                        value={regStudentId}
+                        onChange={(e) => setRegStudentId(e.target.value)}
+                        placeholder="e.g. 2026104819"
+                        autoComplete="off"
+                        className="w-full px-3.5 py-2 text-sm font-mono tabular-nums bg-white/70 backdrop-blur-xs border border-stone-400/55 rounded-lg text-zinc-950 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#A6192E] focus:border-[#A6192E]"
                       />
                     </div>
                   )}
@@ -378,10 +405,11 @@ export function LoginView({
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        autoComplete="off"
                         placeholder={
                           role === 'student'
-                            ? 'm.patel@mymail.mapua.edu.ph'
-                            : 'e.alvarez@mapua.edu.ph'
+                            ? 'username@mymail.mapua.edu.ph'
+                            : 'coordinator@mapua.edu.ph'
                         }
                         className="w-full pl-10 pr-3.5 py-2 text-sm bg-white/70 backdrop-blur-xs border border-stone-400/55 rounded-lg text-zinc-950 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#A6192E] focus:border-[#A6192E]"
                       />
@@ -436,6 +464,7 @@ export function LoginView({
                           type={showPassword ? 'text' : 'password'}
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
+                          autoComplete={authMode === 'register' ? 'new-password' : 'current-password'}
                           placeholder="Enter your password"
                           className="w-full pl-10 pr-10 py-2 text-sm bg-white/70 backdrop-blur-xs border border-stone-400/55 rounded-lg text-zinc-950 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#A6192E] focus:border-[#A6192E]"
                         />
