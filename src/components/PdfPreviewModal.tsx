@@ -286,14 +286,24 @@ export function PdfPreviewModal({
                 )}
 
                 {submission.objectUrl && (
-                  <a
-                    href={submission.objectUrl}
-                    download={submission.fileName}
-                    className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-zinc-100 bg-zinc-700 hover:bg-zinc-600 rounded transition-colors whitespace-nowrap"
-                  >
-                    <Download className="w-3 h-3" />
-                    <span>Download</span>
-                  </a>
+                  <div className="flex items-center gap-1.5">
+                    <a
+                      href={submission.objectUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-zinc-100 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 rounded transition-colors whitespace-nowrap"
+                    >
+                      <span>Open in Tab</span>
+                    </a>
+                    <a
+                      href={submission.objectUrl}
+                      download={submission.fileName}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-white bg-[#A6192E] hover:bg-[#881325] rounded transition-colors whitespace-nowrap shadow-xs"
+                    >
+                      <Download className="w-3 h-3" />
+                      <span>Download</span>
+                    </a>
+                  </div>
                 )}
               </div>
             </div>

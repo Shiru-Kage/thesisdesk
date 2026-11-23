@@ -335,27 +335,36 @@ export async function uploadSubmissionFile(
   submissionId: string,
   file: File
 ): Promise<{ downloadUrl: string; isCloud: boolean }> {
+  // Store immediately in persistent IndexedDB so local preview & download work instantly
+  const localUrl = await storeFileInIdb(submissionId, file);
+
   const storage = getFirebaseStorage();
   
-  // Try uploading to real Firebase Storage first
+  // Try uploading to Cloud Storage with a 2.5s timeout so it never hangs the UI
   if (storage) {
     try {
-      const extension = file.name.split('.').pop() || 'pdf';
-      const cleanName = `${submissionId}_${Date.now()}.${extension}`;
-      const pathRef = storageRef(storage, `thesis_submissions/${cleanName}`);
-      
-      const snapshot = await uploadBytes(pathRef, file, {
-        contentType: file.type || 'application/pdf',
-      });
-      const downloadUrl = await getDownloadURL(snapshot.ref);
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Storage timeout')), 2500)
+      );
+
+      const uploadPromise = (async () => {
+        const extension = file.name.split('.').pop() || 'pdf';
+        const cleanName = `${submissionId}_${Date.now()}.${extension}`;
+        const pathRef = storageRef(storage, `thesis_submissions/${cleanName}`);
+        
+        const snapshot = await uploadBytes(pathRef, file, {
+          contentType: file.type || 'application/pdf',
+        });
+        return await getDownloadURL(snapshot.ref);
+      })();
+
+      const downloadUrl = await Promise.race([uploadPromise, timeoutPromise]);
       return { downloadUrl, isCloud: true };
     } catch (err) {
-      console.warn('Firebase Storage upload failed, falling back to local persistent storage:', err);
+      console.warn('Firebase Storage upload skipped/failed, using persistent local storage:', err);
     }
   }
 
-  // Fallback to IndexedDB persistent storage
-  const localUrl = await storeFileInIdb(submissionId, file);
   return { downloadUrl: localUrl, isCloud: false };
 }
 

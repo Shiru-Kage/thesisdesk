@@ -227,7 +227,7 @@ export default function App() {
     registeredUsers,
   ]);
 
-  const isQuarterOpen = activeQuarter?.status === 'Open';
+  const isQuarterOpen = !activeQuarter || activeQuarter.status === 'Open';
 
   const isStudentClearedToSchedule = (user: UserAccount) => {
     const requiredIds = REQUIRED_DOCUMENTS.filter((d) => d.required).map((d) => d.id);
@@ -242,27 +242,20 @@ export default function App() {
   };
 
   // --------------------------------------------------------------------------
-  // Real File Upload to Firebase Storage & IndexedDB
+  // Real File Upload to Firebase Storage & IndexedDB (Instant Local & Background Sync)
   // --------------------------------------------------------------------------
-  const handleUploadStudentFile = async (
+  const handleUploadStudentFile = (
     requirementId: string,
     fileMeta: { fileName: string; fileSize: string; objectUrl?: string; rawFile?: File }
   ) => {
-    if (!currentUser || !isQuarterOpen) return;
+    if (!currentUser) return;
     const studentId = currentUser.studentId ?? '2026108914';
-    const submissionId = `SUB-${Math.floor(910 + Math.random() * 880)}`;
+    const submissionId = `SUB-${Date.now().toString().slice(-6)}`;
 
-    let resolvedUrl = fileMeta.objectUrl;
-
-    if (fileMeta.rawFile) {
-      try {
-        const uploadResult = await uploadSubmissionFile(submissionId, fileMeta.rawFile);
-        if (uploadResult.downloadUrl) {
-          resolvedUrl = uploadResult.downloadUrl;
-        }
-      } catch (err) {
-        console.warn('File upload handler error:', err);
-      }
+    // Generate immediate object URL if missing
+    let immediateUrl = fileMeta.objectUrl;
+    if (!immediateUrl && fileMeta.rawFile) {
+      immediateUrl = URL.createObjectURL(fileMeta.rawFile);
     }
 
     const nextRecord: StudentFileSubmission = {
@@ -280,9 +273,10 @@ export default function App() {
       facultyNote: undefined,
       reviewedBy: undefined,
       reviewedAt: undefined,
-      objectUrl: resolvedUrl,
+      objectUrl: immediateUrl,
     };
 
+    // 1. Instantly update UI and state
     setFileSubmissions((prev) => {
       const existingIndex = prev.findIndex(
         (sub) =>
@@ -293,12 +287,29 @@ export default function App() {
       if (existingIndex >= 0) {
         const copy = [...prev];
         copy[existingIndex] = { ...nextRecord, id: prev[existingIndex].id };
-        saveDocument('fileSubmissions', copy[existingIndex]);
+        saveDocument('fileSubmissions', copy[existingIndex]).catch(() => {});
         return copy;
       }
-      saveDocument('fileSubmissions', nextRecord);
+      saveDocument('fileSubmissions', nextRecord).catch(() => {});
       return [nextRecord, ...prev];
     });
+
+    // 2. Persist binary blob to IndexedDB & sync cloud in background
+    if (fileMeta.rawFile) {
+      uploadSubmissionFile(submissionId, fileMeta.rawFile)
+        .then((res) => {
+          if (res.downloadUrl && res.downloadUrl !== immediateUrl) {
+            setFileSubmissions((prev) =>
+              prev.map((sub) =>
+                sub.id === submissionId ? { ...sub, objectUrl: res.downloadUrl } : sub
+              )
+            );
+          }
+        })
+        .catch((err) => {
+          console.warn('Background storage sync:', err);
+        });
+    }
   };
 
   const handleRemoveStudentFile = (submissionId: string) => {

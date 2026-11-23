@@ -216,7 +216,7 @@ export function StudentPortal({
     [requiredDocs, submissionByReqId]
   );
 
-  const isQuarterOpen = activeQuarter?.status === 'Open';
+  const isQuarterOpen = !activeQuarter || activeQuarter.status === 'Open';
 
   const isClearedToSchedule =
     isQuarterOpen &&
@@ -436,18 +436,6 @@ export function StudentPortal({
     if (file) {
       handleUploadedFile(requirementId, file);
     }
-  };
-
-  const handleAttachSampleFile = (doc: RequiredDocumentSpec) => {
-    if (!isQuarterOpen) {
-      showToast('File submissions are paused while the current Quarterm is closed.', 'warning');
-      return;
-    }
-    onUploadFile(doc.id, {
-      fileName: doc.sampleFileName,
-      fileSize: doc.sampleFileSize,
-    });
-    showToast(`Submitted "${doc.sampleFileName}" for professor approval.`, 'success');
   };
 
   const handleBookingSubmit = (e: FormEvent) => {
@@ -1240,43 +1228,35 @@ export function StudentPortal({
 
                     <div className="flex flex-wrap items-center gap-2 shrink-0">
                       <input
+                        id={`file-input-${doc.id}`}
                         ref={(el) => {
                           fileInputRefs.current[doc.id] = el;
                         }}
                         type="file"
-                        accept=".pdf,.doc,.docx,.ppt,.pptx"
+                        accept=".pdf,.doc,.docx"
                         onChange={(e) => handleFileInputChange(doc.id, e)}
-                        className="sr-only"
+                        className="hidden"
                         aria-label={`Upload ${doc.title}`}
                       />
 
                       {!isApproved && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => fileInputRefs.current[doc.id]?.click()}
-                            className="py-2 px-3.5 bg-[#A6192E] hover:bg-[#881325] text-white text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
-                          >
-                            <Upload className="w-3.5 h-3.5 shrink-0" />
-                            <span>
-                              {isRevision
-                                ? 'Upload Revision'
-                                : submission
-                                ? 'Replace File'
-                                : 'Upload File'}
-                            </span>
-                          </button>
-
-                          {!submission && (
-                            <button
-                              type="button"
-                              onClick={() => handleAttachSampleFile(doc)}
-                              className="py-2 px-3 bg-white/80 hover:bg-white border border-stone-300/80 text-zinc-800 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0"
-                            >
-                              Attach Sample PDF
-                            </button>
-                          )}
-                        </>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const inputEl = fileInputRefs.current[doc.id] || document.getElementById(`file-input-${doc.id}`) as HTMLInputElement;
+                            inputEl?.click();
+                          }}
+                          className="py-2 px-3.5 bg-[#A6192E] hover:bg-[#881325] text-white text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer shadow-xs"
+                        >
+                          <Upload className="w-3.5 h-3.5 shrink-0" />
+                          <span>
+                            {isRevision
+                              ? 'Upload Revision'
+                              : submission
+                              ? 'Replace File'
+                              : 'Upload File'}
+                          </span>
+                        </button>
                       )}
 
                       {submission && !isApproved && (
@@ -1337,17 +1317,20 @@ export function StudentPortal({
                   ) : (
                     <button
                       type="button"
-                      onClick={() => fileInputRefs.current[doc.id]?.click()}
+                      onClick={() => {
+                        const inputEl = fileInputRefs.current[doc.id] || document.getElementById(`file-input-${doc.id}`) as HTMLInputElement;
+                        inputEl?.click();
+                      }}
                       onDragOver={(e) => {
                         e.preventDefault();
                         if (dragOverDocId !== doc.id) setDragOverDocId(doc.id);
                       }}
                       onDragLeave={() => setDragOverDocId(null)}
                       onDrop={(e) => handleFileDrop(doc.id, e)}
-                      className={`w-full rounded-lg border border-dashed px-4 py-4 text-left flex flex-col sm:flex-row sm:items-center justify-between gap-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6192E] ${
+                      className={`w-full rounded-lg border border-dashed px-4 py-4 text-left flex flex-col sm:flex-row sm:items-center justify-between gap-2 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6192E] ${
                         dragOverDocId === doc.id
                           ? 'border-[#A6192E] bg-[#A6192E]/6 text-zinc-900'
-                          : 'border-stone-300 bg-stone-900/[0.02] hover:border-stone-400 hover:bg-white/60 text-zinc-600'
+                          : 'border-stone-300 bg-stone-900/[0.02] hover:border-[#A6192E] hover:bg-white/80 text-zinc-600'
                       }`}
                     >
                       <span className="flex items-center gap-2.5 text-xs">
@@ -1360,7 +1343,7 @@ export function StudentPortal({
                           <strong className="font-medium text-zinc-800">
                             Drop PDF here or click to browse
                           </strong>{' '}
-                          — or use Attach Sample PDF above for template preview.
+                          (PDF, DOC, DOCX up to 25 MB)
                         </span>
                       </span>
                       <span className="text-[11px] font-mono text-zinc-500 whitespace-nowrap shrink-0">
