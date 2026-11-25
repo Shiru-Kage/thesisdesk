@@ -2100,7 +2100,7 @@ export function AdminPortal({
                 </p>
                 <p className="text-xs text-zinc-500 mt-1 max-w-md mx-auto leading-relaxed">
                   {appointments.length === 0
-                    ? 'Student candidates must upload required pre-defense files and obtain faculty approval to book an open Zoom slot. Once booked, reservations appear here for committee review and Zoom link assignment.'
+                    ? 'Incoming student slot requests will appear here for panel confirmation and Zoom link assignment.'
                     : 'Clear your search query or select another status filter above.'}
                 </p>
                 {appointments.length === 0 ? (

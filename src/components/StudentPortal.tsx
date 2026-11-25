@@ -671,13 +671,13 @@ export function StudentPortal({
           <div>
             <p className="font-semibold text-zinc-900">
               {activeQuarter
-                ? `Mapúa Quarterm ${activeQuarter.code} is Currently Closed`
-                : 'No Active Quarterm Open Yet'}
+                ? `Mapúa Quarterm ${activeQuarter.code} is Closed`
+                : 'No Active Quarterm Open'}
             </p>
             <p className="text-xs text-zinc-600 mt-0.5">
               {activeQuarter
-                ? 'New thesis file uploads and defense bookings are paused while the SOIT Coordinator concludes and archives this Quarterm.'
-                : 'The previous Quarterm has been archived. Scheduling and file uploads will resume once the SOIT Coordinator opens the next Quarterm.'}
+                ? 'File submissions and defense scheduling are paused while this term is concluded.'
+                : 'Submissions and scheduling will resume once the next Quarterm is opened.'}
             </p>
           </div>
         </div>
@@ -1353,10 +1353,10 @@ export function StudentPortal({
               </div>
               <p className="text-xs text-zinc-600 mt-2">
                 {isClearedToSchedule
-                  ? 'You can now reserve an open defense window.'
+                  ? 'All 3 documents approved · Defense scheduling unlocked.'
                   : submittedRequiredCount === requiredDocs.length
-                  ? 'All files submitted. Switch to Admin View to review & approve as faculty.'
-                  : 'Upload every required document below to submit for faculty sign-off.'}
+                  ? 'Files submitted · Awaiting faculty review.'
+                  : 'Upload required PDF manuscripts for faculty clearance.'}
               </p>
             </div>
           </div>
@@ -1372,24 +1372,23 @@ export function StudentPortal({
                 <div key={doc.id} className="p-5 sm:p-6 space-y-4">
                   <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                     <div className="space-y-1.5 flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-500">
-                        <span className="font-mono tabular-nums">
+                      <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                        <span className="font-mono text-xs font-semibold text-zinc-500">
                           0{index + 1}
                         </span>
-                        <span aria-hidden="true">·</span>
-                        <span className="font-medium text-zinc-700">
-                          {doc.required ? 'Required' : 'Optional'}
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-stone-100 text-zinc-700 border border-stone-200">
+                          {doc.required ? 'Mandatory' : 'Optional'}
                         </span>
-                        <span aria-hidden="true">·</span>
-                        <span>{doc.acceptedFormats}</span>
-                        <span aria-hidden="true">·</span>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-mono text-zinc-600 bg-stone-100 border border-stone-200">
+                          PDF only
+                        </span>
                         <FileStatusLabel status={submission?.status ?? 'Not Submitted'} />
                       </div>
 
                       <h2 className="text-base font-semibold text-zinc-900">
                         {doc.title}
                       </h2>
-                      <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed">
+                      <p className="text-xs text-zinc-600 leading-relaxed">
                         {doc.description}
                       </p>
                     </div>
@@ -1424,10 +1423,10 @@ export function StudentPortal({
                           {isRevision
                             ? 'Upload Revision'
                             : isApproved
-                            ? 'Resubmit Document'
+                            ? 'Resubmit'
                             : submission
-                            ? 'Replace File'
-                            : 'Upload File'}
+                            ? 'Replace'
+                            : 'Upload PDF'}
                         </span>
                       </button>
 
@@ -2053,45 +2052,61 @@ export function StudentPortal({
                 </div>
               </section>
 
-              {/* Numbered Procedures */}
-              <div className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl divide-y divide-stone-200/80">
-                <div className="p-5 sm:p-6">
-                  <h2 className="text-base font-semibold text-zinc-900">
-                    01. Manuscript Filing & Faculty Clearance
-                  </h2>
-                  <p className="text-sm text-zinc-600 mt-1.5 leading-relaxed">
-                    Final defense-ready drafts (Chapters 1–5), signed adviser endorsement, and Turnitin
-                    similarity report must be uploaded under Files to Submit and approved by faculty
-                    before Zoom slot scheduling unlocks.
+              {/* Visual Protocol Runbook Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-white/70 backdrop-blur-md border border-stone-300/70 shadow-2xs rounded-xl p-5 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#A6192E]/10 text-[#A6192E] border border-[#A6192E]/20">
+                      <FileText className="w-3 h-3" />
+                      <span>01. Pre-Requisites</span>
+                    </span>
+                    <span className="text-[11px] font-mono text-zinc-400">Step 1</span>
+                  </div>
+                  <h3 className="text-sm font-semibold text-zinc-900">Manuscript Clearance</h3>
+                  <p className="text-xs text-zinc-600 leading-relaxed">
+                    Upload Chapters 1–5, Adviser Endorsement, and Turnitin Report (&le;15%). All 3 files must be faculty-cleared to unlock slot scheduling.
                   </p>
                 </div>
-                <div className="p-5 sm:p-6">
-                  <h2 className="text-base font-semibold text-zinc-900">
-                    02. Official Mapúa UOx Zoom Attendance
-                  </h2>
-                  <p className="text-sm text-zinc-600 mt-1.5 leading-relaxed">
-                    All UOx oral defenses are conducted fully online via coordinator-managed Mapúa Zoom
-                    channels. Sign in with your official <span className="font-mono text-xs">@mymail.mapua.edu.ph</span>{' '}
-                    account and enter the waiting room 10 minutes before your scheduled start time.
+
+                <div className="bg-white/70 backdrop-blur-md border border-stone-300/70 shadow-2xs rounded-xl p-5 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-500/10 text-amber-800 border border-amber-500/20">
+                      <Video className="w-3 h-3" />
+                      <span>02. Attendance</span>
+                    </span>
+                    <span className="text-[11px] font-mono text-zinc-400">Step 2</span>
+                  </div>
+                  <h3 className="text-sm font-semibold text-zinc-900">Mapúa UOx Zoom Check-In</h3>
+                  <p className="text-xs text-zinc-600 leading-relaxed">
+                    Join via official <span className="font-mono text-[11px] text-zinc-800">@mymail.mapua.edu.ph</span> account 10 minutes prior for host admission and audio check.
                   </p>
                 </div>
-                <div className="p-5 sm:p-6">
-                  <h2 className="text-base font-semibold text-zinc-900">
-                    03. Camera, Audio & Screen-Share Standards
-                  </h2>
-                  <p className="text-sm text-zinc-600 mt-1.5 leading-relaxed">
-                    Keep your webcam enabled throughout presentation and panel Q&A. Close non-essential
-                    tabs before screen-sharing, and keep an offline PDF export of your slides ready in
-                    case of bandwidth drops.
+
+                <div className="bg-white/70 backdrop-blur-md border border-stone-300/70 shadow-2xs rounded-xl p-5 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-zinc-100 text-zinc-700 border border-zinc-200">
+                      <Clock className="w-3 h-3" />
+                      <span>03. Hardware & Media</span>
+                    </span>
+                    <span className="text-[11px] font-mono text-zinc-400">Step 3</span>
+                  </div>
+                  <h3 className="text-sm font-semibold text-zinc-900">Camera & Screen-Share</h3>
+                  <p className="text-xs text-zinc-600 leading-relaxed">
+                    Webcam required throughout presentation and Q&A. Format slides in 16:9 widescreen and keep an offline PDF export as backup.
                   </p>
                 </div>
-                <div className="p-5 sm:p-6">
-                  <h2 className="text-base font-semibold text-zinc-900">
-                    04. Rescheduling & Withdrawals
-                  </h2>
-                  <p className="text-sm text-zinc-600 mt-1.5 leading-relaxed">
-                    Candidates may transfer an active reservation to another open Zoom slot up to 48
-                    hours before the scheduled start time without re-filing committee approvals.
+
+                <div className="bg-white/70 backdrop-blur-md border border-stone-300/70 shadow-2xs rounded-xl p-5 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-blue-500/10 text-blue-800 border border-blue-500/20">
+                      <RefreshCw className="w-3 h-3" />
+                      <span>04. Flexibility</span>
+                    </span>
+                    <span className="text-[11px] font-mono text-zinc-400">Step 4</span>
+                  </div>
+                  <h3 className="text-sm font-semibold text-zinc-900">Reschedule Window</h3>
+                  <p className="text-xs text-zinc-600 leading-relaxed">
+                    Transfer reservations to any open Zoom slot up to 48 hours before session without re-filing committee clearance forms.
                   </p>
                 </div>
               </div>
@@ -2274,10 +2289,10 @@ export function StudentPortal({
               </button>
             </div>
 
-            <div className="mt-4 px-3.5 py-2.5 rounded-lg bg-amber-50/80 border border-amber-200/80 flex items-start gap-2.5 text-xs text-amber-900">
-              <Clock className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
-              <p>
-                <strong>First-Come, First-Served:</strong> Submitting this request immediately holds this Zoom window exclusively while awaiting faculty confirmation.
+            <div className="mt-3 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center gap-2 text-xs text-amber-900">
+              <Clock className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+              <p className="font-medium">
+                <span className="font-semibold text-amber-950">FCFS Exclusive Hold:</span> Reserves this slot immediately pending faculty confirmation.
               </p>
             </div>
 
@@ -2313,7 +2328,7 @@ export function StudentPortal({
                   required
                   value={abstractText}
                   onChange={(e) => setAbstractText(e.target.value)}
-                  placeholder="Brief summary of research objectives, methodologies, and candidate findings..."
+                  placeholder="Summary of research objectives, methodology, and key findings..."
                   className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
                 />
               </div>
@@ -2324,7 +2339,7 @@ export function StudentPortal({
                     htmlFor="book-advisor"
                     className="block text-xs font-medium text-zinc-700 mb-1"
                   >
-                    Primary Adviser
+                    Thesis Adviser
                   </label>
                   <input
                     id="book-advisor"
@@ -2341,14 +2356,14 @@ export function StudentPortal({
                     htmlFor="book-committee"
                     className="block text-xs font-medium text-zinc-700 mb-1"
                   >
-                    Panel Members (comma-separated)
+                    Committee Panel
                   </label>
                   <input
                     id="book-committee"
                     type="text"
                     value={committeeInput}
                     onChange={(e) => setCommitteeInput(e.target.value)}
-                    placeholder="e.g., Dr. Maria Santos, Engr. Alex Reyes"
+                    placeholder="Dr. Santos, Engr. Reyes"
                     className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
                   />
                 </div>
@@ -2359,14 +2374,14 @@ export function StudentPortal({
                   htmlFor="book-notes"
                   className="block text-xs font-medium text-zinc-700 mb-1"
                 >
-                  Online Presentation & Zoom Notes (optional)
+                  Special Notes (optional)
                 </label>
                 <input
                   id="book-notes"
                   type="text"
                   value={notesInput}
                   onChange={(e) => setNotesInput(e.target.value)}
-                  placeholder="e.g., Live demo screen share, external panelist timezone"
+                  placeholder="e.g., Live system demo, external panel timezone"
                   className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
                 />
               </div>

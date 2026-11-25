@@ -225,7 +225,7 @@ export function AppointmentDetailDrawer({
                     htmlFor="drawer-zoom-link"
                     className="block text-[11px] font-medium text-zinc-600 mb-1"
                   >
-                    Zoom URL (visible to candidate & panel)
+                    Zoom Meeting Link
                   </label>
                   <input
                     id="drawer-zoom-link"
@@ -370,7 +370,7 @@ export function AppointmentDetailDrawer({
           {appointment.notes && (
             <div>
               <h3 className="text-xs font-medium text-zinc-500 mb-1.5">
-                Online Setup & Presentation Notes
+                Special Candidate Notes
               </h3>
               <p className="text-sm text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-lg p-3">
                 {appointment.notes}
@@ -383,9 +383,9 @@ export function AppointmentDetailDrawer({
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2.5 text-xs text-amber-900">
               <AlertCircle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold">Candidate Resubmitted Document</p>
+                <p className="font-semibold">Resubmitted Files Awaiting Clearance</p>
                 <p className="text-amber-800 mt-0.5 leading-relaxed">
-                  This candidate has resubmitted files currently awaiting faculty verification. All required files must be verified and approved in Submitted Files before this defense slot can be approved.
+                  Candidate has resubmitted files. Approve files in Submitted Files first to unlock defense confirmation.
                 </p>
               </div>
             </div>
