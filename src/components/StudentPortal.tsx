@@ -252,6 +252,28 @@ export function StudentPortal({
     [studentAppointments]
   );
 
+  const fcfsQueuePosition = useMemo(() => {
+    if (
+      !activeDefense ||
+      (activeDefense.status !== 'Pending Review' && activeDefense.status !== 'Reschedule Requested')
+    ) {
+      return null;
+    }
+    const pendingList = appointments
+      .filter((a) => a.status === 'Pending Review' || a.status === 'Reschedule Requested')
+      .sort((a, b) => {
+        const timeA = new Date(a.createdAt).getTime() || 0;
+        const timeB = new Date(b.createdAt).getTime() || 0;
+        return timeA - timeB;
+      });
+    const idx = pendingList.findIndex((a) => a.id === activeDefense.id);
+    return idx >= 0 ? idx + 1 : null;
+  }, [appointments, activeDefense]);
+
+  const hasPendingActiveRequest = Boolean(
+    activeDefense && (activeDefense.status === 'Pending Review' || activeDefense.status === 'Confirmed')
+  );
+
   const inspectedAppointment = useMemo(
     () =>
       inspectedAppointmentId
@@ -455,6 +477,11 @@ export function StudentPortal({
   const handleBookingSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!bookingSlot || !isClearedToSchedule) return;
+    if (hasPendingActiveRequest && !rescheduleTarget) {
+      showToast('You already have an active defense slot request under faculty review.', 'warning');
+      setBookingSlot(null);
+      return;
+    }
 
     const committeeMembers = committeeInput
       .split(',')
@@ -510,7 +537,7 @@ export function StudentPortal({
       icon: <FileUp className="w-4 h-4" />,
       badgeCount: unapprovedRequiredCount,
     },
-    { id: 'book', label: 'Book Defense Slot', icon: <CalendarDays className="w-4 h-4" /> },
+    { id: 'book', label: 'Request Defense Slot', icon: <CalendarDays className="w-4 h-4" /> },
     {
       id: 'appointments',
       label: 'My Appointments',
@@ -655,11 +682,11 @@ export function StudentPortal({
               },
               {
                 num: '03',
-                title: 'Reserve Zoom Slot',
+                title: 'Request Zoom Slot',
                 detail: activeDefense
                   ? formatShortDate(activeDefense.date)
                   : isClearedToSchedule
-                  ? 'Ready to book'
+                  ? 'Ready to request'
                   : 'Unlocks after approval',
                 done: step3Done,
                 active: step2Done && !step3Done,
@@ -667,14 +694,16 @@ export function StudentPortal({
               },
               {
                 num: '04',
-                title: 'Defense Confirmed',
+                title: 'Faculty Approval & Confirmation',
                 detail: step4Done
                   ? activeDefense?.zoomLink
                     ? 'Zoom link ready'
-                    : 'Link pending'
+                    : 'Confirmed'
+                  : fcfsQueuePosition
+                  ? `FCFS Queue #${fcfsQueuePosition} · Awaiting approval`
                   : activeDefense
                   ? activeDefense.status
-                  : 'Pending slot',
+                  : 'Pending request',
                 done: step4Done,
                 active: step3Done && !step4Done,
                 alert: false,
@@ -686,7 +715,7 @@ export function StudentPortal({
               : !step2Done
               ? { label: 'View File Review', onClick: () => setActiveTab('files') }
               : !step3Done
-              ? { label: 'Reserve Zoom Slot', onClick: () => setActiveTab('book') }
+              ? { label: 'Request Zoom Slot', onClick: () => setActiveTab('book') }
               : {
                   label: 'Inspect Defense',
                   onClick: () => activeDefense && setInspectedAppointmentId(activeDefense.id),
@@ -710,9 +739,9 @@ export function StudentPortal({
                       {step4Done
                         ? 'UOx Defense Confirmed'
                         : step3Done
-                        ? 'Defense Request Awaiting Coordinator Confirmation'
+                        ? 'Defense Request Awaiting Faculty Confirmation'
                         : isClearedToSchedule
-                        ? 'Cleared to Reserve a UOx Zoom Defense Window'
+                        ? 'Cleared to Request a UOx Zoom Defense Window'
                         : 'Defense Scheduling Locked — Complete Required Files & Faculty Approval'}
                     </span>
                   </div>
@@ -797,6 +826,12 @@ export function StudentPortal({
                     <div className="space-y-2 flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-zinc-500">
                         <StatusLabel status={activeDefense.status} />
+                        {fcfsQueuePosition !== null && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-amber-100 text-amber-900 border border-amber-300">
+                            <Clock className="w-3 h-3 text-amber-700" />
+                            FCFS Queue #{fcfsQueuePosition} (Held Exclusively)
+                          </span>
+                        )}
                         <span aria-hidden="true">·</span>
                         <span>UOx Fully Online · Zoom</span>
                       </div>
@@ -876,17 +911,17 @@ export function StudentPortal({
                   <div>
                     <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded-md bg-stone-100 text-zinc-700 border border-stone-200">
                       <Lock className="w-3 h-3 text-[#A6192E]" />
-                      {isClearedToSchedule ? 'Cleared to Book Slot' : 'Defense Scheduling Locked'}
+                      {isClearedToSchedule ? 'Cleared to Request Slot' : 'Defense Scheduling Locked'}
                     </span>
                     <h3 id="active-defense-heading" className="text-base font-semibold text-zinc-900 mt-2">
                       {isClearedToSchedule
-                        ? 'Ready to Reserve a UOx Defense Slot'
+                        ? 'Ready to Request a UOx Defense Slot'
                         : 'Awaiting Faculty File Clearances'}
                     </h3>
                     <p className="text-xs text-zinc-600 mt-1 leading-relaxed">
                       {isClearedToSchedule
-                        ? 'All required thesis documents are approved by faculty. Select an open committee window from the panel on the right.'
-                        : `${submittedRequiredCount}/${requiredDocs.length} files submitted (${approvedRequiredCount}/${requiredDocs.length} approved). Upload all required documents and await faculty approval to unlock booking.`}
+                        ? 'All required thesis documents are approved by faculty. Submit a slot request on a first-come, first-served basis for committee review.'
+                        : `${submittedRequiredCount}/${requiredDocs.length} files submitted (${approvedRequiredCount}/${requiredDocs.length} approved). Upload all required documents and await faculty approval to unlock defense slot requests.`}
                     </p>
                   </div>
 
@@ -899,7 +934,7 @@ export function StudentPortal({
                       {isClearedToSchedule ? (
                         <>
                           <CalendarDays className="w-3.5 h-3.5 shrink-0" />
-                          <span>Select Defense Slot</span>
+                          <span>Request Defense Slot</span>
                         </>
                       ) : (
                         <>
@@ -963,12 +998,20 @@ export function StudentPortal({
                         </div>
                         <button
                           type="button"
+                          disabled={!isClearedToSchedule || (hasPendingActiveRequest && !rescheduleTarget)}
                           onClick={() => {
                             if (!isClearedToSchedule) {
                               setActiveTab('files');
                               showToast(
-                                'Complete required file submissions and await professor approval to reserve a slot.',
+                                'Complete required file submissions and await professor approval to request a slot.',
                                 'warning'
+                              );
+                              return;
+                            }
+                            if (hasPendingActiveRequest && !rescheduleTarget) {
+                              showToast(
+                                'You already have an active defense slot request under faculty review.',
+                                'info'
                               );
                               return;
                             }
@@ -976,13 +1019,23 @@ export function StudentPortal({
                             openBookingModal(slot);
                           }}
                           className={`py-1 px-2.5 text-[11px] font-medium rounded-md transition-colors whitespace-nowrap shrink-0 inline-flex items-center gap-1 ${
-                            isClearedToSchedule
-                              ? 'text-[#A6192E] bg-[#A6192E]/10 hover:bg-[#A6192E]/15'
-                              : 'text-zinc-500 bg-stone-100 hover:bg-stone-200'
+                            !isClearedToSchedule || (hasPendingActiveRequest && !rescheduleTarget)
+                              ? 'text-zinc-500 bg-stone-100 cursor-not-allowed'
+                              : 'text-[#A6192E] bg-[#A6192E]/10 hover:bg-[#A6192E]/15'
                           }`}
                         >
-                          {!isClearedToSchedule && <Lock className="w-2.5 h-2.5 shrink-0" />}
-                          <span>{isClearedToSchedule ? 'Reserve' : 'Locked'}</span>
+                          {!isClearedToSchedule ? (
+                            <Lock className="w-2.5 h-2.5 shrink-0" />
+                          ) : hasPendingActiveRequest && !rescheduleTarget ? (
+                            <Clock className="w-2.5 h-2.5 shrink-0 text-amber-600" />
+                          ) : null}
+                          <span>
+                            {!isClearedToSchedule
+                              ? 'Locked'
+                              : hasPendingActiveRequest && !rescheduleTarget
+                              ? 'Pending'
+                              : 'Request'}
+                          </span>
                         </button>
                       </div>
                     ))}
@@ -1375,6 +1428,51 @@ export function StudentPortal({
       {/* TAB 3: BOOK DEFENSE SLOT */}
       {activeTab === 'book' && (
         <div className="space-y-4 sm:space-y-5">
+          {activeDefense &&
+            (activeDefense.status === 'Pending Review' ||
+              activeDefense.status === 'Reschedule Requested') &&
+            !rescheduleTarget && (
+              <div className="bg-amber-50/90 border border-amber-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs sm:text-sm text-amber-950">
+                <div className="flex items-start gap-3">
+                  <Clock className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-amber-950">
+                        Active Defense Slot Request Under Faculty Review
+                      </span>
+                      {fcfsQueuePosition !== null && (
+                        <span className="px-2 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-amber-200 text-amber-900 border border-amber-300">
+                          FCFS Queue #{fcfsQueuePosition}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-amber-800 mt-1">
+                      Your requested Zoom window ({formatReadableDate(activeDefense.date)} ·{' '}
+                      {formatTimeRange(activeDefense.startTime, activeDefense.endTime)}) is held
+                      exclusively for you on a first-come, first-served basis. To prevent schedule
+                      bottlenecks, each candidate holds one active request at a time.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setInspectedAppointmentId(activeDefense.id)}
+                    className="py-1.5 px-3 bg-white text-zinc-800 border border-amber-300 rounded-lg text-xs font-medium hover:bg-amber-50"
+                  >
+                    View Details
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRescheduleTarget(activeDefense)}
+                    className="py-1.5 px-3 bg-[#A6192E] text-white rounded-lg text-xs font-medium hover:bg-[#881325]"
+                  >
+                    Change Slot
+                  </button>
+                </div>
+              </div>
+            )}
+
           {!isClearedToSchedule && (
             <div
               role="alert"
@@ -1540,21 +1638,27 @@ export function StudentPortal({
                         </span>
                         <button
                           type="button"
-                          disabled={!isClearedToSchedule}
+                          disabled={!isClearedToSchedule || (hasPendingActiveRequest && !rescheduleTarget)}
                           onClick={() => openBookingModal(slot)}
                           className={`py-1.5 px-3.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 inline-flex items-center gap-1.5 ${
-                            isClearedToSchedule
-                              ? 'bg-[#A6192E] hover:bg-[#881325] text-white'
-                              : 'bg-stone-900/[0.08] text-zinc-500 cursor-not-allowed'
+                            !isClearedToSchedule || (hasPendingActiveRequest && !rescheduleTarget)
+                              ? 'bg-stone-900/[0.08] text-zinc-500 cursor-not-allowed'
+                              : 'bg-[#A6192E] hover:bg-[#881325] text-white'
                           }`}
                         >
-                          {!isClearedToSchedule && <Lock className="w-3.5 h-3.5 shrink-0" />}
+                          {!isClearedToSchedule ? (
+                            <Lock className="w-3.5 h-3.5 shrink-0" />
+                          ) : hasPendingActiveRequest && !rescheduleTarget ? (
+                            <Clock className="w-3.5 h-3.5 shrink-0 text-amber-600" />
+                          ) : null}
                           <span>
                             {!isClearedToSchedule
                               ? 'Approval Required'
                               : rescheduleTarget
                               ? 'Move to Slot'
-                              : 'Reserve Slot'}
+                              : hasPendingActiveRequest
+                              ? 'Request Pending'
+                              : 'Request Slot'}
                           </span>
                         </button>
                       </div>
@@ -2023,7 +2127,7 @@ export function StudentPortal({
                   id="booking-modal-title"
                   className="text-xl font-semibold text-zinc-900 mt-1"
                 >
-                  {rescheduleTarget ? 'Confirm Defense Reschedule' : 'Submit Defense Request'}
+                  {rescheduleTarget ? 'Confirm Defense Reschedule' : 'Request Defense Slot'}
                 </h2>
                 <p className="text-xs text-zinc-500 mt-0.5">
                   {bookingSlot.zoomRoomName} · UOx Fully Online (Zoom)
@@ -2039,7 +2143,14 @@ export function StudentPortal({
               </button>
             </div>
 
-            <form onSubmit={handleBookingSubmit} className="mt-5 space-y-4">
+            <div className="mt-4 px-3.5 py-2.5 rounded-lg bg-amber-50/80 border border-amber-200/80 flex items-start gap-2.5 text-xs text-amber-900">
+              <Clock className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+              <p>
+                <strong>First-Come, First-Served:</strong> Submitting this request immediately holds this Zoom window exclusively while awaiting faculty confirmation.
+              </p>
+            </div>
+
+            <form onSubmit={handleBookingSubmit} className="mt-4 space-y-4">
               <div>
                 <label
                   htmlFor="book-title"
@@ -2141,7 +2252,7 @@ export function StudentPortal({
                   type="submit"
                   className="py-2 px-4 text-sm font-medium text-white bg-[#A6192E] hover:bg-[#881325] rounded-lg transition-colors whitespace-nowrap"
                 >
-                  {rescheduleTarget ? 'Confirm New Slot' : 'Submit Request'}
+                  {rescheduleTarget ? 'Confirm Reschedule' : 'Submit Slot Request'}
                 </button>
               </div>
             </form>

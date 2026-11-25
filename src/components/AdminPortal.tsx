@@ -363,6 +363,22 @@ export function AdminPortal({
     };
   }, [appointments, missingZoomLinkCount]);
 
+  // First-Come, First-Served (FCFS) Queue for Pending Requests
+  const pendingFcfsMap = useMemo(() => {
+    const pendingList = appointments
+      .filter((a) => a.status === 'Pending Review' || a.status === 'Reschedule Requested')
+      .sort((a, b) => {
+        const timeA = new Date(a.createdAt).getTime() || 0;
+        const timeB = new Date(b.createdAt).getTime() || 0;
+        return timeA - timeB;
+      });
+    const map = new Map<string, number>();
+    pendingList.forEach((appt, index) => {
+      map.set(appt.id, index + 1);
+    });
+    return map;
+  }, [appointments]);
+
   const filteredRequests = useMemo(() => {
     return appointments
       .filter((a) => {
@@ -387,8 +403,15 @@ export function AdminPortal({
           a.id.toLowerCase().includes(q)
         );
       })
-      .sort((a, b) => `${b.date} ${a.startTime}`.localeCompare(`${a.date} ${a.startTime}`));
-  }, [appointments, statusFilter, searchQuery]);
+      .sort((a, b) => {
+        if (statusFilter === 'Pending Review' || statusFilter === 'Reschedule Requested') {
+          const qA = pendingFcfsMap.get(a.id) ?? 999;
+          const qB = pendingFcfsMap.get(b.id) ?? 999;
+          return qA - qB;
+        }
+        return `${b.date} ${a.startTime}`.localeCompare(`${a.date} ${a.startTime}`);
+      });
+  }, [appointments, statusFilter, searchQuery, pendingFcfsMap]);
 
   const nextOpenDateIso = useMemo(() => {
     const openDates = Array.from(
@@ -2114,6 +2137,14 @@ export function AdminPortal({
                                 <span className="font-sans font-medium text-zinc-600">
                                   {appt.department}
                                 </span>
+                                {pendingFcfsMap.has(appt.id) && (
+                                  <>
+                                    <span aria-hidden="true">·</span>
+                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-mono font-semibold bg-amber-100 text-amber-900 border border-amber-300">
+                                      FCFS #{pendingFcfsMap.get(appt.id)}
+                                    </span>
+                                  </>
+                                )}
                               </div>
                             </div>
                           </div>

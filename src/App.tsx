@@ -404,6 +404,26 @@ export default function App() {
   ) => {
     if (!currentUser || !isQuarterOpen || !isStudentClearedToSchedule(currentUser)) return;
 
+    // First-Come, First-Served: Prevent student from holding multiple simultaneous active defense requests
+    const existingActiveRequest = appointments.find(
+      (a) =>
+        (a.studentEmail.toLowerCase() === currentUser.email.toLowerCase() ||
+          a.studentId === currentUser.studentId) &&
+        (a.status === 'Pending Review' || a.status === 'Confirmed') &&
+        a.id !== rescheduleFromId
+    );
+    if (existingActiveRequest) {
+      return;
+    }
+
+    // First-Come, First-Served: Ensure slot is not already held by another candidate
+    const slotAlreadyHeld = appointments.find(
+      (a) => a.slotId === slot.id && a.status !== 'Cancelled' && a.id !== rescheduleFromId
+    );
+    if (slotAlreadyHeld) {
+      return;
+    }
+
     const newAppointment: DefenseAppointment = {
       id: `DEF-${Math.floor(2610 + Math.random() * 380)}`,
       slotId: slot.id,
@@ -425,7 +445,7 @@ export default function App() {
       zoomMeetingId: slot.zoomMeetingId,
       zoomPasscode: slot.zoomPasscode,
       notes: payload.notes || undefined,
-      createdAt: TODAY_ISO,
+      createdAt: new Date().toISOString(),
     };
 
     saveDocument('appointments', newAppointment);
