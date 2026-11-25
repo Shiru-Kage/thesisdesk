@@ -124,6 +124,34 @@ export default function App() {
 
   const initialSeededRef = useRef(false);
 
+  // Rehydrate local object URLs from IndexedDB on initial mount
+  useEffect(() => {
+    let active = true;
+    const rehydrate = async () => {
+      const current = fileSubmissions;
+      let hasChanges = false;
+      const updated = await Promise.all(
+        current.map(async (sub) => {
+          if (!sub.objectUrl || sub.objectUrl.startsWith('blob:')) {
+            const localUrl = await retrieveFileFromIdb(sub.id);
+            if (localUrl && localUrl !== sub.objectUrl) {
+              hasChanges = true;
+              return { ...sub, objectUrl: localUrl };
+            }
+          }
+          return sub;
+        })
+      );
+      if (active && hasChanges) {
+        setFileSubmissions(updated);
+      }
+    };
+    rehydrate();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   // --------------------------------------------------------------------------
   // Firebase Real-time Subscriptions & Cloud Persistence
   // --------------------------------------------------------------------------
@@ -155,7 +183,7 @@ export default function App() {
       if (records) {
         const enriched = await Promise.all(
           records.map(async (sub) => {
-            if (!sub.objectUrl) {
+            if (!sub.objectUrl || sub.objectUrl.startsWith('blob:')) {
               const localUrl = await retrieveFileFromIdb(sub.id);
               if (localUrl) return { ...sub, objectUrl: localUrl };
             }
@@ -274,7 +302,13 @@ export default function App() {
   ) => {
     if (!currentUser) return;
     const studentId = currentUser.studentId ?? '2026108914';
-    const submissionId = `SUB-${Date.now().toString().slice(-6)}`;
+    const existingSubmission = fileSubmissions.find(
+      (sub) =>
+        sub.requirementId === requirementId &&
+        (sub.studentEmail.toLowerCase() === currentUser.email.toLowerCase() ||
+          sub.studentId === studentId)
+    );
+    const submissionId = existingSubmission?.id ?? `SUB-${Date.now().toString().slice(-6)}`;
 
     // Generate immediate object URL if missing
     let immediateUrl = fileMeta.objectUrl;
@@ -302,15 +336,10 @@ export default function App() {
 
     // 1. Instantly update UI and state
     setFileSubmissions((prev) => {
-      const existingIndex = prev.findIndex(
-        (sub) =>
-          sub.requirementId === requirementId &&
-          (sub.studentEmail.toLowerCase() === currentUser.email.toLowerCase() ||
-            sub.studentId === studentId)
-      );
+      const existingIndex = prev.findIndex((sub) => sub.id === submissionId);
       if (existingIndex >= 0) {
         const copy = [...prev];
-        copy[existingIndex] = { ...nextRecord, id: prev[existingIndex].id };
+        copy[existingIndex] = nextRecord;
         saveDocument('fileSubmissions', copy[existingIndex]).catch(() => {});
         return copy;
       }

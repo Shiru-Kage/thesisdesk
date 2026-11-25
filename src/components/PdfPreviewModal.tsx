@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
+  AlertCircle,
   ChevronLeft,
   ChevronRight,
   Download,
+  Eye,
   FileText,
+  Loader2,
   ZoomIn,
   ZoomOut,
   X,
 } from 'lucide-react';
+import mammoth from 'mammoth';
 import {
   DefenseAppointment,
   FileReviewStatus,
@@ -17,6 +21,7 @@ import {
 } from '../types/defense';
 import { FileStatusLabel } from './FileStatusLabel';
 import { formatShortDate } from '../utils/dateUtils';
+import { retrieveFileFromIdb } from '../services/firebase';
 
 interface PdfPreviewModalProps {
   submission: StudentFileSubmission | null;
@@ -54,12 +59,67 @@ export function PdfPreviewModal({
   const [page, setPage] = useState(1);
   const [zoomIndex, setZoomIndex] = useState(1);
 
+  // Live file resolution & multi-format rendering state
+  const [liveUrl, setLiveUrl] = useState<string | null>(submission?.objectUrl ?? null);
+  const [docxHtml, setDocxHtml] = useState<string | null>(null);
+  const [docxLoading, setDocxLoading] = useState(false);
+  const [docxError, setDocxError] = useState<string | null>(null);
+  const [textContent, setTextContent] = useState<string | null>(null);
+
   useEffect(() => {
     if (submission) {
       setNote(submission.facultyNote ?? '');
       setPage(1);
       setZoomIndex(1);
     }
+  }, [submission]);
+
+  // Resolve live URL with IndexedDB fallback for page reloads / role switches
+  useEffect(() => {
+    let active = true;
+    if (!submission) {
+      setLiveUrl(null);
+      setDocxHtml(null);
+      setTextContent(null);
+      return;
+    }
+
+    const resolveUrl = async () => {
+      // 1. If submission has an objectUrl, check if it is alive (if it is a blob: URL)
+      if (submission.objectUrl) {
+        if (!submission.objectUrl.startsWith('blob:')) {
+          if (active) setLiveUrl(submission.objectUrl);
+          return;
+        }
+        try {
+          const res = await fetch(submission.objectUrl, { method: 'HEAD' });
+          if (res.ok) {
+            if (active) setLiveUrl(submission.objectUrl);
+            return;
+          }
+        } catch {
+          // Stale / revoked blob URL from previous session
+        }
+      }
+
+      // 2. Recover live blob from persistent IndexedDB
+      try {
+        const localUrl = await retrieveFileFromIdb(submission.id);
+        if (active && localUrl) {
+          setLiveUrl(localUrl);
+          return;
+        }
+      } catch {
+        // IDB retrieval error
+      }
+
+      if (active) setLiveUrl(submission.objectUrl ?? null);
+    };
+
+    resolveUrl();
+    return () => {
+      active = false;
+    };
   }, [submission]);
 
   const currentIdx = submission
@@ -96,9 +156,63 @@ export function PdfPreviewModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [submission, siblingSubmissions, currentIdx, onSelectSubmission, onClose]);
 
-  const isLocalPdf =
-    Boolean(submission?.objectUrl) &&
-    Boolean(submission?.fileName.toLowerCase().endsWith('.pdf'));
+  // Format and file-type analysis
+  const fileName = (submission?.fileName ?? '').trim();
+  const lowerName = fileName.toLowerCase();
+  const isPdf = lowerName.endsWith('.pdf');
+  const isDocx = lowerName.endsWith('.docx') || lowerName.endsWith('.doc');
+  const isImage = /\.(png|jpe?g|webp|svg|gif|bmp)$/i.test(lowerName);
+  const isText = /\.(txt|md|cpp|c|java|py|json|csv|log|sql)$/i.test(lowerName);
+  const hasLiveDocument = Boolean(liveUrl);
+
+  // Process DOCX conversion to rich HTML using Mammoth
+  useEffect(() => {
+    let active = true;
+    if (!liveUrl) {
+      setDocxHtml(null);
+      setTextContent(null);
+      setDocxLoading(false);
+      return;
+    }
+
+    if (isDocx) {
+      setDocxLoading(true);
+      setDocxError(null);
+      fetch(liveUrl)
+        .then((res) => res.arrayBuffer())
+        .then((buf) => mammoth.convertToHtml({ arrayBuffer: buf }))
+        .then((res) => {
+          if (active) {
+            setDocxHtml(res.value);
+            setDocxLoading(false);
+          }
+        })
+        .catch((err) => {
+          console.warn('Mammoth docx parse error:', err);
+          if (active) {
+            setDocxError('Unable to extract live Word document formatting.');
+            setDocxLoading(false);
+          }
+        });
+    } else if (isText) {
+      fetch(liveUrl)
+        .then((res) => res.text())
+        .then((txt) => {
+          if (active) setTextContent(txt);
+        })
+        .catch(() => {
+          if (active) setTextContent(null);
+        });
+    } else {
+      setDocxHtml(null);
+      setTextContent(null);
+      setDocxLoading(false);
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [liveUrl, isDocx, isText]);
 
   const totalPages = submission?.requirementId === 'req-manuscript' ? 2 : 1;
   const zoomPercent = ZOOM_STEPS[zoomIndex];
@@ -227,67 +341,78 @@ export function PdfPreviewModal({
                 <span className="font-mono tabular-nums text-zinc-400 hidden sm:inline shrink-0">
                   {submission.fileSize}
                 </span>
+                <span className="hidden md:inline-flex px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-zinc-800 text-zinc-300 border border-zinc-700/80">
+                  {isDocx
+                    ? 'Word Document (.docx)'
+                    : isPdf
+                    ? 'PDF Interactive View'
+                    : isImage
+                    ? 'Image Preview'
+                    : isText
+                    ? 'Text Document'
+                    : 'Document'}
+                </span>
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                {!isLocalPdf && (
-                  <>
-                    <div className="flex items-center gap-1 border-r border-zinc-700 pr-2">
-                      <button
-                        type="button"
-                        disabled={zoomIndex === 0}
-                        onClick={() => setZoomIndex((z) => Math.max(0, z - 1))}
-                        aria-label="Zoom out"
-                        className="p-1 text-zinc-300 hover:text-white disabled:opacity-40 rounded"
-                      >
-                        <ZoomOut className="w-3.5 h-3.5" />
-                      </button>
-                      <span className="font-mono tabular-nums text-[11px] w-9 text-center">
-                        {zoomPercent}%
-                      </span>
-                      <button
-                        type="button"
-                        disabled={zoomIndex === ZOOM_STEPS.length - 1}
-                        onClick={() =>
-                          setZoomIndex((z) => Math.min(ZOOM_STEPS.length - 1, z + 1))
-                        }
-                        aria-label="Zoom in"
-                        className="p-1 text-zinc-300 hover:text-white disabled:opacity-40 rounded"
-                      >
-                        <ZoomIn className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        disabled={page <= 1}
-                        onClick={() => setPage((p) => Math.max(1, p - 1))}
-                        aria-label="Previous page"
-                        className="p-1 text-zinc-300 hover:text-white disabled:opacity-40 rounded"
-                      >
-                        <ChevronLeft className="w-3.5 h-3.5" />
-                      </button>
-                      <span className="font-mono tabular-nums text-[11px] whitespace-nowrap">
-                        Page {page} / {totalPages}
-                      </span>
-                      <button
-                        type="button"
-                        disabled={page >= totalPages}
-                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                        aria-label="Next page"
-                        className="p-1 text-zinc-300 hover:text-white disabled:opacity-40 rounded"
-                      >
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </>
+                {(!isPdf || !hasLiveDocument) && (
+                  <div className="flex items-center gap-1 border-r border-zinc-700 pr-2">
+                    <button
+                      type="button"
+                      disabled={zoomIndex === 0}
+                      onClick={() => setZoomIndex((z) => Math.max(0, z - 1))}
+                      aria-label="Zoom out"
+                      className="p-1 text-zinc-300 hover:text-white disabled:opacity-40 rounded"
+                    >
+                      <ZoomOut className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="font-mono tabular-nums text-[11px] w-9 text-center">
+                      {zoomPercent}%
+                    </span>
+                    <button
+                      type="button"
+                      disabled={zoomIndex === ZOOM_STEPS.length - 1}
+                      onClick={() =>
+                        setZoomIndex((z) => Math.min(ZOOM_STEPS.length - 1, z + 1))
+                      }
+                      aria-label="Zoom in"
+                      className="p-1 text-zinc-300 hover:text-white disabled:opacity-40 rounded"
+                    >
+                      <ZoomIn className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 )}
 
-                {submission.objectUrl && (
+                {!hasLiveDocument && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      disabled={page <= 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      aria-label="Previous page"
+                      className="p-1 text-zinc-300 hover:text-white disabled:opacity-40 rounded"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="font-mono tabular-nums text-[11px] whitespace-nowrap">
+                      Page {page} / {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      aria-label="Next page"
+                      className="p-1 text-zinc-300 hover:text-white disabled:opacity-40 rounded"
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
+                {liveUrl && (
                   <div className="flex items-center gap-1.5">
                     <a
-                      href={submission.objectUrl}
+                      href={liveUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-zinc-100 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 rounded transition-colors whitespace-nowrap"
@@ -295,7 +420,7 @@ export function PdfPreviewModal({
                       <span>Open in Tab</span>
                     </a>
                     <a
-                      href={submission.objectUrl}
+                      href={liveUrl}
                       download={submission.fileName}
                       className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-white bg-[#A6192E] hover:bg-[#881325] rounded transition-colors whitespace-nowrap shadow-xs"
                     >
@@ -307,15 +432,81 @@ export function PdfPreviewModal({
               </div>
             </div>
 
-            {/* Viewer Viewport */}
+            {/* Viewer Viewport: Actual Document Contents */}
             <div className="flex-1 overflow-auto p-4 sm:p-6 flex justify-center items-start">
-              {isLocalPdf && submission.objectUrl ? (
+              {/* 1. Live PDF Viewer */}
+              {isPdf && liveUrl ? (
                 <iframe
-                  src={submission.objectUrl}
+                  src={`${liveUrl}#toolbar=1&navpanes=0&view=FitH`}
                   title={`PDF Preview of ${submission.fileName}`}
-                  className="w-full h-full min-h-[420px] bg-white rounded shadow-md border border-zinc-700"
+                  className="w-full h-full min-h-[520px] bg-white rounded shadow-md border border-zinc-700"
                 />
+              ) : isDocx && hasLiveDocument ? (
+                /* 2. Live Word Document (.docx) Online Viewer */
+                docxLoading ? (
+                  <div className="flex flex-col items-center justify-center p-12 text-zinc-400 gap-3 my-auto">
+                    <Loader2 className="w-8 h-8 animate-spin text-[#E5B53B]" />
+                    <p className="text-xs font-medium text-zinc-300">
+                      Reading and rendering live Word document preview...
+                    </p>
+                  </div>
+                ) : docxHtml ? (
+                  <div
+                    style={{
+                      transform: `scale(${zoomPercent / 100})`,
+                      transformOrigin: 'top center',
+                    }}
+                    className="w-full max-w-3xl bg-white text-zinc-900 rounded-sm shadow-2xl border border-stone-300 p-8 sm:p-12 docx-rendered-content transition-transform space-y-4"
+                  >
+                    <div
+                      dangerouslySetInnerHTML={{ __html: docxHtml }}
+                      className="prose prose-sm max-w-none text-zinc-800"
+                    />
+                  </div>
+                ) : docxError ? (
+                  <div className="p-8 text-center text-zinc-300 space-y-3 my-auto">
+                    <AlertCircle className="w-8 h-8 text-amber-500 mx-auto" />
+                    <p className="text-sm font-semibold text-white">Word Document Uploaded</p>
+                    <p className="text-xs text-zinc-400 max-w-md mx-auto">{docxError}</p>
+                    {liveUrl && (
+                      <div className="flex items-center justify-center gap-2 pt-2">
+                        <a
+                          href={liveUrl}
+                          download={submission.fileName}
+                          className="px-3 py-1.5 bg-[#A6192E] text-white rounded text-xs font-medium hover:bg-[#881325]"
+                        >
+                          Download Document
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                ) : null
+              ) : isImage && liveUrl ? (
+                /* 3. Live Image Document Viewer */
+                <div className="w-full h-full flex items-center justify-center p-4">
+                  <img
+                    src={liveUrl}
+                    alt={submission.fileName}
+                    style={{
+                      transform: `scale(${zoomPercent / 100})`,
+                      transformOrigin: 'center center',
+                    }}
+                    className="max-w-full max-h-[75vh] object-contain rounded shadow-xl transition-transform"
+                  />
+                </div>
+              ) : isText && textContent !== null ? (
+                /* 4. Live Text Document Viewer */
+                <div
+                  style={{
+                    transform: `scale(${zoomPercent / 100})`,
+                    transformOrigin: 'top center',
+                  }}
+                  className="w-full max-w-3xl bg-white text-zinc-900 rounded-sm shadow-2xl border border-stone-300 p-8 font-mono text-xs whitespace-pre-wrap transition-transform"
+                >
+                  {textContent}
+                </div>
               ) : (
+                /* 5. Fallback Simulated Letterhead for Unuploaded Sample Entries */
                 <div
                   style={{
                     transform: `scale(${zoomPercent / 100})`,
