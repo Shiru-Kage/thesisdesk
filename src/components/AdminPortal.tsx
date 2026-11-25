@@ -137,7 +137,6 @@ interface AdminPortalProps {
   onUpdateGuidelines?: (updated: DefenseGuidelinesData) => void;
   onSwitchRole: () => void;
   onSignOut: () => void;
-  onResetDemoData: () => void;
   onOpenProfileModal?: () => void;
   announcements?: Announcement[];
   onCreateAnnouncement?: (data: Omit<Announcement, 'id' | 'createdAt'>) => void;
@@ -180,7 +179,6 @@ export function AdminPortal({
   onUpdateGuidelines,
   onSwitchRole,
   onSignOut,
-  onResetDemoData,
   onOpenProfileModal,
   announcements = [],
   onCreateAnnouncement,
@@ -918,15 +916,6 @@ export function AdminPortal({
       }}
       onSwitchRole={onSwitchRole}
       onSignOut={onSignOut}
-      onResetDemoData={() => {
-        onResetDemoData();
-        setOpenFolderKey(null);
-        setStatusFilter('All');
-        setSearchQuery('');
-        setFileStatusFilter('All');
-        setFileSearchQuery('');
-        showToast('Restored default Mapúa SOIT 1Q2627 demo data.', 'info');
-      }}
       onOpenProfileModal={onOpenProfileModal}
     >
       {/* TAB 1: SCHEDULE OVERVIEW */}

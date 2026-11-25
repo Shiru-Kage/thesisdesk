@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { ArrowLeftRight, LogOut, Menu, RotateCcw, UserCog, X } from 'lucide-react';
+import { ArrowLeftRight, LogOut, Menu, UserCog, X } from 'lucide-react';
 import { UserAccount } from '../types/defense';
 
 export interface NavItem {
@@ -27,7 +27,6 @@ interface PortalLayoutProps {
   onPrimaryAction: () => void;
   onSwitchRole: () => void;
   onSignOut: () => void;
-  onResetDemoData?: () => void;
   onOpenProfileModal?: () => void;
   children: ReactNode;
 }
@@ -43,7 +42,6 @@ export function PortalLayout({
   onPrimaryAction,
   onSwitchRole,
   onSignOut,
-  onResetDemoData,
   onOpenProfileModal,
   children,
 }: PortalLayoutProps) {
@@ -213,20 +211,6 @@ export function PortalLayout({
             <span>Sign Out</span>
           </button>
         </div>
-
-        {onResetDemoData && (
-          <button
-            type="button"
-            onClick={() => {
-              onResetDemoData();
-              setMobileMenuOpen(false);
-            }}
-            className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2.5 text-[11px] font-medium text-zinc-500 hover:text-zinc-900 hover:bg-stone-900/[0.04] rounded-md transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6192E]"
-          >
-            <RotateCcw className="w-3 h-3 shrink-0" />
-            <span>Reset Demo Data</span>
-          </button>
-        )}
       </div>
     </div>
   );

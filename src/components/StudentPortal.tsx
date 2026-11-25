@@ -89,7 +89,6 @@ interface StudentPortalProps {
   onToggleChecklist: (id: string) => void;
   onSwitchRole: () => void;
   onSignOut: () => void;
-  onResetDemoData: () => void;
   onOpenProfileModal?: () => void;
   announcements?: Announcement[];
   guidelines?: DefenseGuidelinesData;
@@ -131,7 +130,6 @@ export function StudentPortal({
   onToggleChecklist,
   onSwitchRole,
   onSignOut,
-  onResetDemoData,
   onOpenProfileModal,
   announcements = [],
   guidelines,
@@ -660,10 +658,6 @@ export function StudentPortal({
       onSwitchRole={onSwitchRole}
       onSignOut={onSignOut}
       onOpenProfileModal={onOpenProfileModal}
-      onResetDemoData={() => {
-        onResetDemoData();
-        showToast('Restored default Mapúa SOIT 1Q2627 demo data.', 'info');
-      }}
     >
       {!isQuarterOpen && (
         <div

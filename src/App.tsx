@@ -1271,28 +1271,6 @@ export default function App() {
     removeDocument('announcements', id);
   };
 
-  const handleResetDemoData = () => {
-    try {
-      window.localStorage.removeItem(STORAGE_KEY);
-      window.localStorage.removeItem('thesisdesk_portal_state_v2');
-      window.localStorage.removeItem('thesisdesk_soit_state_v1');
-    } catch {
-      // Ignore storage access errors
-    }
-    lastStudentUserRef.current = null;
-    lastAdminUserRef.current = null;
-    setSlots([]);
-    setAppointments([]);
-    setZoomRooms(INITIAL_ZOOM_ROOMS);
-    setFaculty(INITIAL_FACULTY);
-    setChecklist(INITIAL_CHECKLIST);
-    setFileSubmissions([]);
-    setActiveQuarter(INITIAL_ACTIVE_QUARTER);
-    setArchivedQuarters([]);
-    setAnnouncements(INITIAL_ANNOUNCEMENTS);
-    setPreSelectedSlot(null);
-  };
-
   if (!currentUser) {
     return (
       <LoginView
@@ -1330,7 +1308,6 @@ export default function App() {
           onToggleChecklist={handleToggleChecklist}
           onSwitchRole={handleSwitchRole}
           onSignOut={handleSignOut}
-          onResetDemoData={handleResetDemoData}
           onOpenProfileModal={() => setIsProfileModalOpen(true)}
         />
         <ProfileModal
@@ -1384,7 +1361,6 @@ export default function App() {
         onUpdateGuidelines={handleUpdateGuidelines}
         onSwitchRole={handleSwitchRole}
         onSignOut={handleSignOut}
-        onResetDemoData={handleResetDemoData}
         onOpenProfileModal={() => setIsProfileModalOpen(true)}
       />
       <ProfileModal
