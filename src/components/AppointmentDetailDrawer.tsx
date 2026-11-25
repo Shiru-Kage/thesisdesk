@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
+  AlertCircle,
   Calendar,
   CalendarPlus,
   Check,
@@ -21,6 +22,7 @@ interface AppointmentDetailDrawerProps {
   appointment: DefenseAppointment | null;
   role: UserRole;
   onClose: () => void;
+  hasPendingDocumentReview?: boolean;
   onAdminUpdateStatus?: (
     id: string,
     status: AppointmentStatus,
@@ -41,6 +43,7 @@ export function AppointmentDetailDrawer({
   appointment,
   role,
   onClose,
+  hasPendingDocumentReview = false,
   onAdminUpdateStatus,
   onAdminSaveZoom,
   onStudentReschedule,
@@ -360,6 +363,19 @@ export function AppointmentDetailDrawer({
             </div>
           )}
 
+          {/* Candidate Resubmission Notice for Admin */}
+          {hasPendingDocumentReview && role === 'admin' && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2.5 text-xs text-amber-900">
+              <AlertCircle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold">Candidate Resubmitted Document</p>
+                <p className="text-amber-800 mt-0.5 leading-relaxed">
+                  This candidate has resubmitted files currently awaiting faculty verification. All required files must be verified and approved in Submitted Files before this defense slot can be approved.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Coordinator Feedback Section */}
           {role === 'admin' && !readOnly ? (
             <div>
@@ -415,7 +431,9 @@ export function AppointmentDetailDrawer({
                 {appointment.status !== 'Confirmed' && appointment.status !== 'Completed' && (
                   <button
                     type="button"
+                    disabled={hasPendingDocumentReview}
                     onClick={() => {
+                      if (hasPendingDocumentReview) return;
                       onAdminUpdateStatus(
                         appointment.id,
                         'Confirmed',
@@ -424,7 +442,12 @@ export function AppointmentDetailDrawer({
                       );
                       onClose();
                     }}
-                    className="py-2 px-4 bg-[#A6192E] hover:bg-[#881325] text-white text-xs font-medium rounded-lg transition-colors whitespace-nowrap"
+                    title={
+                      hasPendingDocumentReview
+                        ? 'Verify and approve candidate resubmitted files in Submitted Files first'
+                        : undefined
+                    }
+                    className="py-2 px-4 bg-[#A6192E] hover:bg-[#881325] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-medium rounded-lg transition-colors whitespace-nowrap shadow-xs"
                   >
                     Approve Defense
                   </button>

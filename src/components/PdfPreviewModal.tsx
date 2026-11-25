@@ -823,10 +823,18 @@ export function PdfPreviewModal({
                       <input
                         ref={resubmitInputRef}
                         type="file"
-                        accept=".pdf,.doc,.docx"
+                        accept=".pdf,application/pdf"
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file && submission) {
+                            const isPdf =
+                              file.type === 'application/pdf' ||
+                              file.name.toLowerCase().endsWith('.pdf');
+                            if (!isPdf) {
+                              alert('Only PDF documents (.pdf) are accepted for thesis defense submissions.');
+                              e.target.value = '';
+                              return;
+                            }
                             onResubmit(submission.requirementId, file);
                           }
                           e.target.value = '';

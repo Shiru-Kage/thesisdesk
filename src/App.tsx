@@ -161,7 +161,7 @@ export default function App() {
     if (slots.length === 0 && activeQuarter && activeQuarter.status === 'Open') {
       const seeded = createStarterSlotsForQuarterm(activeQuarter.code, TODAY_ISO, zoomRooms);
       setSlots(seeded);
-      seeded.forEach((s) => saveDocument('slots', s).catch(() => {}));
+      seeded.forEach((s) => saveDocument('slots', s).catch(() => { }));
     }
   }, [slots.length, activeQuarter, zoomRooms]);
 
@@ -198,7 +198,7 @@ export default function App() {
     if (slots.length === 0 && activeQuarter && activeQuarter.status === 'Open') {
       const seeded = createStarterSlotsForQuarterm(activeQuarter.code, TODAY_ISO, zoomRooms);
       setSlots(seeded);
-      seeded.forEach((s) => saveDocument('slots', s).catch(() => {}));
+      seeded.forEach((s) => saveDocument('slots', s).catch(() => { }));
     }
   }, [slots.length, activeQuarter, zoomRooms]);
 
@@ -390,10 +390,10 @@ export default function App() {
       if (existingIndex >= 0) {
         const copy = [...prev];
         copy[existingIndex] = nextRecord;
-        saveDocument('fileSubmissions', copy[existingIndex]).catch(() => {});
+        saveDocument('fileSubmissions', copy[existingIndex]).catch(() => { });
         return copy;
       }
-      saveDocument('fileSubmissions', nextRecord).catch(() => {});
+      saveDocument('fileSubmissions', nextRecord).catch(() => { });
       return [nextRecord, ...prev];
     });
 
@@ -532,17 +532,17 @@ export default function App() {
     setAppointments((prev) => {
       const updated = rescheduleFromId
         ? prev.map((a) => {
-            if (a.id === rescheduleFromId) {
-              const reschedUpdated: DefenseAppointment = {
-                ...a,
-                status: 'Cancelled' as AppointmentStatus,
-                adminFeedback: 'Superseded by student reschedule request.',
-              };
-              saveDocument('appointments', reschedUpdated);
-              return reschedUpdated;
-            }
-            return a;
-          })
+          if (a.id === rescheduleFromId) {
+            const reschedUpdated: DefenseAppointment = {
+              ...a,
+              status: 'Cancelled' as AppointmentStatus,
+              adminFeedback: 'Superseded by student reschedule request.',
+            };
+            saveDocument('appointments', reschedUpdated);
+            return reschedUpdated;
+          }
+          return a;
+        })
         : prev;
       return [newAppointment, ...updated];
     });
@@ -832,11 +832,11 @@ export default function App() {
     setActiveQuarter((prev) => {
       const updated: QuartermPeriod | null = prev
         ? {
-            ...prev,
-            status: 'Closed',
-            closedAt: TODAY_ISO,
-            closingNote,
-          }
+          ...prev,
+          status: 'Closed',
+          closedAt: TODAY_ISO,
+          closingNote,
+        }
         : null;
       saveActiveQuarter(updated);
       return updated;
@@ -847,11 +847,11 @@ export default function App() {
     setActiveQuarter((prev) => {
       const updated: QuartermPeriod | null = prev
         ? {
-            ...prev,
-            status: 'Open',
-            closedAt: undefined,
-            closingNote: undefined,
-          }
+          ...prev,
+          status: 'Open',
+          closedAt: undefined,
+          closingNote: undefined,
+        }
         : null;
       saveActiveQuarter(updated);
       return updated;

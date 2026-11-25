@@ -460,6 +460,16 @@ export function StudentPortal({
       showToast('File uploads are paused while the current Quarterm is closed.', 'warning');
       return;
     }
+    const isPdf =
+      file.type === 'application/pdf' ||
+      file.name.toLowerCase().endsWith('.pdf');
+    if (!isPdf) {
+      showToast(
+        'Only PDF documents (.pdf) are accepted for thesis defense submissions.',
+        'warning'
+      );
+      return;
+    }
     const isResubmission = Boolean(submissionByReqId[requirementId]);
     const objectUrl = URL.createObjectURL(file);
     onUploadFile(requirementId, {
@@ -468,12 +478,19 @@ export function StudentPortal({
       objectUrl,
       rawFile: file,
     });
-    showToast(
-      isResubmission
-        ? `Resubmitted "${file.name}" for faculty review.`
-        : `Uploaded "${file.name}" for faculty review.`,
-      'success'
-    );
+    if (isResubmission && activeDefense) {
+      showToast(
+        `Resubmitted "${file.name}". Defense slot is held while faculty re-verifies your file.`,
+        'info'
+      );
+    } else {
+      showToast(
+        isResubmission
+          ? `Resubmitted "${file.name}" for faculty review.`
+          : `Uploaded "${file.name}" for faculty review.`,
+        'success'
+      );
+    }
   };
 
   const handleFileInputChange = (
@@ -709,6 +726,7 @@ export function StudentPortal({
               requiredDocs.length > 0 && approvedRequiredCount === requiredDocs.length;
             const step3Done = Boolean(activeDefense);
             const step4Done = activeDefense?.status === 'Confirmed';
+            const hasActiveDefenseWithResubmission = Boolean(activeDefense) && !step2Done;
 
             const journeySteps = [
               {
@@ -725,10 +743,12 @@ export function StudentPortal({
                 detail:
                   revisionRequestedCount > 0
                     ? `${revisionRequestedCount} revision needed`
+                    : hasActiveDefenseWithResubmission
+                    ? `${approvedRequiredCount}/${requiredDocs.length} approved (re-approval needed)`
                     : `${approvedRequiredCount}/${requiredDocs.length} approved`,
                 done: step2Done,
                 active: step1Done && !step2Done,
-                alert: revisionRequestedCount > 0,
+                alert: revisionRequestedCount > 0 || hasActiveDefenseWithResubmission,
               },
               {
                 num: '03',
@@ -746,17 +766,21 @@ export function StudentPortal({
                 num: '04',
                 title: 'Faculty Approval & Confirmation',
                 detail: step4Done
-                  ? activeDefense?.zoomLink
+                  ? hasActiveDefenseWithResubmission
+                    ? 'Confirmed · Resubmission under review'
+                    : activeDefense?.zoomLink
                     ? 'Zoom link ready'
                     : 'Confirmed'
+                  : hasActiveDefenseWithResubmission
+                  ? 'Slot held · Awaiting file re-approval'
                   : fcfsQueuePosition
                   ? `FCFS Queue #${fcfsQueuePosition} · Awaiting approval`
                   : activeDefense
                   ? activeDefense.status
                   : 'Pending request',
-                done: step4Done,
-                active: step3Done && !step4Done,
-                alert: false,
+                done: step4Done && !hasActiveDefenseWithResubmission,
+                active: (step3Done && !step4Done) || hasActiveDefenseWithResubmission,
+                alert: hasActiveDefenseWithResubmission,
               },
             ];
 
@@ -778,7 +802,9 @@ export function StudentPortal({
               >
                 <div className="px-5 py-3.5 border-b border-stone-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-2 text-xs text-zinc-600">
-                    {step4Done ? (
+                    {hasActiveDefenseWithResubmission ? (
+                      <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
+                    ) : step4Done ? (
                       <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
                     ) : isClearedToSchedule ? (
                       <CheckCircle2 className="w-4 h-4 text-[#9A6E00] shrink-0" />
@@ -786,7 +812,9 @@ export function StudentPortal({
                       <Lock className="w-4 h-4 text-[#A6192E] shrink-0" />
                     )}
                     <span className="font-semibold text-zinc-900">
-                      {step4Done
+                      {hasActiveDefenseWithResubmission
+                        ? `Defense Slot Reserved (${formatShortDate(activeDefense!.date)}) · Confirmation held pending review of resubmitted file`
+                        : step4Done
                         ? 'UOx Defense Confirmed'
                         : step3Done
                         ? 'Defense Request Awaiting Faculty Confirmation'
@@ -872,6 +900,19 @@ export function StudentPortal({
             >
               {activeDefense ? (
                 <>
+                  {approvedRequiredCount < requiredDocs.length && (
+                    <div className="p-3 bg-amber-50 border border-amber-200/80 rounded-lg flex items-start gap-2.5 text-xs text-amber-900 mb-4">
+                      <AlertCircle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-semibold">Resubmitted Document Under Faculty Review</p>
+                        <p className="text-amber-800 mt-0.5 leading-relaxed">
+                          {activeDefense.status === 'Confirmed'
+                            ? 'You submitted an updated document after defense confirmation. Your scheduled window remains reserved, but faculty must re-verify your file before oral examination.'
+                            : 'Your defense slot reservation is held exclusively for you. Faculty will confirm this defense slot once your resubmitted document is approved.'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                     <div className="space-y-2 flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-zinc-500">
@@ -1351,7 +1392,7 @@ export function StudentPortal({
                           fileInputRefs.current[doc.id] = el;
                         }}
                         type="file"
-                        accept=".pdf,.doc,.docx"
+                        accept=".pdf,application/pdf"
                         onChange={(e) => handleFileInputChange(doc.id, e)}
                         className="hidden"
                         aria-label={`Upload ${doc.title}`}

@@ -250,7 +250,26 @@ export function AdminPortal({
     window.setTimeout(() => setCopiedId(null), 1600);
   };
 
+  const candidateHasPendingFileReview = (studentEmail: string, studentId: string) => {
+    const candidateFiles = fileSubmissions.filter(
+      (f) =>
+        f.studentEmail.toLowerCase() === studentEmail.toLowerCase() ||
+        f.studentId === studentId
+    );
+    return candidateFiles.some(
+      (f) => f.status === 'Pending Review' || f.status === 'Revision Requested'
+    );
+  };
+
   const handleQuickApproveAppointment = (appt: DefenseAppointment) => {
+    if (candidateHasPendingFileReview(appt.studentEmail, appt.studentId)) {
+      showToast(
+        `Cannot confirm defense: ${appt.studentName} has resubmitted files awaiting review. Please verify files in Submitted Files first.`,
+        'warning'
+      );
+      return;
+    }
+
     if (appt.zoomLink.trim()) {
       onUpdateAppointmentStatus(
         appt.id,
@@ -2153,6 +2172,14 @@ export function AdminPortal({
                                     </span>
                                   </>
                                 )}
+                                {candidateHasPendingFileReview(appt.studentEmail, appt.studentId) && (
+                                  <>
+                                    <span aria-hidden="true">·</span>
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[10px] font-semibold bg-rose-100 text-rose-900 border border-rose-300">
+                                      Resubmission Pending
+                                    </span>
+                                  </>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -2727,6 +2754,14 @@ export function AdminPortal({
       <AppointmentDetailDrawer
         appointment={inspectedAppointment}
         role="admin"
+        hasPendingDocumentReview={
+          inspectedAppointment
+            ? candidateHasPendingFileReview(
+                inspectedAppointment.studentEmail,
+                inspectedAppointment.studentId
+              )
+            : false
+        }
         onClose={() => setInspectedAppointment(null)}
         onAdminSaveZoom={(id, zoomDetails) => {
           onUpdateAppointmentZoom(id, zoomDetails);
