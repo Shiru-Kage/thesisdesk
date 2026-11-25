@@ -1227,7 +1227,7 @@ export function AdminPortal({
                                 : 'bg-rose-50 text-rose-700 border border-rose-200'
                             }`}
                           >
-                            {isAvailable ? 'Open' : slot.isBlocked ? 'Blocked' : 'Reserved'}
+                            {isAvailable ? 'Open' : slot.isBlocked ? 'Locked' : 'Reserved'}
                           </span>
                         </div>
                         <div className="text-xs text-zinc-600 pt-1 border-t border-stone-200/60 flex items-center justify-between gap-2">
@@ -1835,7 +1835,7 @@ export function AdminPortal({
                                 Booked ({bookedAppt.studentName.split(' ')[0]})
                               </button>
                             ) : slot.isBlocked ? (
-                              <span className="text-xs font-medium text-rose-700">Blocked</span>
+                              <span className="text-xs font-medium text-rose-700">Locked</span>
                             ) : (
                               <span className="text-xs font-medium text-emerald-700">Open</span>
                             )}
@@ -1926,18 +1926,26 @@ export function AdminPortal({
                           <div className="flex items-center justify-end gap-2 pt-0.5">
                             <button
                               type="button"
-                              onClick={() => onToggleBlockSlot(slot.id)}
+                              onClick={() => {
+                                onToggleBlockSlot(slot.id);
+                                showToast(
+                                  slot.isBlocked
+                                    ? `Unlocked slot ${slot.startTime} – ${slot.endTime}.`
+                                    : `Locked slot ${slot.startTime} – ${slot.endTime}.`,
+                                  'info'
+                                );
+                              }}
                               className="inline-flex items-center gap-1 py-1 px-2.5 text-xs font-medium text-zinc-700 bg-stone-900/[0.06] hover:bg-stone-900/[0.10] border border-stone-300/60 rounded-md transition-colors"
                             >
                               {slot.isBlocked ? (
                                 <>
                                   <Unlock className="w-3 h-3" />
-                                  <span>Unblock</span>
+                                  <span>Unlock</span>
                                 </>
                               ) : (
                                 <>
                                   <Lock className="w-3 h-3" />
-                                  <span>Block</span>
+                                  <span>Lock</span>
                                 </>
                               )}
                             </button>

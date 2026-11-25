@@ -993,7 +993,7 @@ export function QuartermArchivesView({
                               {bookedAppt.studentName} ({bookedAppt.status})
                             </button>
                           ) : slot.isBlocked ? (
-                            <span className="text-xs font-medium text-rose-700">Blocked</span>
+                            <span className="text-xs font-medium text-rose-700">Locked</span>
                           ) : (
                             <span className="text-xs text-zinc-500">Unused Window</span>
                           )}

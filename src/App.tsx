@@ -165,6 +165,43 @@ export default function App() {
     }
   }, [slots.length, activeQuarter, zoomRooms]);
 
+  // Rehydrate local object URLs from IndexedDB on initial mount
+  useEffect(() => {
+    let active = true;
+    const rehydrate = async () => {
+      const current = fileSubmissions;
+      let hasChanges = false;
+      const updated = await Promise.all(
+        current.map(async (sub) => {
+          if (!sub.objectUrl || sub.objectUrl.startsWith('blob:')) {
+            const localUrl = await retrieveFileFromIdb(sub.id);
+            if (localUrl && localUrl !== sub.objectUrl) {
+              hasChanges = true;
+              return { ...sub, objectUrl: localUrl };
+            }
+          }
+          return sub;
+        })
+      );
+      if (active && hasChanges) {
+        setFileSubmissions(updated);
+      }
+    };
+    rehydrate();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Auto-seed starter defense windows if slots list is empty for the active quarterm
+  useEffect(() => {
+    if (slots.length === 0 && activeQuarter && activeQuarter.status === 'Open') {
+      const seeded = createStarterSlotsForQuarterm(activeQuarter.code, TODAY_ISO, zoomRooms);
+      setSlots(seeded);
+      seeded.forEach((s) => saveDocument('slots', s).catch(() => {}));
+    }
+  }, [slots.length, activeQuarter, zoomRooms]);
+
   // --------------------------------------------------------------------------
   // Firebase Real-time Subscriptions & Cloud Persistence
   // --------------------------------------------------------------------------
