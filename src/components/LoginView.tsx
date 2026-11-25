@@ -288,16 +288,16 @@ export function LoginView({
         )}
       </header>
 
-      {/* Centered Two-Column Translucent Hero Card (Card-Only Soft Blur so Building Shows Through) */}
+      {/* Centered Two-Column Translucent Hero Card (Fixed Height on Desktop to Prevent Expansion Shifts) */}
       <main className="relative z-20 flex items-center justify-center px-4 pt-16 pb-10 sm:pt-20 md:px-8 md:pt-16 md:pb-12">
         <motion.div
           initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={transitionFast}
-          className="w-full max-w-[920px] grid grid-cols-1 lg:grid-cols-12 rounded-xl overflow-hidden border border-white/75 ring-1 ring-stone-900/12 shadow-[0_22px_60px_rgba(24,24,27,0.12)]"
+          className="w-full max-w-[920px] lg:h-[530px] grid grid-cols-1 lg:grid-cols-12 rounded-xl overflow-hidden border border-white/75 ring-1 ring-stone-900/12 shadow-[0_22px_60px_rgba(24,24,27,0.12)]"
         >
           {/* Left Column: Translucent Auth Panel */}
-          <section className="lg:col-span-6 bg-white/46 backdrop-blur-[3px] p-6 sm:p-8 flex flex-col justify-center">
+          <section className="lg:col-span-6 bg-white/46 backdrop-blur-[3px] p-6 sm:p-7 flex flex-col justify-center min-h-0 overflow-y-auto">
               <div className="mb-4">
                 <div className="flex items-center justify-between gap-2 mb-1">
                   <span className="text-xs font-semibold text-[#881325]">
@@ -579,82 +579,81 @@ export function LoginView({
           </section>
 
           {/* Right Column: Translucent Cardinal Red SOIT Announcements Panel */}
-          <aside className="lg:col-span-6 bg-[#A6192E]/74 backdrop-blur-[3px] p-6 sm:p-8 flex flex-col justify-between border-t lg:border-t-0 lg:border-l border-white/25">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-white text-center mb-5">
-                Announcements
-              </h2>
+          <aside className="lg:col-span-6 bg-[#A6192E]/74 backdrop-blur-[3px] p-6 sm:p-7 flex flex-col justify-between border-t lg:border-t-0 lg:border-l border-white/25 min-h-0 overflow-hidden">
+            <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-white text-center mb-4 shrink-0">
+              Announcements
+            </h2>
 
-              <div className="space-y-2.5">
-                {displayAnnouncements.map((item) => {
-                  const isOpen = expandedNoticeId === item.id;
-                  const dateStr = item.createdAt
-                    ? new Date(item.createdAt).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })
-                    : 'Recent Notice';
-                  return (
-                    <div
-                      key={item.id}
-                      className="rounded-lg bg-white/70 hover:bg-white/80 backdrop-blur-[2px] border border-white/60 text-zinc-900 transition-colors overflow-hidden"
+            {/* Scrollable Announcements List */}
+            <div className="flex-1 min-h-0 overflow-y-auto space-y-2.5 pr-1.5 announcements-scroll">
+              {displayAnnouncements.map((item) => {
+                const isOpen = expandedNoticeId === item.id;
+                const dateStr = item.createdAt
+                  ? new Date(item.createdAt).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })
+                  : 'Recent Notice';
+                return (
+                  <div
+                    key={item.id}
+                    className="rounded-lg bg-white/70 hover:bg-white/80 backdrop-blur-[2px] border border-white/60 text-zinc-900 transition-colors overflow-hidden shrink-0"
+                  >
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setExpandedNoticeId(isOpen ? '' : item.id)
+                      }
+                      aria-expanded={isOpen}
+                      className="w-full px-4 py-3 text-left flex items-start justify-between gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6192E]"
                     >
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setExpandedNoticeId(isOpen ? '' : item.id)
-                        }
-                        aria-expanded={isOpen}
-                        className="w-full px-4 py-3 text-left flex items-start justify-between gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6192E]"
-                      >
-                        <div className="min-w-0 pr-2">
-                          <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                            {item.pinned && (
-                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#A6192E] text-white">
-                                <Pin className="w-2.5 h-2.5" /> Pinned
-                              </span>
-                            )}
-                            {item.priority === 'urgent' ? (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
-                                Urgent
-                              </span>
-                            ) : item.priority === 'important' ? (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200">
-                                Important
-                              </span>
-                            ) : null}
-                            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-stone-100/90 text-stone-700">
-                              {item.category}
+                      <div className="min-w-0 pr-2">
+                        <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                          {item.pinned && (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#A6192E] text-white">
+                              <Pin className="w-2.5 h-2.5" /> Pinned
                             </span>
-                          </div>
-                          <p className="text-xs sm:text-sm font-semibold text-zinc-950 leading-snug">
-                            {item.title}
-                          </p>
-                          <p className="text-[11px] text-zinc-700 mt-0.5">
-                            {dateStr} {item.authorName ? `· ${item.authorName}` : ''}
-                          </p>
+                          )}
+                          {item.priority === 'urgent' ? (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                              Urgent
+                            </span>
+                          ) : item.priority === 'important' ? (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200">
+                              Important
+                            </span>
+                          ) : null}
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-stone-100/90 text-stone-700">
+                            {item.category}
+                          </span>
                         </div>
-                        {isOpen ? (
-                          <ChevronUp className="w-4 h-4 text-zinc-700 shrink-0 mt-0.5" />
-                        ) : (
-                          <ChevronDown className="w-4 h-4 text-zinc-700 shrink-0 mt-0.5" />
-                        )}
-                      </button>
-
-                      {isOpen && (
-                        <div className="px-4 pb-3.5 pt-1 text-xs text-zinc-800 leading-relaxed border-t border-stone-900/10">
-                          <p className="whitespace-pre-line">{item.content}</p>
-                        </div>
+                        <p className="text-xs sm:text-sm font-semibold text-zinc-950 leading-snug">
+                          {item.title}
+                        </p>
+                        <p className="text-[11px] text-zinc-700 mt-0.5">
+                          {dateStr} {item.authorName ? `· ${item.authorName}` : ''}
+                        </p>
+                      </div>
+                      {isOpen ? (
+                        <ChevronUp className="w-4 h-4 text-zinc-700 shrink-0 mt-0.5" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-zinc-700 shrink-0 mt-0.5" />
                       )}
-                    </div>
-                  );
-                })}
-              </div>
+                    </button>
+
+                    {isOpen && (
+                      <div className="px-4 pb-3.5 pt-1 text-xs text-zinc-800 leading-relaxed border-t border-stone-900/10">
+                        <p className="whitespace-pre-line">{item.content}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Bottom Mapúa Gold Term Summary Banner */}
-            <div className="mt-5 rounded-lg bg-[#E5A91A]/82 backdrop-blur-xs border border-[#F5CA5C]/65 px-4 py-3 text-zinc-950">
+            <div className="mt-3.5 shrink-0 rounded-lg bg-[#E5A91A]/82 backdrop-blur-xs border border-[#F5CA5C]/65 px-4 py-2.5 text-zinc-950">
               <p className="text-xs font-bold tracking-tight text-zinc-950">
                 {quarterCodeLabel} UOx Online Defense Availability
               </p>
