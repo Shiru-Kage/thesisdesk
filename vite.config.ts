@@ -22,7 +22,12 @@ export default defineConfig(() => {
           const srcAssets = path.resolve(baseDir, 'src/assets');
           const distAssets = path.resolve(distDir, 'src/assets');
           if (fs.existsSync(distDir) && fs.existsSync(srcAssets)) {
-            fs.cpSync(srcAssets, distAssets, {recursive: true, force: true});
+            try {
+              fs.mkdirSync(path.dirname(distAssets), { recursive: true });
+              fs.cpSync(srcAssets, distAssets, { recursive: true, force: true });
+            } catch (e) {
+              console.warn('Failed to copy src/assets to dist/src/assets', e);
+            }
           }
         },
       },
@@ -31,6 +36,9 @@ export default defineConfig(() => {
       alias: {
         '@': path.resolve(import.meta.dirname || '.', '.'),
       },
+    },
+    build: {
+      chunkSizeWarningLimit: 2000,
     },
     server: {
       port: 3000,
