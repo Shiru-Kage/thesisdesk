@@ -10,9 +10,11 @@ import {
   KeyRound,
   Lock,
   Mail,
+  Pin,
   UserCheck,
 } from 'lucide-react';
 import {
+  Announcement,
   DefenseAppointment,
   DefenseSlot,
   QuartermPeriod,
@@ -31,6 +33,7 @@ interface LoginViewProps {
   appointments: DefenseAppointment[];
   zoomRooms: ZoomRoom[];
   activeQuarter: QuartermPeriod | null;
+  announcements?: Announcement[];
   registeredUsers?: UserAccount[];
   onLogin: (user: UserAccount, pendingSlot?: DefenseSlot | null) => void;
   onRegister?: (user: UserAccount) => void;
@@ -41,6 +44,7 @@ export function LoginView({
   appointments,
   zoomRooms,
   activeQuarter,
+  announcements = [],
   registeredUsers = [],
   onLogin,
   onRegister,
@@ -63,37 +67,55 @@ export function LoginView({
 
   const quarterCodeLabel = activeQuarter ? activeQuarter.code : 'Upcoming Quarterm';
 
-  const announcements = [
-    {
-      id: 'notice-window',
-      title: `${quarterCodeLabel} SOIT UOx Online Defense Scheduling`,
-      date: activeQuarter
-        ? `${activeQuarter.label} · ${activeQuarter.status}`
-        : 'Awaiting Quarterm Opening',
-      summary:
-        'Mapúa UOx online students may reserve 90-minute Zoom oral defense slots once required thesis files are approved by faculty.',
-      detail:
-        'All defenses are conducted fully online via Zoom. Official Zoom meeting links and passcodes are assigned by the SOIT Coordinator inside your appointment details.',
-    },
-    {
-      id: 'notice-manuscript',
-      title: 'Final Manuscript & Turnitin Clearance Deadline',
-      date: 'Due 72 hours prior to defense',
-      summary:
-        'Submit your PDF manuscript draft and originality clearance reference inside the portal prior to committee review.',
-      detail:
-        'Coordinator approval requires a verified adviser sign-off and complete three-member defense panel roster.',
-    },
-    {
-      id: 'notice-policy',
-      title: 'Panel Quorum & Reschedule Protocol',
-      date: 'SOIT Thesis Coordination Office',
-      summary:
-        'Schedule adjustments within 48 hours of an assigned defense time require coordinator approval.',
-      detail:
-        'Students may submit a single-click reschedule request with a proposed alternative slot directly from My Appointments.',
-    },
-  ];
+  const displayAnnouncements = useMemo(() => {
+    if (announcements && announcements.length > 0) {
+      return [...announcements].sort((a, b) => {
+        if (Boolean(b.pinned) !== Boolean(a.pinned)) {
+          return b.pinned ? -1 : 1;
+        }
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+    }
+
+    return [
+      {
+        id: 'notice-window',
+        title: `${quarterCodeLabel} SOIT UOx Online Defense Scheduling`,
+        category: 'Defense Schedule',
+        priority: 'urgent' as const,
+        authorName: 'Prof. P. Cabalag',
+        authorRole: 'SOIT Thesis Coordinator',
+        createdAt: '2026-11-15T08:00:00.000Z',
+        pinned: true,
+        content:
+          'Mapúa UOx online students may reserve 90-minute Zoom oral defense slots once required thesis files are approved by faculty. All defenses are conducted fully online via Zoom. Official Zoom meeting links and passcodes are assigned by the SOIT Coordinator inside your appointment details.',
+      },
+      {
+        id: 'notice-manuscript',
+        title: 'Final Manuscript & Turnitin Clearance Deadline',
+        category: 'Submission Deadline',
+        priority: 'important' as const,
+        authorName: 'Prof. P. Cabalag',
+        authorRole: 'SOIT Thesis Coordinator',
+        createdAt: '2026-11-18T10:30:00.000Z',
+        pinned: true,
+        content:
+          'Submit your PDF manuscript draft and originality clearance reference inside the portal prior to committee review. Coordinator approval requires a verified adviser sign-off and complete three-member defense panel roster.',
+      },
+      {
+        id: 'notice-policy',
+        title: 'Panel Quorum & Reschedule Protocol',
+        category: 'Panel Guidelines',
+        priority: 'normal' as const,
+        authorName: 'School of Information Technology',
+        authorRole: 'SOIT Thesis Coordination Office',
+        createdAt: '2026-11-20T14:00:00.000Z',
+        pinned: false,
+        content:
+          'Schedule adjustments within 48 hours of an assigned defense time require coordinator approval. Students may submit a single-click reschedule request with a proposed alternative slot directly from My Appointments.',
+      },
+    ];
+  }, [announcements, quarterCodeLabel]);
 
   const openSlotCount = useMemo(() => {
     const booked = new Set(
@@ -564,12 +586,19 @@ export function LoginView({
               </h2>
 
               <div className="space-y-2.5">
-                {announcements.map((item) => {
+                {displayAnnouncements.map((item) => {
                   const isOpen = expandedNoticeId === item.id;
+                  const dateStr = item.createdAt
+                    ? new Date(item.createdAt).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })
+                    : 'Recent Notice';
                   return (
                     <div
                       key={item.id}
-                      className="rounded-lg bg-white/64 hover:bg-white/76 backdrop-blur-[2px] border border-white/60 text-zinc-900 transition-colors overflow-hidden"
+                      className="rounded-lg bg-white/70 hover:bg-white/80 backdrop-blur-[2px] border border-white/60 text-zinc-900 transition-colors overflow-hidden"
                     >
                       <button
                         type="button"
@@ -579,12 +608,31 @@ export function LoginView({
                         aria-expanded={isOpen}
                         className="w-full px-4 py-3 text-left flex items-start justify-between gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6192E]"
                       >
-                        <div>
+                        <div className="min-w-0 pr-2">
+                          <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                            {item.pinned && (
+                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#A6192E] text-white">
+                                <Pin className="w-2.5 h-2.5" /> Pinned
+                              </span>
+                            )}
+                            {item.priority === 'urgent' ? (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                                Urgent
+                              </span>
+                            ) : item.priority === 'important' ? (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200">
+                                Important
+                              </span>
+                            ) : null}
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-stone-100/90 text-stone-700">
+                              {item.category}
+                            </span>
+                          </div>
                           <p className="text-xs sm:text-sm font-semibold text-zinc-950 leading-snug">
                             {item.title}
                           </p>
-                          <p className="text-[11px] italic text-zinc-700 mt-0.5">
-                            {item.date}
+                          <p className="text-[11px] text-zinc-700 mt-0.5">
+                            {dateStr} {item.authorName ? `· ${item.authorName}` : ''}
                           </p>
                         </div>
                         {isOpen ? (
@@ -595,9 +643,8 @@ export function LoginView({
                       </button>
 
                       {isOpen && (
-                        <div className="px-4 pb-3.5 pt-1 text-xs text-zinc-800 leading-relaxed space-y-1.5 border-t border-stone-900/10">
-                          <p>{item.summary}</p>
-                          <p className="text-zinc-700">{item.detail}</p>
+                        <div className="px-4 pb-3.5 pt-1 text-xs text-zinc-800 leading-relaxed border-t border-stone-900/10">
+                          <p className="whitespace-pre-line">{item.content}</p>
                         </div>
                       )}
                     </div>

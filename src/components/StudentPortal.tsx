@@ -25,6 +25,8 @@ import {
   FileUp,
   LayoutDashboard,
   Lock,
+  Megaphone,
+  Pin,
   Search,
   Square,
   Trash2,
@@ -34,6 +36,7 @@ import {
   X,
 } from 'lucide-react';
 import {
+  Announcement,
   AppointmentStatus,
   ChecklistItem,
   DefenseAppointment,
@@ -49,6 +52,7 @@ import { StatusLabel } from './StatusLabel';
 import { FileStatusLabel } from './FileStatusLabel';
 import { AppointmentDetailDrawer } from './AppointmentDetailDrawer';
 import { PdfPreviewModal } from './PdfPreviewModal';
+import { StudentAnnouncementsView } from './StudentAnnouncementsView';
 import { ToastNotification, ToastState, ToastTone } from './ToastNotification';
 import { formatReadableDate, formatShortDate, formatTimeRange } from '../utils/dateUtils';
 import { downloadDefenseCalendarInvite } from '../utils/calendarExport';
@@ -85,6 +89,7 @@ interface StudentPortalProps {
   onSignOut: () => void;
   onResetDemoData: () => void;
   onOpenProfileModal?: () => void;
+  announcements?: Announcement[];
 }
 
 function formatFileSize(bytes: number): string {
@@ -125,10 +130,11 @@ export function StudentPortal({
   onSignOut,
   onResetDemoData,
   onOpenProfileModal,
+  announcements = [],
 }: StudentPortalProps) {
   const prefersReducedMotion = useReducedMotion();
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'files' | 'book' | 'appointments' | 'guidelines'
+    'overview' | 'announcements' | 'files' | 'book' | 'appointments' | 'guidelines'
   >(initialSlot ? 'book' : 'overview');
   const [calYear, setCalYear] = useState(2026);
   const [calMonth, setCalMonth] = useState(10); // November (0-indexed)
@@ -475,8 +481,24 @@ export function StudentPortal({
     setActiveTab('appointments');
   };
 
+  const latestAnnouncement = useMemo(() => {
+    if (!announcements || announcements.length === 0) return null;
+    return [...announcements].sort((a, b) => {
+      if (Boolean(b.pinned) !== Boolean(a.pinned)) {
+        return b.pinned ? -1 : 1;
+      }
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    })[0];
+  }, [announcements]);
+
   const navItems: NavItem[] = [
     { id: 'overview', label: 'Overview', icon: <LayoutDashboard className="w-4 h-4" /> },
+    {
+      id: 'announcements',
+      label: 'Announcements',
+      icon: <Megaphone className="w-4 h-4" />,
+      badgeCount: announcements.length,
+    },
     {
       id: 'files',
       label: 'Files to Submit',
@@ -495,6 +517,7 @@ export function StudentPortal({
 
   const tabBackgroundMap: Record<typeof activeTab, string> = {
     overview: '/assets/portal/image_ed324830.png',
+    announcements: '/assets/portal/image_ed324830.png',
     files: '/assets/portal/image_40c3523c.png',
     book: '/assets/portal/image_7b399ac3.png',
     appointments: '/assets/portal/image_40c3523c.png',
@@ -592,6 +615,47 @@ export function StudentPortal({
               </button>
             )}
           </div>
+
+          {/* Latest Announcement Banner */}
+          {latestAnnouncement && (
+            <div className="rounded-xl border border-stone-300/80 bg-white/80 backdrop-blur-md p-4 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-start gap-3 min-w-0">
+                <span className="p-2 rounded-lg bg-[#A6192E]/10 text-[#A6192E] shrink-0 mt-0.5">
+                  <Megaphone className="w-4 h-4" />
+                </span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[11px] font-bold text-[#A6192E] uppercase tracking-wide">
+                      Latest SOIT Bulletin
+                    </span>
+                    {latestAnnouncement.pinned && (
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#A6192E] text-white">
+                        <Pin className="w-2.5 h-2.5" /> Pinned
+                      </span>
+                    )}
+                    <span className="text-zinc-400 text-xs">·</span>
+                    <span className="text-xs text-zinc-500 font-medium">
+                      {new Date(latestAnnouncement.createdAt).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </span>
+                  </div>
+                  <p className="text-sm font-semibold text-zinc-900 truncate mt-0.5">
+                    {latestAnnouncement.title}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab('announcements')}
+                className="px-3 py-1.5 text-xs font-semibold text-[#881325] hover:text-[#6B0F1D] bg-stone-100 hover:bg-stone-200/70 border border-stone-300/80 rounded-lg whitespace-nowrap transition-colors shrink-0 cursor-pointer"
+              >
+                View All Bulletins →
+              </button>
+            </div>
+          )}
 
           {/* 4-Step Defense Journey Tracker */}
           {(() => {
@@ -1106,6 +1170,11 @@ export function StudentPortal({
             )}
           </div>
         </div>
+      )}
+
+      {/* TAB: ANNOUNCEMENTS */}
+      {activeTab === 'announcements' && (
+        <StudentAnnouncementsView announcements={announcements} />
       )}
 
       {/* TAB 2: FILES TO SUBMIT */}

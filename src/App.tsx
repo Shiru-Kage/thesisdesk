@@ -10,12 +10,14 @@ import {
   DEFAULT_ADMIN_USER,
   DEFAULT_STUDENT_USER,
   INITIAL_ACTIVE_QUARTER,
+  INITIAL_ANNOUNCEMENTS,
   INITIAL_CHECKLIST,
   INITIAL_FACULTY,
   INITIAL_ZOOM_ROOMS,
   REQUIRED_DOCUMENTS,
 } from './data/mockTemplateData';
 import {
+  Announcement,
   AppointmentStatus,
   ArchivedQuarterm,
   ChecklistItem,
@@ -58,6 +60,7 @@ interface PersistedPortalState {
   activeQuarter: QuartermPeriod | null;
   archivedQuarters: ArchivedQuarterm[];
   registeredUsers?: UserAccount[];
+  announcements?: Announcement[];
 }
 
 function loadPersistedState(): Partial<PersistedPortalState> | null {
@@ -110,6 +113,9 @@ export default function App() {
   );
   const [registeredUsers, setRegisteredUsers] = useState<UserAccount[]>(
     () => persisted?.registeredUsers ?? [DEFAULT_STUDENT_USER, DEFAULT_ADMIN_USER]
+  );
+  const [announcements, setAnnouncements] = useState<Announcement[]>(
+    () => persisted?.announcements ?? INITIAL_ANNOUNCEMENTS
   );
 
   const initialSeededRef = useRef(false);
@@ -185,6 +191,15 @@ export default function App() {
       }
     });
 
+    // 7. Subscribe to Announcements
+    const unsubAnnouncements = subscribeToCollection<Announcement>('announcements', (records) => {
+      if (records && records.length > 0) {
+        setAnnouncements(records);
+      } else if (!initialSeededRef.current) {
+        batchSaveDocuments('announcements', INITIAL_ANNOUNCEMENTS);
+      }
+    });
+
     initialSeededRef.current = true;
 
     return () => {
@@ -194,6 +209,7 @@ export default function App() {
       unsubQuarter?.();
       unsubArchives?.();
       unsubUsers?.();
+      unsubAnnouncements?.();
     };
   }, []);
 
@@ -212,6 +228,7 @@ export default function App() {
         activeQuarter,
         archivedQuarters,
         registeredUsers,
+        announcements,
       };
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     } catch {
@@ -227,6 +244,7 @@ export default function App() {
     activeQuarter,
     archivedQuarters,
     registeredUsers,
+    announcements,
   ]);
 
   const isQuarterOpen = !activeQuarter || activeQuarter.status === 'Open';
@@ -882,6 +900,30 @@ export default function App() {
     setIsProfileModalOpen(false);
   };
 
+  const handleCreateAnnouncement = (
+    data: Omit<Announcement, 'id' | 'createdAt'>
+  ) => {
+    const newAnn: Announcement = {
+      ...data,
+      id: `ann-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      createdAt: new Date().toISOString(),
+    };
+    setAnnouncements((prev) => [newAnn, ...prev]);
+    saveDocument('announcements', newAnn);
+  };
+
+  const handleUpdateAnnouncement = (updated: Announcement) => {
+    setAnnouncements((prev) =>
+      prev.map((a) => (a.id === updated.id ? updated : a))
+    );
+    saveDocument('announcements', updated);
+  };
+
+  const handleDeleteAnnouncement = (id: string) => {
+    setAnnouncements((prev) => prev.filter((a) => a.id !== id));
+    removeDocument('announcements', id);
+  };
+
   const handleResetDemoData = () => {
     try {
       window.localStorage.removeItem(STORAGE_KEY);
@@ -897,6 +939,7 @@ export default function App() {
     setFileSubmissions([]);
     setActiveQuarter(INITIAL_ACTIVE_QUARTER);
     setArchivedQuarters([]);
+    setAnnouncements(INITIAL_ANNOUNCEMENTS);
     setPreSelectedSlot(null);
   };
 
@@ -907,6 +950,7 @@ export default function App() {
         appointments={appointments}
         zoomRooms={zoomRooms}
         activeQuarter={activeQuarter}
+        announcements={announcements}
         registeredUsers={registeredUsers}
         onLogin={handleLogin}
         onRegister={handleRegisterUser}
@@ -927,6 +971,7 @@ export default function App() {
           activeQuarter={activeQuarter}
           todayIso={TODAY_ISO}
           initialSlot={preSelectedSlot}
+          announcements={announcements}
           onUploadFile={handleUploadStudentFile}
           onRemoveFile={handleRemoveStudentFile}
           onBookSlot={handleBookSlot}
@@ -960,6 +1005,10 @@ export default function App() {
         activeQuarter={activeQuarter}
         archivedQuarters={archivedQuarters}
         todayIso={TODAY_ISO}
+        announcements={announcements}
+        onCreateAnnouncement={handleCreateAnnouncement}
+        onUpdateAnnouncement={handleUpdateAnnouncement}
+        onDeleteAnnouncement={handleDeleteAnnouncement}
         onCloseQuarterm={handleCloseQuarterm}
         onReopenQuarterm={handleReopenQuarterm}
         onArchiveQuarterm={handleArchiveQuarterm}

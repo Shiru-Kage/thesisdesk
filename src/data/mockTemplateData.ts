@@ -1,4 +1,5 @@
 import {
+  Announcement,
   ArchivedQuarterm,
   ChecklistItem,
   DefenseAppointment,
@@ -319,3 +320,45 @@ export const INITIAL_ACTIVE_QUARTER: QuartermPeriod = {
 
 // All demo archived quarters removed
 export const INITIAL_ARCHIVED_QUARTERS: ArchivedQuarterm[] = [];
+
+export const INITIAL_ANNOUNCEMENTS: Announcement[] = [
+  {
+    id: 'ann-1',
+    title: '1Q2627 SOIT UOx Online Defense Scheduling Now Open',
+    content:
+      'Mapúa UOx online students may reserve 90-minute Zoom oral defense slots once required thesis files are approved by faculty. All defenses are conducted fully online via Zoom. Official Zoom meeting links and passcodes are assigned by the SOIT Coordinator inside your appointment details.',
+    category: 'Defense Schedule',
+    priority: 'urgent',
+    authorName: 'Prof. P. Cabalag',
+    authorRole: 'SOIT Thesis Coordinator',
+    authorEmail: 'pvcabalag@mapua.edu.ph',
+    createdAt: '2026-11-15T08:00:00.000Z',
+    pinned: true,
+  },
+  {
+    id: 'ann-2',
+    title: 'Final Manuscript & Turnitin Clearance Deadline',
+    content:
+      'Submit your PDF manuscript draft and originality clearance reference inside the portal at least 72 hours prior to committee review. Coordinator approval requires a verified adviser sign-off and complete three-member defense panel roster.',
+    category: 'Submission Deadline',
+    priority: 'important',
+    authorName: 'Prof. P. Cabalag',
+    authorRole: 'SOIT Thesis Coordinator',
+    authorEmail: 'pvcabalag@mapua.edu.ph',
+    createdAt: '2026-11-18T10:30:00.000Z',
+    pinned: true,
+  },
+  {
+    id: 'ann-3',
+    title: 'Panel Quorum & Reschedule Protocol',
+    content:
+      'Schedule adjustments within 48 hours of an assigned defense time require coordinator approval. Students may submit a single-click reschedule request with a proposed alternative slot directly from My Appointments.',
+    category: 'Panel Guidelines',
+    priority: 'normal',
+    authorName: 'School of Information Technology',
+    authorRole: 'SOIT Thesis Coordination Office',
+    authorEmail: 'pvcabalag@mapua.edu.ph',
+    createdAt: '2026-11-20T14:00:00.000Z',
+    pinned: false,
+  },
+];

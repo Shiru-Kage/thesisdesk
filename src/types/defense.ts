@@ -68,6 +68,21 @@ export interface ZoomRoom {
   available: boolean;
 }
 
+export type AnnouncementPriority = 'normal' | 'important' | 'urgent';
+
+export interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  priority: AnnouncementPriority;
+  authorName: string;
+  authorRole: string;
+  authorEmail?: string;
+  createdAt: string;
+  pinned?: boolean;
+}
+
 export interface FacultyChair {
   id: string;
   name: string;

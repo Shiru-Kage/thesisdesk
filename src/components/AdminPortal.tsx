@@ -21,6 +21,7 @@ import {
   LayoutDashboard,
   Link2,
   Lock,
+  Megaphone,
   Pencil,
   Plus,
   RotateCcw,
@@ -31,6 +32,7 @@ import {
   X,
 } from 'lucide-react';
 import {
+  Announcement,
   AppointmentStatus,
   ArchivedQuarterm,
   DefenseAppointment,
@@ -54,6 +56,7 @@ import { FileStatusLabel } from './FileStatusLabel';
 import { AppointmentDetailDrawer } from './AppointmentDetailDrawer';
 import { PdfPreviewModal } from './PdfPreviewModal';
 import { QuartermArchivesView } from './QuartermArchivesView';
+import { AdminAnnouncementsView } from './AdminAnnouncementsView';
 import { ToastNotification, ToastState, ToastTone } from './ToastNotification';
 import {
   ArchiveQuartermModal,
@@ -116,6 +119,10 @@ interface AdminPortalProps {
   onSignOut: () => void;
   onResetDemoData: () => void;
   onOpenProfileModal?: () => void;
+  announcements?: Announcement[];
+  onCreateAnnouncement?: (data: Omit<Announcement, 'id' | 'createdAt'>) => void;
+  onUpdateAnnouncement?: (announcement: Announcement) => void;
+  onDeleteAnnouncement?: (id: string) => void;
 }
 
 export function AdminPortal({
@@ -149,9 +156,13 @@ export function AdminPortal({
   onSignOut,
   onResetDemoData,
   onOpenProfileModal,
+  announcements = [],
+  onCreateAnnouncement,
+  onUpdateAnnouncement,
+  onDeleteAnnouncement,
 }: AdminPortalProps) {
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'submissions' | 'slots' | 'requests' | 'directory' | 'archives'
+    'overview' | 'announcements' | 'submissions' | 'slots' | 'requests' | 'directory' | 'archives'
   >('overview');
   const [calYear, setCalYear] = useState(2026);
   const [calMonth, setCalMonth] = useState(10);
@@ -641,6 +652,12 @@ export function AdminPortal({
   const navItems: NavItem[] = [
     { id: 'overview', label: 'Schedule Overview', icon: <LayoutDashboard className="w-4 h-4" /> },
     {
+      id: 'announcements',
+      label: 'Announcements',
+      icon: <Megaphone className="w-4 h-4" />,
+      badgeCount: announcements.length,
+    },
+    {
       id: 'submissions',
       label: 'Submitted Files',
       icon: <FolderCheck className="w-4 h-4" />,
@@ -664,6 +681,7 @@ export function AdminPortal({
 
   const tabBackgroundMap: Record<typeof activeTab, string> = {
     overview: '/assets/portal/image_ed324830.png',
+    announcements: '/assets/portal/image_ed324830.png',
     submissions: '/assets/portal/image_40c3523c.png',
     slots: '/assets/portal/image_7b399ac3.png',
     requests: '/assets/portal/image_40c3523c.png',
@@ -1084,6 +1102,18 @@ export function AdminPortal({
             </section>
           </div>
         </div>
+      )}
+
+      {/* TAB: ANNOUNCEMENTS */}
+      {activeTab === 'announcements' && (
+        <AdminAnnouncementsView
+          user={user}
+          announcements={announcements}
+          onCreateAnnouncement={onCreateAnnouncement ?? (() => {})}
+          onUpdateAnnouncement={onUpdateAnnouncement ?? (() => {})}
+          onDeleteAnnouncement={onDeleteAnnouncement ?? (() => {})}
+          onNotify={showToast}
+        />
       )}
 
       {/* TAB 2: SUBMITTED FILES (STUDENT FOLDERS + PDF PREVIEW) */}
