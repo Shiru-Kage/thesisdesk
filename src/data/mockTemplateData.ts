@@ -38,90 +38,12 @@ export const DEMO_USERS: Record<'student' | 'admin', UserAccount> = {
   admin: DEFAULT_ADMIN_USER,
 };
 
-export const INITIAL_ZOOM_ROOMS: ZoomRoom[] = [
-  {
-    id: 'ZM-01',
-    name: 'UOx Zoom Defense Room 01',
-    hostAccount: 'soit-uox-host01@mapua.edu.ph',
-    zoomLink: 'https://mapua-edu-ph.zoom.us/j/94281740211',
-    meetingId: '942 8174 0211',
-    passcode: 'SOIT-UOX1',
-    features: 'Waiting Room · Cloud Recording · Panel Breakout Deliberation',
-    available: true,
-  },
-  {
-    id: 'ZM-02',
-    name: 'UOx Zoom Defense Room 02',
-    hostAccount: 'soit-uox-host02@mapua.edu.ph',
-    zoomLink: 'https://mapua-edu-ph.zoom.us/j/98144205934',
-    meetingId: '981 4420 5934',
-    passcode: 'SOIT-UOX2',
-    features: 'Waiting Room · HD Screen Share · Automated Transcript',
-    available: true,
-  },
-  {
-    id: 'ZM-03',
-    name: 'UOx Zoom Defense Room 03',
-    hostAccount: 'soit-uox-host03@mapua.edu.ph',
-    zoomLink: 'https://mapua-edu-ph.zoom.us/j/96530187420',
-    meetingId: '965 3018 7420',
-    passcode: 'SOIT-UOX3',
-    features: 'Waiting Room · Co-Host Panel Controls · Cloud Recording',
-    available: true,
-  },
-  {
-    id: 'ZM-04',
-    name: 'UOx Zoom Defense Room 04',
-    hostAccount: 'soit-uox-host04@mapua.edu.ph',
-    zoomLink: 'https://mapua-edu-ph.zoom.us/j/91377624088',
-    meetingId: '913 7762 4088',
-    passcode: 'SOIT-UOX4',
-    features: 'Waiting Room · External Panelist Access · Breakout Room',
-    available: true,
-  },
-];
+export const INITIAL_ZOOM_ROOMS: ZoomRoom[] = [];
 
 // Demo appointments removed; generated upon student request
 export const INITIAL_APPOINTMENTS: DefenseAppointment[] = [];
 
-export const INITIAL_FACULTY: FacultyChair[] = [
-  {
-    id: 'FAC-01',
-    name: 'Prof. Henrik Lindqvist',
-    title: 'Chair of Distributed Computing',
-    department: 'Information Technology',
-    email: 'h.lindqvist@mapua.edu.ph',
-    activeDefenses: 0,
-    available: true,
-  },
-  {
-    id: 'FAC-02',
-    name: 'Dr. Miriam Okafor',
-    title: 'Associate Professor of Data Science',
-    department: 'Data Science',
-    email: 'm.okafor@mapua.edu.ph',
-    activeDefenses: 0,
-    available: true,
-  },
-  {
-    id: 'FAC-03',
-    name: 'Prof. Arthur Chen',
-    title: 'Lead of Software & Cloud Systems',
-    department: 'Computer Science',
-    email: 'a.chen@mapua.edu.ph',
-    activeDefenses: 0,
-    available: true,
-  },
-  {
-    id: 'FAC-04',
-    name: 'Dr. Samuel Vance',
-    title: 'Senior Lecturer in Cybersecurity',
-    department: 'Information Systems',
-    email: 's.vance@mapua.edu.ph',
-    activeDefenses: 0,
-    available: true,
-  },
-];
+export const INITIAL_FACULTY: FacultyChair[] = [];
 
 export const INITIAL_CHECKLIST: ChecklistItem[] = [
   {
@@ -296,7 +218,9 @@ export function createStarterSlotsForQuarterm(
     return `${yyyy}-${mm}-${dd}`;
   };
 
-  const rm = (idx: number) => zoomRooms[idx % zoomRooms.length] ?? INITIAL_ZOOM_ROOMS[0];
+  if (zoomRooms.length === 0) return [];
+
+  const rm = (idx: number) => zoomRooms[idx % zoomRooms.length];
 
   return [
     {
@@ -309,7 +233,7 @@ export function createStarterSlotsForQuarterm(
       zoomMeetingId: rm(0).meetingId,
       zoomPasscode: rm(0).passcode,
       department: 'Information Technology',
-      chairName: 'Prof. Henrik Lindqvist',
+      chairName: 'SOIT Faculty Panel',
       isBlocked: false,
     },
     {
@@ -317,12 +241,12 @@ export function createStarterSlotsForQuarterm(
       date: offsetDate(0),
       startTime: '14:00',
       endTime: '15:30',
-      zoomRoomName: rm(1).name,
-      zoomLink: rm(1).zoomLink,
-      zoomMeetingId: rm(1).meetingId,
-      zoomPasscode: rm(1).passcode,
+      zoomRoomName: rm(1 % zoomRooms.length).name,
+      zoomLink: rm(1 % zoomRooms.length).zoomLink,
+      zoomMeetingId: rm(1 % zoomRooms.length).meetingId,
+      zoomPasscode: rm(1 % zoomRooms.length).passcode,
       department: 'Information Technology',
-      chairName: 'Dr. Miriam Okafor',
+      chairName: 'SOIT Faculty Panel',
       isBlocked: false,
     },
     {
@@ -335,7 +259,7 @@ export function createStarterSlotsForQuarterm(
       zoomMeetingId: rm(0).meetingId,
       zoomPasscode: rm(0).passcode,
       department: 'Computer Science',
-      chairName: 'Prof. Arthur Chen',
+      chairName: 'SOIT Faculty Panel',
       isBlocked: false,
     },
     {
@@ -343,12 +267,12 @@ export function createStarterSlotsForQuarterm(
       date: offsetDate(1),
       startTime: '13:30',
       endTime: '15:00',
-      zoomRoomName: rm(2).name,
-      zoomLink: rm(2).zoomLink,
-      zoomMeetingId: rm(2).meetingId,
-      zoomPasscode: rm(2).passcode,
+      zoomRoomName: rm(2 % zoomRooms.length).name,
+      zoomLink: rm(2 % zoomRooms.length).zoomLink,
+      zoomMeetingId: rm(2 % zoomRooms.length).meetingId,
+      zoomPasscode: rm(2 % zoomRooms.length).passcode,
       department: 'Information Technology',
-      chairName: 'Dr. Samuel Vance',
+      chairName: 'SOIT Faculty Panel',
       isBlocked: false,
     },
     {
@@ -356,12 +280,12 @@ export function createStarterSlotsForQuarterm(
       date: offsetDate(2),
       startTime: '10:30',
       endTime: '12:00',
-      zoomRoomName: rm(1).name,
-      zoomLink: rm(1).zoomLink,
-      zoomMeetingId: rm(1).meetingId,
-      zoomPasscode: rm(1).passcode,
+      zoomRoomName: rm(1 % zoomRooms.length).name,
+      zoomLink: rm(1 % zoomRooms.length).zoomLink,
+      zoomMeetingId: rm(1 % zoomRooms.length).meetingId,
+      zoomPasscode: rm(1 % zoomRooms.length).passcode,
       department: 'Data Science',
-      chairName: 'Prof. Henrik Lindqvist',
+      chairName: 'SOIT Faculty Panel',
       isBlocked: false,
     },
     {
@@ -369,12 +293,12 @@ export function createStarterSlotsForQuarterm(
       date: offsetDate(5),
       startTime: '14:00',
       endTime: '15:30',
-      zoomRoomName: rm(3).name,
-      zoomLink: rm(3).zoomLink,
-      zoomMeetingId: rm(3).meetingId,
-      zoomPasscode: rm(3).passcode,
+      zoomRoomName: rm(3 % zoomRooms.length).name,
+      zoomLink: rm(3 % zoomRooms.length).zoomLink,
+      zoomMeetingId: rm(3 % zoomRooms.length).meetingId,
+      zoomPasscode: rm(3 % zoomRooms.length).passcode,
       department: 'Information Systems',
-      chairName: 'Dr. Miriam Okafor',
+      chairName: 'SOIT Faculty Panel',
       isBlocked: false,
     },
   ];

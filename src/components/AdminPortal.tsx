@@ -117,6 +117,8 @@ interface AdminPortalProps {
   onToggleBlockSlot: (slotId: string) => void;
   onDeleteSlot: (slotId: string) => void;
   onToggleZoomRoomAvailability: (roomId: string) => void;
+  onAddZoomRoom?: (room: Omit<ZoomRoom, 'id'>) => void;
+  onDeleteZoomRoom?: (roomId: string) => void;
   onUpdateZoomRoomLink: (
     roomId: string,
     payload: { zoomLink: string; meetingId: string; passcode: string }
@@ -130,6 +132,7 @@ interface AdminPortalProps {
     program?: string;
     available: boolean;
   }) => void;
+  onDeleteFaculty?: (facultyId: string) => void;
   guidelines?: DefenseGuidelinesData;
   onUpdateGuidelines?: (updated: DefenseGuidelinesData) => void;
   onSwitchRole: () => void;
@@ -167,9 +170,12 @@ export function AdminPortal({
   onToggleBlockSlot,
   onDeleteSlot,
   onToggleZoomRoomAvailability,
+  onAddZoomRoom,
+  onDeleteZoomRoom,
   onUpdateZoomRoomLink,
   onToggleFacultyAvailability,
   onAddFaculty,
+  onDeleteFaculty,
   guidelines,
   onUpdateGuidelines,
   onSwitchRole,
@@ -259,6 +265,18 @@ export function AdminPortal({
   const [newFacultyProgram, setNewFacultyProgram] = useState('B.S. Information Technology · Mapúa UOx');
   const [newFacultyAvailable, setNewFacultyAvailable] = useState(true);
 
+  // Add Zoom Room Modal State
+  const [isAddZoomRoomOpen, setIsAddZoomRoomOpen] = useState(false);
+  const [newRoomName, setNewRoomName] = useState('UOx Zoom Defense Room 01');
+  const [newRoomHost, setNewRoomHost] = useState(user.email);
+  const [newRoomLink, setNewRoomLink] = useState('');
+  const [newRoomMeetingId, setNewRoomMeetingId] = useState('');
+  const [newRoomPasscode, setNewRoomPasscode] = useState('');
+  const [newRoomFeatures, setNewRoomFeatures] = useState(
+    'Waiting Room · Cloud Recording · Breakout Deliberation'
+  );
+  const [newRoomAvailable, setNewRoomAvailable] = useState(true);
+
   // Defense Guidelines Management State
   const activeGuidelines = guidelines ?? INITIAL_DEFENSE_GUIDELINES;
   const [guideTotalDuration, setGuideTotalDuration] = useState(activeGuidelines.sessionDurationMin);
@@ -303,6 +321,31 @@ export function AdminPortal({
     setIsAddFacultyOpen(false);
     setNewFacultyName('');
     setNewFacultyEmail('');
+  };
+
+  const handleAddZoomRoomSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!newRoomName.trim() || !newRoomLink.trim()) {
+      showToast('Please provide channel name and Zoom meeting link.', 'warning');
+      return;
+    }
+    onAddZoomRoom?.({
+      name: newRoomName.trim(),
+      hostAccount: newRoomHost.trim() || user.email,
+      zoomLink: newRoomLink.trim(),
+      meetingId: newRoomMeetingId.trim() || '—',
+      passcode: newRoomPasscode.trim() || '—',
+      features: newRoomFeatures.trim() || 'Waiting Room · Cloud Recording',
+      available: newRoomAvailable,
+      createdByEmail: user.email,
+      createdByName: user.name,
+    });
+    showToast(`Added Zoom defense channel ${newRoomName.trim()}.`, 'success');
+    setIsAddZoomRoomOpen(false);
+    setNewRoomName(`UOx Zoom Defense Room 0${zoomRooms.length + 1}`);
+    setNewRoomLink('');
+    setNewRoomMeetingId('');
+    setNewRoomPasscode('');
   };
 
   const handleUpdateProtocolCard = (index: number, field: keyof ProtocolCard, value: string) => {
@@ -357,7 +400,7 @@ export function AdminPortal({
 
   const handleCopyZoomLink = (id: string, link: string) => {
     if (!link) return;
-    navigator.clipboard?.writeText(link).catch(() => {});
+    navigator.clipboard?.writeText(link).catch(() => { });
     setCopiedId(id);
     window.setTimeout(() => setCopiedId(null), 1600);
   };
@@ -805,15 +848,15 @@ export function AdminPortal({
 
   const quartermBannerInfo: QuartermBannerInfo = activeQuarter
     ? {
-        code: activeQuarter.code,
-        label: activeQuarter.label,
-        status: activeQuarter.status,
-      }
+      code: activeQuarter.code,
+      label: activeQuarter.label,
+      status: activeQuarter.status,
+    }
     : {
-        code: 'No Active Term',
-        label: `Ready to open ${nextQuarterPreviewCode}`,
-        status: 'Unopened',
-      };
+      code: 'No Active Term',
+      label: `Ready to open ${nextQuarterPreviewCode}`,
+      status: 'Unopened',
+    };
 
   const navItems: NavItem[] = [
     { id: 'overview', label: 'Schedule Overview', icon: <LayoutDashboard className="w-4 h-4" /> },
@@ -898,11 +941,10 @@ export function AdminPortal({
               <>
                 <div className="flex items-start gap-3.5 min-w-0">
                   <div
-                    className={`w-11 h-11 rounded-lg flex items-center justify-center shrink-0 border ${
-                      activeQuarter.status === 'Open'
+                    className={`w-11 h-11 rounded-lg flex items-center justify-center shrink-0 border ${activeQuarter.status === 'Open'
                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                         : 'bg-[#A6192E]/10 text-[#A6192E] border-[#A6192E]/20'
-                    }`}
+                      }`}
                   >
                     {activeQuarter.status === 'Open' ? (
                       <Unlock className="w-5 h-5" />
@@ -917,11 +959,10 @@ export function AdminPortal({
                         ·
                       </span>
                       <span
-                        className={`inline-flex items-center gap-1 font-semibold ${
-                          activeQuarter.status === 'Open'
+                        className={`inline-flex items-center gap-1 font-semibold ${activeQuarter.status === 'Open'
                             ? 'text-emerald-700'
                             : 'text-[#A6192E]'
-                        }`}
+                          }`}
                       >
                         {activeQuarter.status === 'Open'
                           ? 'Open for Submissions & Scheduling'
@@ -1261,9 +1302,8 @@ export function AdminPortal({
                           {formatShortDate(appt.date)} · {appt.startTime}
                         </span>
                         <span
-                          className={`text-xs font-medium ${
-                            appt.zoomLink ? 'text-emerald-700' : 'text-[#9A6E00]'
-                          }`}
+                          className={`text-xs font-medium ${appt.zoomLink ? 'text-emerald-700' : 'text-[#9A6E00]'
+                            }`}
                         >
                           {appt.zoomLink ? 'Zoom Ready' : 'Set Zoom Link'}
                         </span>
@@ -1351,13 +1391,12 @@ export function AdminPortal({
                             </p>
                           </div>
                           <span
-                            className={`px-2 py-0.5 rounded text-[11px] font-semibold ${
-                              isAvailable
+                            className={`px-2 py-0.5 rounded text-[11px] font-semibold ${isAvailable
                                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                 : slot.isBlocked
-                                ? 'bg-stone-200 text-stone-600'
-                                : 'bg-rose-50 text-rose-700 border border-rose-200'
-                            }`}
+                                  ? 'bg-stone-200 text-stone-600'
+                                  : 'bg-rose-50 text-rose-700 border border-rose-200'
+                              }`}
                           >
                             {isAvailable ? 'Open' : slot.isBlocked ? 'Locked' : 'Reserved'}
                           </span>
@@ -1404,9 +1443,8 @@ export function AdminPortal({
                       >
                         <span className="font-medium text-zinc-800 truncate">{shortName}</span>
                         <span
-                          className={`w-2 h-2 rounded-full shrink-0 ${
-                            room.available ? 'bg-emerald-500' : 'bg-zinc-300'
-                          }`}
+                          className={`w-2 h-2 rounded-full shrink-0 ${room.available ? 'bg-emerald-500' : 'bg-zinc-300'
+                            }`}
                         />
                       </div>
                     );
@@ -1461,9 +1499,9 @@ export function AdminPortal({
         <AdminAnnouncementsView
           user={user}
           announcements={announcements}
-          onCreateAnnouncement={onCreateAnnouncement ?? (() => {})}
-          onUpdateAnnouncement={onUpdateAnnouncement ?? (() => {})}
-          onDeleteAnnouncement={onDeleteAnnouncement ?? (() => {})}
+          onCreateAnnouncement={onCreateAnnouncement ?? (() => { })}
+          onUpdateAnnouncement={onUpdateAnnouncement ?? (() => { })}
+          onDeleteAnnouncement={onDeleteAnnouncement ?? (() => { })}
           onNotify={showToast}
         />
       )}
@@ -1569,11 +1607,10 @@ export function AdminPortal({
                       key={tab.id}
                       type="button"
                       onClick={() => setFileStatusFilter(tab.id)}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap shrink-0 ${
-                        fileStatusFilter === tab.id
+                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap shrink-0 ${fileStatusFilter === tab.id
                           ? 'bg-white text-zinc-900 shadow-xs'
                           : 'text-zinc-600 hover:text-zinc-900'
-                      }`}
+                        }`}
                     >
                       {tab.label}
                     </button>
@@ -1635,13 +1672,12 @@ export function AdminPortal({
                       <div className="space-y-3">
                         <div className="flex items-start justify-between gap-3">
                           <div
-                            className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
-                              group.isCleared
+                            className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-colors ${group.isCleared
                                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80'
                                 : group.revisionCount > 0
-                                ? 'bg-[#A6192E]/10 text-[#A6192E] border border-[#A6192E]/20'
-                                : 'bg-[#C99700]/12 text-[#9A6E00] border border-[#C99700]/25'
-                            }`}
+                                  ? 'bg-[#A6192E]/10 text-[#A6192E] border border-[#A6192E]/20'
+                                  : 'bg-[#C99700]/12 text-[#9A6E00] border border-[#C99700]/25'
+                              }`}
                           >
                             <Folder className="w-5 h-5 group-hover:hidden" />
                             <FolderOpen className="w-5 h-5 hidden group-hover:block" />
@@ -2133,21 +2169,19 @@ export function AdminPortal({
                       key={st}
                       type="button"
                       onClick={() => setStatusFilter(st)}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap shrink-0 inline-flex items-center gap-1.5 ${
-                        isSelected
+                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap shrink-0 inline-flex items-center gap-1.5 ${isSelected
                           ? 'bg-white text-zinc-900 shadow-xs'
                           : st === 'Missing Zoom Link' && missingZoomLinkCount > 0
-                          ? 'text-[#9A6E00] hover:text-zinc-900'
-                          : 'text-zinc-600 hover:text-zinc-900'
-                      }`}
+                            ? 'text-[#9A6E00] hover:text-zinc-900'
+                            : 'text-zinc-600 hover:text-zinc-900'
+                        }`}
                     >
                       <span>{st}</span>
                       <span
-                        className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono tabular-nums font-semibold ${
-                          isSelected
+                        className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono tabular-nums font-semibold ${isSelected
                             ? 'bg-stone-100 text-zinc-800'
                             : 'bg-stone-300/60 text-zinc-600'
-                        }`}
+                          }`}
                       >
                         {count}
                       </span>
@@ -2188,8 +2222,7 @@ export function AdminPortal({
                       `ThesisDesk-${termCode}-Defense-Schedule`
                     );
                     showToast(
-                      `Exported ${filteredRequests.length} defense request${
-                        filteredRequests.length === 1 ? '' : 's'
+                      `Exported ${filteredRequests.length} defense request${filteredRequests.length === 1 ? '' : 's'
                       } to CSV.`,
                       'success'
                     );
@@ -2394,16 +2427,26 @@ export function AdminPortal({
       {activeTab === 'directory' && (
         <div className="space-y-4 sm:space-y-5">
           <section className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-zinc-200 flex items-center justify-between gap-3">
+            <div className="px-5 py-4 border-b border-zinc-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <h2 className="text-base font-semibold text-zinc-900">
                   UOx Zoom Defense Channels
                 </h2>
                 <p className="text-xs text-zinc-500 mt-0.5">
-                  Updating a channel&apos;s Zoom link automatically syncs to open slots and active
-                  defenses assigned to that channel.
+                  Faculty chairs can add and manage Zoom defense rooms. Updates sync automatically to scheduled slots.
                 </p>
               </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setNewRoomHost(user.email);
+                  setIsAddZoomRoomOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg text-white bg-[#A6192E] hover:bg-[#8B1425] transition-colors shadow-xs shrink-0 self-start sm:self-auto cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Zoom Channel</span>
+              </button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -2416,117 +2459,154 @@ export function AdminPortal({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 text-sm">
-                  {zoomRooms.map((room) => {
-                    const isEditing = editingZoomRoomId === room.id;
-                    return (
-                      <tr key={room.id}>
-                        <td className="py-3.5 px-4 whitespace-nowrap align-top">
-                          <p className="font-medium text-zinc-900">{room.name}</p>
-                          <p className="text-xs font-mono text-zinc-500 mt-0.5">
-                            {room.hostAccount}
-                          </p>
-                        </td>
-                        <td className="py-3.5 px-4 min-w-[290px] align-top">
-                          {isEditing ? (
-                            <div className="space-y-2">
-                              <input
-                                type="url"
-                                value={editingRoomLink}
-                                onChange={(e) => setEditingRoomLink(e.target.value)}
-                                placeholder="https://mapua-edu-ph.zoom.us/j/..."
-                                className="w-full px-2.5 py-1.5 text-xs font-mono bg-white border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
-                              />
-                              <div className="grid grid-cols-2 gap-2">
-                                <input
-                                  type="text"
-                                  value={editingRoomMeetingId}
-                                  onChange={(e) => setEditingRoomMeetingId(e.target.value)}
-                                  placeholder="Meeting ID"
-                                  className="px-2.5 py-1.5 text-xs font-mono bg-white border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
-                                />
-                                <input
-                                  type="text"
-                                  value={editingRoomPasscode}
-                                  onChange={(e) => setEditingRoomPasscode(e.target.value)}
-                                  placeholder="Passcode"
-                                  className="px-2.5 py-1.5 text-xs font-mono bg-white border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
-                                />
-                              </div>
-                            </div>
-                          ) : (
-                            <div>
-                              <p className="text-xs font-mono text-zinc-900 break-all">
-                                {room.zoomLink}
+                  {zoomRooms.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="py-12 px-4 text-center">
+                        <div className="w-10 h-10 rounded-full bg-stone-100 border border-stone-200 text-zinc-400 flex items-center justify-center mx-auto mb-2">
+                          <Video className="w-5 h-5" />
+                        </div>
+                        <p className="text-sm font-semibold text-zinc-800">No Zoom Channels Added Yet</p>
+                        <p className="text-xs text-zinc-500 mt-0.5">Click &ldquo;Add Zoom Channel&rdquo; above to register an online defense room.</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    zoomRooms.map((room) => {
+                      const isEditing = editingZoomRoomId === room.id;
+                      const canDeleteRoom =
+                        user.role === 'admin' ||
+                        !room.createdByEmail ||
+                        (user.email && room.createdByEmail.toLowerCase() === user.email.toLowerCase());
+
+                      return (
+                        <tr key={room.id} className="hover:bg-zinc-50/70 transition-colors">
+                          <td className="py-3.5 px-4 whitespace-nowrap align-top">
+                            <p className="font-medium text-zinc-900">{room.name}</p>
+                            <p className="text-xs font-mono text-zinc-500 mt-0.5">
+                              {room.hostAccount}
+                            </p>
+                            {room.createdByName && (
+                              <p className="text-[10px] text-zinc-400 mt-0.5">
+                                Added by {room.createdByName}
                               </p>
-                              <p className="text-xs font-mono tabular-nums text-zinc-500 mt-0.5">
-                                ID: {room.meetingId} · Passcode: {room.passcode}
-                              </p>
-                            </div>
-                          )}
-                        </td>
-                        <td className="py-3.5 px-4 text-xs text-zinc-600 min-w-[210px] align-top">
-                          {room.features}
-                        </td>
-                        <td className="py-3.5 px-4 text-right whitespace-nowrap align-top">
-                          <div className="inline-flex items-center gap-1.5">
-                            {isEditing ? (
-                              <>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    onUpdateZoomRoomLink(room.id, {
-                                      zoomLink: editingRoomLink.trim(),
-                                      meetingId: editingRoomMeetingId.trim(),
-                                      passcode: editingRoomPasscode.trim(),
-                                    });
-                                    setEditingZoomRoomId(null);
-                                    showToast(`Updated Zoom link for ${room.name}.`, 'success');
-                                  }}
-                                  className="py-1.5 px-3 text-xs font-medium text-white bg-[#A6192E] hover:bg-[#881325] rounded-md transition-colors"
-                                >
-                                  Save Link
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setEditingZoomRoomId(null)}
-                                  className="py-1.5 px-2.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100 rounded-md"
-                                >
-                                  Cancel
-                                </button>
-                              </>
-                            ) : (
-                              <>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setEditingZoomRoomId(room.id);
-                                    setEditingRoomLink(room.zoomLink);
-                                    setEditingRoomMeetingId(room.meetingId);
-                                    setEditingRoomPasscode(room.passcode);
-                                  }}
-                                  className="py-1.5 px-2.5 text-xs font-medium text-zinc-700 bg-white hover:bg-stone-50 border border-stone-300 rounded-md inline-flex items-center gap-1 transition-colors"
-                                >
-                                  <Pencil className="w-3 h-3" />
-                                  <span>Edit Link</span>
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => onToggleZoomRoomAvailability(room.id)}
-                                  className={`py-1.5 px-3 text-xs font-medium rounded-md transition-colors ${
-                                    room.available
-                                      ? 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
-                                      : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
-                                  }`}
-                                >
-                                  {room.available ? 'Active' : 'Offline'}
-                                </button>
-                              </>
                             )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                          </td>
+                          <td className="py-3.5 px-4 min-w-[290px] align-top">
+                            {isEditing ? (
+                              <div className="space-y-2">
+                                <input
+                                  type="url"
+                                  value={editingRoomLink}
+                                  onChange={(e) => setEditingRoomLink(e.target.value)}
+                                  placeholder="https://mapua-edu-ph.zoom.us/j/..."
+                                  className="w-full px-2.5 py-1.5 text-xs font-mono bg-white border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                                />
+                                <div className="grid grid-cols-2 gap-2">
+                                  <input
+                                    type="text"
+                                    value={editingRoomMeetingId}
+                                    onChange={(e) => setEditingRoomMeetingId(e.target.value)}
+                                    placeholder="Meeting ID"
+                                    className="px-2.5 py-1.5 text-xs font-mono bg-white border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                                  />
+                                  <input
+                                    type="text"
+                                    value={editingRoomPasscode}
+                                    onChange={(e) => setEditingRoomPasscode(e.target.value)}
+                                    placeholder="Passcode"
+                                    className="px-2.5 py-1.5 text-xs font-mono bg-white border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                                  />
+                                </div>
+                              </div>
+                            ) : (
+                              <div>
+                                <p className="text-xs font-mono text-zinc-900 break-all">
+                                  {room.zoomLink}
+                                </p>
+                                <p className="text-xs font-mono tabular-nums text-zinc-500 mt-0.5">
+                                  ID: {room.meetingId} · Passcode: {room.passcode}
+                                </p>
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4 text-xs text-zinc-600 min-w-[210px] align-top">
+                            {room.features}
+                          </td>
+                          <td className="py-3.5 px-4 text-right whitespace-nowrap align-top">
+                            <div className="inline-flex items-center gap-1.5">
+                              {isEditing ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      onUpdateZoomRoomLink(room.id, {
+                                        zoomLink: editingRoomLink.trim(),
+                                        meetingId: editingRoomMeetingId.trim(),
+                                        passcode: editingRoomPasscode.trim(),
+                                      });
+                                      setEditingZoomRoomId(null);
+                                      showToast(`Updated Zoom link for ${room.name}.`, 'success');
+                                    }}
+                                    className="py-1.5 px-3 text-xs font-medium text-white bg-[#A6192E] hover:bg-[#881325] rounded-md transition-colors cursor-pointer"
+                                  >
+                                    Save Link
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingZoomRoomId(null)}
+                                    className="py-1.5 px-2.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100 rounded-md cursor-pointer"
+                                  >
+                                    Cancel
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingZoomRoomId(room.id);
+                                      setEditingRoomLink(room.zoomLink);
+                                      setEditingRoomMeetingId(room.meetingId);
+                                      setEditingRoomPasscode(room.passcode);
+                                    }}
+                                    className="py-1.5 px-2.5 text-xs font-medium text-zinc-700 bg-white hover:bg-stone-50 border border-stone-300 rounded-md inline-flex items-center gap-1 transition-colors cursor-pointer"
+                                  >
+                                    <Pencil className="w-3 h-3" />
+                                    <span>Edit Link</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => onToggleZoomRoomAvailability(room.id)}
+                                    className={`py-1.5 px-3 text-xs font-medium rounded-md transition-colors cursor-pointer ${room.available
+                                        ? 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                                        : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                                      }`}
+                                  >
+                                    {room.available ? 'Active' : 'Offline'}
+                                  </button>
+                                  {canDeleteRoom && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (window.confirm(`Delete ${room.name}? This channel will be permanently removed.`)) {
+                                          onDeleteZoomRoom?.(room.id);
+                                          showToast(`Deleted ${room.name}.`, 'info');
+                                        }
+                                      }}
+                                      className="py-1.5 px-2 text-xs font-medium text-rose-700 hover:bg-rose-50 rounded-md transition-colors inline-flex items-center gap-1 cursor-pointer"
+                                      title="Delete Zoom Room"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                      <span>Delete</span>
+                                    </button>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
@@ -2559,41 +2639,67 @@ export function AdminPortal({
                     <th className="py-3 px-4">Official Email</th>
                     <th className="py-3 px-4">Program & Department</th>
                     <th className="py-3 px-4 text-right">Assigned Defenses</th>
-                    <th className="py-3 px-4 text-right">Availability</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 text-sm">
-                  {faculty.map((member) => (
-                    <tr key={member.id} className="hover:bg-zinc-50/70 transition-colors">
-                      <td className="py-3 px-4 whitespace-nowrap">
-                        <p className="font-medium text-zinc-900">{member.name}</p>
-                        <p className="text-xs text-zinc-500">{member.title}</p>
-                      </td>
-                      <td className="py-3 px-4 whitespace-nowrap font-mono text-xs text-zinc-600">
-                        {member.email || '—'}
-                      </td>
-                      <td className="py-3 px-4 whitespace-nowrap">
-                        <p className="text-xs font-semibold text-zinc-800">{member.program || member.department}</p>
-                        <p className="text-[11px] text-zinc-500">{member.department}</p>
-                      </td>
-                      <td className="py-3 px-4 text-right font-mono tabular-nums text-zinc-800">
-                        {member.activeDefenses}
-                      </td>
-                      <td className="py-3 px-4 text-right whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => onToggleFacultyAvailability(member.id)}
-                          className={`py-1.5 px-3 text-xs font-medium rounded-md transition-colors cursor-pointer ${
-                            member.available
-                              ? 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
-                              : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
-                          }`}
-                        >
-                          {member.available ? 'Available' : 'On Leave'}
-                        </button>
+                  {faculty.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-12 px-4 text-center">
+                        <div className="w-10 h-10 rounded-full bg-stone-100 border border-stone-200 text-zinc-400 flex items-center justify-center mx-auto mb-2">
+                          <UserPlus className="w-5 h-5" />
+                        </div>
+                        <p className="text-sm font-semibold text-zinc-800">No Faculty Chairs Registered Yet</p>
+                        <p className="text-xs text-zinc-500 mt-0.5">Click &ldquo;Add Faculty Member&rdquo; above to register evaluators.</p>
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    faculty.map((member) => (
+                      <tr key={member.id} className="hover:bg-zinc-50/70 transition-colors">
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          <p className="font-medium text-zinc-900">{member.name}</p>
+                          <p className="text-xs text-zinc-500">{member.title}</p>
+                        </td>
+                        <td className="py-3 px-4 whitespace-nowrap font-mono text-xs text-zinc-600">
+                          {member.email || '—'}
+                        </td>
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          <p className="text-xs font-semibold text-zinc-800">{member.program || member.department}</p>
+                          <p className="text-[11px] text-zinc-500">{member.department}</p>
+                        </td>
+                        <td className="py-3 px-4 text-right font-mono tabular-nums text-zinc-800">
+                          {member.activeDefenses}
+                        </td>
+                        <td className="py-3 px-4 text-right whitespace-nowrap">
+                          <div className="inline-flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => onToggleFacultyAvailability(member.id)}
+                              className={`py-1.5 px-3 text-xs font-medium rounded-md transition-colors cursor-pointer ${member.available
+                                  ? 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                                  : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                                }`}
+                            >
+                              {member.available ? 'Available' : 'On Leave'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (window.confirm(`Delete ${member.name} from faculty directory?`)) {
+                                  onDeleteFaculty?.(member.id);
+                                  showToast(`Deleted ${member.name} from faculty directory.`, 'info');
+                                }
+                              }}
+                              className="p-1.5 text-zinc-400 hover:text-rose-700 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
+                              title="Delete Faculty Member"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -2963,167 +3069,167 @@ export function AdminPortal({
               }
               className="bg-white border border-stone-300 rounded-xl max-w-md w-full p-6 shadow-2xl my-8"
             >
-            <div className="flex items-start justify-between gap-4 pb-4 border-b border-zinc-200">
-              <div>
-                <h2 id="add-slot-title" className="text-xl font-semibold text-zinc-900">
-                  Add UOx Zoom Defense Slot
-                </h2>
-                <p className="text-xs text-zinc-500 mt-0.5">
-                  Publish an online defense window and set its Zoom link for UOx candidates.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setAddSlotModalOpen(false)}
-                aria-label="Close modal"
-                className="p-1.5 text-zinc-400 hover:text-zinc-700 rounded-md"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateSlot} className="mt-5 space-y-4">
-              <div>
-                <label htmlFor="slot-date" className="block text-xs font-medium text-zinc-700 mb-1">
-                  Defense Date
-                </label>
-                <input
-                  id="slot-date"
-                  type="date"
-                  required
-                  value={newSlotDate}
-                  onChange={(e) => setNewSlotDate(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-start justify-between gap-4 pb-4 border-b border-zinc-200">
                 <div>
-                  <label htmlFor="slot-start" className="block text-xs font-medium text-zinc-700 mb-1">
-                    Start Time
-                  </label>
-                  <input
-                    id="slot-start"
-                    type="time"
-                    required
-                    value={newStartTime}
-                    onChange={(e) => setNewStartTime(e.target.value)}
-                    className="w-full px-3 py-2 text-sm font-mono border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
-                  />
+                  <h2 id="add-slot-title" className="text-xl font-semibold text-zinc-900">
+                    Add UOx Zoom Defense Slot
+                  </h2>
+                  <p className="text-xs text-zinc-500 mt-0.5">
+                    Publish an online defense window and set its Zoom link for UOx candidates.
+                  </p>
                 </div>
-                <div>
-                  <label htmlFor="slot-end" className="block text-xs font-medium text-zinc-700 mb-1">
-                    End Time
-                  </label>
-                  <input
-                    id="slot-end"
-                    type="time"
-                    required
-                    value={newEndTime}
-                    onChange={(e) => setNewEndTime(e.target.value)}
-                    className="w-full px-3 py-2 text-sm font-mono border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="slot-zoom-room" className="block text-xs font-medium text-zinc-700 mb-1">
-                  UOx Zoom Channel
-                </label>
-                <select
-                  id="slot-zoom-room"
-                  value={newZoomRoomName}
-                  onChange={(e) => handleSelectNewSlotZoomRoom(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
-                >
-                  {zoomRooms.map((r) => (
-                    <option key={r.id} value={r.name}>
-                      {r.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label htmlFor="slot-zoom-link" className="block text-xs font-medium text-zinc-700 mb-1">
-                  Zoom Meeting Link
-                </label>
-                <input
-                  id="slot-zoom-link"
-                  type="url"
-                  value={newZoomLink}
-                  onChange={(e) => setNewZoomLink(e.target.value)}
-                  placeholder="https://mapua-edu-ph.zoom.us/j/..."
-                  className="w-full px-3 py-2 text-xs font-mono border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label htmlFor="slot-passcode" className="block text-xs font-medium text-zinc-700 mb-1">
-                    Passcode (optional)
-                  </label>
-                  <input
-                    id="slot-passcode"
-                    type="text"
-                    value={newZoomPasscode}
-                    onChange={(e) => setNewZoomPasscode(e.target.value)}
-                    placeholder="SOIT-UOX1"
-                    className="w-full px-3 py-2 text-xs font-mono border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="slot-dept" className="block text-xs font-medium text-zinc-700 mb-1">
-                    SOIT Program
-                  </label>
-                  <select
-                    id="slot-dept"
-                    value={newDepartment}
-                    onChange={(e) => setNewDepartment(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
-                  >
-                    <option value="Information Technology">Information Technology</option>
-                    <option value="Computer Science">Computer Science</option>
-                    <option value="Data Science">Data Science</option>
-                    <option value="Information Systems">Information Systems</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="slot-chair" className="block text-xs font-medium text-zinc-700 mb-1">
-                  Presiding Chair
-                </label>
-                <select
-                  id="slot-chair"
-                  value={newChair}
-                  onChange={(e) => setNewChair(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
-                >
-                  {faculty.map((f) => (
-                    <option key={f.id} value={f.name}>
-                      {f.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="pt-3 border-t border-zinc-200 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setAddSlotModalOpen(false)}
-                  className="py-2 px-4 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors cursor-pointer"
+                  aria-label="Close modal"
+                  className="p-1.5 text-zinc-400 hover:text-zinc-700 rounded-md"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="py-2 px-4 text-sm font-medium text-white bg-[#A6192E] hover:bg-[#881325] rounded-lg transition-colors cursor-pointer"
-                >
-                  Publish Slot
+                  <X className="w-5 h-5" />
                 </button>
               </div>
-            </form>
+
+              <form onSubmit={handleCreateSlot} className="mt-5 space-y-4">
+                <div>
+                  <label htmlFor="slot-date" className="block text-xs font-medium text-zinc-700 mb-1">
+                    Defense Date
+                  </label>
+                  <input
+                    id="slot-date"
+                    type="date"
+                    required
+                    value={newSlotDate}
+                    onChange={(e) => setNewSlotDate(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label htmlFor="slot-start" className="block text-xs font-medium text-zinc-700 mb-1">
+                      Start Time
+                    </label>
+                    <input
+                      id="slot-start"
+                      type="time"
+                      required
+                      value={newStartTime}
+                      onChange={(e) => setNewStartTime(e.target.value)}
+                      className="w-full px-3 py-2 text-sm font-mono border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="slot-end" className="block text-xs font-medium text-zinc-700 mb-1">
+                      End Time
+                    </label>
+                    <input
+                      id="slot-end"
+                      type="time"
+                      required
+                      value={newEndTime}
+                      onChange={(e) => setNewEndTime(e.target.value)}
+                      className="w-full px-3 py-2 text-sm font-mono border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="slot-zoom-room" className="block text-xs font-medium text-zinc-700 mb-1">
+                    UOx Zoom Channel
+                  </label>
+                  <select
+                    id="slot-zoom-room"
+                    value={newZoomRoomName}
+                    onChange={(e) => handleSelectNewSlotZoomRoom(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                  >
+                    {zoomRooms.map((r) => (
+                      <option key={r.id} value={r.name}>
+                        {r.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="slot-zoom-link" className="block text-xs font-medium text-zinc-700 mb-1">
+                    Zoom Meeting Link
+                  </label>
+                  <input
+                    id="slot-zoom-link"
+                    type="url"
+                    value={newZoomLink}
+                    onChange={(e) => setNewZoomLink(e.target.value)}
+                    placeholder="https://mapua-edu-ph.zoom.us/j/..."
+                    className="w-full px-3 py-2 text-xs font-mono border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label htmlFor="slot-passcode" className="block text-xs font-medium text-zinc-700 mb-1">
+                      Passcode (optional)
+                    </label>
+                    <input
+                      id="slot-passcode"
+                      type="text"
+                      value={newZoomPasscode}
+                      onChange={(e) => setNewZoomPasscode(e.target.value)}
+                      placeholder="SOIT-UOX1"
+                      className="w-full px-3 py-2 text-xs font-mono border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="slot-dept" className="block text-xs font-medium text-zinc-700 mb-1">
+                      SOIT Program
+                    </label>
+                    <select
+                      id="slot-dept"
+                      value={newDepartment}
+                      onChange={(e) => setNewDepartment(e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                    >
+                      <option value="Information Technology">Information Technology</option>
+                      <option value="Computer Science">Computer Science</option>
+                      <option value="Data Science">Data Science</option>
+                      <option value="Information Systems">Information Systems</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="slot-chair" className="block text-xs font-medium text-zinc-700 mb-1">
+                    Presiding Chair
+                  </label>
+                  <select
+                    id="slot-chair"
+                    value={newChair}
+                    onChange={(e) => setNewChair(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                  >
+                    {faculty.map((f) => (
+                      <option key={f.id} value={f.name}>
+                        {f.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="pt-3 border-t border-zinc-200 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setAddSlotModalOpen(false)}
+                    className="py-2 px-4 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="py-2 px-4 text-sm font-medium text-white bg-[#A6192E] hover:bg-[#881325] rounded-lg transition-colors cursor-pointer"
+                  >
+                    Publish Slot
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </motion.div>
         )}
@@ -3266,11 +3372,10 @@ export function AdminPortal({
                     <button
                       type="button"
                       onClick={() => setNewFacultyAvailable(true)}
-                      className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
-                        newFacultyAvailable
+                      className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${newFacultyAvailable
                           ? 'border-emerald-500 bg-emerald-50/70 text-emerald-900 shadow-xs'
                           : 'border-zinc-200 hover:border-zinc-300 text-zinc-600'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center justify-between mb-0.5">
                         <span className="text-xs font-semibold">Available</span>
@@ -3281,11 +3386,10 @@ export function AdminPortal({
                     <button
                       type="button"
                       onClick={() => setNewFacultyAvailable(false)}
-                      className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
-                        !newFacultyAvailable
+                      className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${!newFacultyAvailable
                           ? 'border-zinc-400 bg-zinc-100 text-zinc-900 shadow-xs'
                           : 'border-zinc-200 hover:border-zinc-300 text-zinc-600'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center justify-between mb-0.5">
                         <span className="text-xs font-semibold">On Leave</span>
@@ -3309,6 +3413,196 @@ export function AdminPortal({
                     className="py-2 px-4 text-sm font-medium text-white bg-[#A6192E] hover:bg-[#881325] rounded-lg transition-colors cursor-pointer"
                   >
                     Register Faculty Member
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ADD ZOOM ROOM MODAL */}
+      <AnimatePresence>
+        {isAddZoomRoomOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-zinc-200 p-6 overflow-hidden max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex items-start justify-between pb-4 border-b border-zinc-200">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center shrink-0">
+                    <Video className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-zinc-900">
+                      Add UOx Zoom Defense Channel
+                    </h3>
+                    <p className="text-xs text-zinc-500 mt-0.5">
+                      Register an official Zoom meeting room for oral thesis presentations.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsAddZoomRoomOpen(false)}
+                  aria-label="Close modal"
+                  className="p-1.5 text-zinc-400 hover:text-zinc-700 rounded-md cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddZoomRoomSubmit} className="mt-5 space-y-4">
+                <div>
+                  <label htmlFor="zoom-room-name" className="block text-xs font-semibold text-zinc-700 mb-1">
+                    Defense Channel Name *
+                  </label>
+                  <input
+                    id="zoom-room-name"
+                    type="text"
+                    required
+                    placeholder="e.g., UOx Zoom Defense Room 01"
+                    value={newRoomName}
+                    onChange={(e) => setNewRoomName(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="zoom-room-host" className="block text-xs font-semibold text-zinc-700 mb-1">
+                    Host Account Email *
+                  </label>
+                  <input
+                    id="zoom-room-host"
+                    type="email"
+                    required
+                    placeholder="e.g., faculty@mapua.edu.ph"
+                    value={newRoomHost}
+                    onChange={(e) => setNewRoomHost(e.target.value)}
+                    className="w-full px-3 py-2 text-sm font-mono border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                  />
+                  <p className="text-[11px] text-zinc-500 mt-1">
+                    Designated Mapúa institutional host account managing panel host rights.
+                  </p>
+                </div>
+
+                <div>
+                  <label htmlFor="zoom-room-link" className="block text-xs font-semibold text-zinc-700 mb-1">
+                    Zoom Meeting Link *
+                  </label>
+                  <input
+                    id="zoom-room-link"
+                    type="url"
+                    required
+                    placeholder="https://mapua-edu-ph.zoom.us/j/..."
+                    value={newRoomLink}
+                    onChange={(e) => setNewRoomLink(e.target.value)}
+                    className="w-full px-3 py-2 text-sm font-mono border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label htmlFor="zoom-meeting-id" className="block text-xs font-semibold text-zinc-700 mb-1">
+                      Meeting ID (Optional)
+                    </label>
+                    <input
+                      id="zoom-meeting-id"
+                      type="text"
+                      placeholder="e.g., 942 8174 0211"
+                      value={newRoomMeetingId}
+                      onChange={(e) => setNewRoomMeetingId(e.target.value)}
+                      className="w-full px-3 py-2 text-xs font-mono border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="zoom-passcode" className="block text-xs font-semibold text-zinc-700 mb-1">
+                      Passcode (Optional)
+                    </label>
+                    <input
+                      id="zoom-passcode"
+                      type="text"
+                      placeholder="e.g., SOIT-UOX1"
+                      value={newRoomPasscode}
+                      onChange={(e) => setNewRoomPasscode(e.target.value)}
+                      className="w-full px-3 py-2 text-xs font-mono border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="zoom-room-features" className="block text-xs font-semibold text-zinc-700 mb-1">
+                    Channel Capabilities
+                  </label>
+                  <input
+                    id="zoom-room-features"
+                    type="text"
+                    placeholder="e.g., Waiting Room · Cloud Recording · Breakout Deliberation"
+                    value={newRoomFeatures}
+                    onChange={(e) => setNewRoomFeatures(e.target.value)}
+                    className="w-full px-3 py-2 text-xs border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
+                    Channel Operating Status
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setNewRoomAvailable(true)}
+                      className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                        newRoomAvailable
+                          ? 'border-emerald-500 bg-emerald-50/70 text-emerald-900 shadow-xs'
+                          : 'border-zinc-200 hover:border-zinc-300 text-zinc-600'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-xs font-semibold">Active & Open</span>
+                        {newRoomAvailable && <Check className="w-3.5 h-3.5 text-emerald-600" />}
+                      </div>
+                      <p className="text-[10px] text-zinc-500">Available for defense slots</p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNewRoomAvailable(false)}
+                      className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                        !newRoomAvailable
+                          ? 'border-zinc-400 bg-zinc-100 text-zinc-900 shadow-xs'
+                          : 'border-zinc-200 hover:border-zinc-300 text-zinc-600'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-xs font-semibold">Maintenance</span>
+                        {!newRoomAvailable && <Check className="w-3.5 h-3.5 text-zinc-600" />}
+                      </div>
+                      <p className="text-[10px] text-zinc-500">Temporarily offline</p>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-zinc-200 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddZoomRoomOpen(false)}
+                    className="py-2 px-4 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="py-2 px-4 text-sm font-medium text-white bg-[#A6192E] hover:bg-[#881325] rounded-lg transition-colors cursor-pointer"
+                  >
+                    Register Zoom Channel
                   </button>
                 </div>
               </form>
@@ -3405,9 +3699,9 @@ export function AdminPortal({
         hasPendingDocumentReview={
           inspectedAppointment
             ? candidateHasPendingFileReview(
-                inspectedAppointment.studentEmail,
-                inspectedAppointment.studentId
-              )
+              inspectedAppointment.studentEmail,
+              inspectedAppointment.studentId
+            )
             : false
         }
         onClose={() => setInspectedAppointment(null)}
@@ -3424,8 +3718,8 @@ export function AdminPortal({
             status === 'Cancelled'
               ? 'info'
               : status === 'Reschedule Requested'
-              ? 'warning'
-              : 'success'
+                ? 'warning'
+                : 'success'
           );
         }}
       />

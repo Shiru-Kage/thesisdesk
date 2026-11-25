@@ -68,6 +68,9 @@ export interface ZoomRoom {
   passcode: string;
   features: string;
   available: boolean;
+  createdByEmail?: string;
+  createdByName?: string;
+  createdAt?: string;
 }
 
 export type AnnouncementPriority = 'normal' | 'important' | 'urgent';

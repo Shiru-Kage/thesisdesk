@@ -54,6 +54,9 @@ import {
 const TODAY_ISO = new Date().toISOString().split('T')[0];
 const STORAGE_KEY = 'thesisdesk_portal_state_v4';
 
+const HARDCODED_ROOM_IDS = new Set(['ZM-01', 'ZM-02', 'ZM-03', 'ZM-04']);
+const HARDCODED_FACULTY_IDS = new Set(['FAC-01', 'FAC-02', 'FAC-03', 'FAC-04']);
+
 interface PersistedPortalState {
   slots: DefenseSlot[];
   appointments: DefenseAppointment[];
@@ -104,12 +107,18 @@ export default function App() {
   const [appointments, setAppointments] = useState<DefenseAppointment[]>(
     () => persisted?.appointments ?? []
   );
-  const [zoomRooms, setZoomRooms] = useState<ZoomRoom[]>(
-    () => persisted?.zoomRooms ?? INITIAL_ZOOM_ROOMS
-  );
-  const [faculty, setFaculty] = useState<FacultyChair[]>(
-    () => persisted?.faculty ?? INITIAL_FACULTY
-  );
+  const [zoomRooms, setZoomRooms] = useState<ZoomRoom[]>(() => {
+    if (persisted?.zoomRooms) {
+      return persisted.zoomRooms.filter((r) => !HARDCODED_ROOM_IDS.has(r.id));
+    }
+    return INITIAL_ZOOM_ROOMS;
+  });
+  const [faculty, setFaculty] = useState<FacultyChair[]>(() => {
+    if (persisted?.faculty) {
+      return persisted.faculty.filter((f) => !HARDCODED_FACULTY_IDS.has(f.id));
+    }
+    return INITIAL_FACULTY;
+  });
   const [checklist, setChecklist] = useState<ChecklistItem[]>(
     () => persisted?.checklist ?? INITIAL_CHECKLIST
   );
@@ -317,12 +326,14 @@ export default function App() {
       }
     });
 
+    // Purge any legacy hardcoded rooms and faculty from Firestore
+    HARDCODED_ROOM_IDS.forEach((id) => removeDocument('zoomRooms', id).catch(() => {}));
+    HARDCODED_FACULTY_IDS.forEach((id) => removeDocument('faculty', id).catch(() => {}));
+
     // 8. Subscribe to Faculty Roster
     const unsubFaculty = subscribeToCollection<FacultyChair>('faculty', (records) => {
-      if (records && records.length > 0) {
-        setFaculty(records);
-      } else if (!initialSeededRef.current) {
-        batchSaveDocuments('faculty', INITIAL_FACULTY);
+      if (records) {
+        setFaculty(records.filter((f) => !HARDCODED_FACULTY_IDS.has(f.id)));
       }
     });
 
@@ -332,6 +343,13 @@ export default function App() {
         setGuidelines(data);
       } else if (!initialSeededRef.current) {
         saveDocument('config', INITIAL_DEFENSE_GUIDELINES);
+      }
+    });
+
+    // 10. Subscribe to Zoom Rooms
+    const unsubZoomRooms = subscribeToCollection<ZoomRoom>('zoomRooms', (records) => {
+      if (records) {
+        setZoomRooms(records.filter((r) => !HARDCODED_ROOM_IDS.has(r.id)));
       }
     });
 
@@ -347,6 +365,7 @@ export default function App() {
       unsubAnnouncements?.();
       unsubFaculty?.();
       unsubGuidelines?.();
+      unsubZoomRooms?.();
     };
   }, []);
 
@@ -815,6 +834,28 @@ export default function App() {
         return item;
       })
     );
+  };
+
+  const handleAddZoomRoom = (roomData: Omit<ZoomRoom, 'id'>) => {
+    const newRoom: ZoomRoom = {
+      ...roomData,
+      id: `ZM-${Date.now().toString().slice(-4)}`,
+      createdByEmail: roomData.createdByEmail || currentUser?.email,
+      createdByName: roomData.createdByName || currentUser?.name,
+      createdAt: new Date().toISOString(),
+    };
+    saveDocument('zoomRooms', newRoom);
+    setZoomRooms((prev) => [...prev, newRoom]);
+  };
+
+  const handleDeleteZoomRoom = (roomId: string) => {
+    setZoomRooms((prev) => prev.filter((r) => r.id !== roomId));
+    removeDocument('zoomRooms', roomId).catch(() => {});
+  };
+
+  const handleDeleteFaculty = (facultyId: string) => {
+    setFaculty((prev) => prev.filter((f) => f.id !== facultyId));
+    removeDocument('faculty', facultyId).catch(() => {});
   };
 
   const handleToggleZoomRoomAvailability = (roomId: string) => {
@@ -1332,10 +1373,13 @@ export default function App() {
         onGenerateDaySlots={handleGenerateDaySlots}
         onToggleBlockSlot={handleToggleBlockSlot}
         onDeleteSlot={handleDeleteSlot}
+        onAddZoomRoom={handleAddZoomRoom}
+        onDeleteZoomRoom={handleDeleteZoomRoom}
         onToggleZoomRoomAvailability={handleToggleZoomRoomAvailability}
         onUpdateZoomRoomLink={handleUpdateZoomRoomLink}
         onToggleFacultyAvailability={handleToggleFacultyAvailability}
         onAddFaculty={handleAddFaculty}
+        onDeleteFaculty={handleDeleteFaculty}
         guidelines={guidelines}
         onUpdateGuidelines={handleUpdateGuidelines}
         onSwitchRole={handleSwitchRole}
