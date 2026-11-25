@@ -268,8 +268,8 @@ export function QuartermArchivesView({
           </div>
         </div>
 
-        {/* Search Bar + Active Context + Actions */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        {/* Unified Control Dock */}
+        <div className="bg-white/75 backdrop-blur-md border border-stone-300/70 rounded-xl px-4 py-2.5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
           <p className="text-xs text-zinc-600">
             <span className="font-mono tabular-nums font-semibold text-zinc-900">
               {filteredArchives.length}
@@ -297,7 +297,7 @@ export function QuartermArchivesView({
                 value={archiveSearch}
                 onChange={(e) => setArchiveSearch(e.target.value)}
                 placeholder="Search quarterm (e.g. 1Q2627), student, thesis..."
-                className="w-full pl-9 pr-8 py-2 text-xs bg-white border border-stone-300/80 rounded-xl text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#A6192E] shadow-2xs"
+                className="w-full pl-9 pr-8 py-1.5 text-xs bg-white border border-stone-300/80 rounded-lg text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#A6192E] shadow-2xs"
               />
               {archiveSearch && (
                 <button
@@ -314,7 +314,7 @@ export function QuartermArchivesView({
               <button
                 type="button"
                 onClick={onRequestOpenNewQuarter}
-                className="py-2 px-3.5 bg-[#A6192E] hover:bg-[#881325] text-white text-xs font-medium rounded-xl transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 shadow-2xs cursor-pointer"
+                className="py-1.5 px-3.5 bg-[#A6192E] hover:bg-[#881325] text-white text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 shadow-2xs cursor-pointer"
               >
                 <CalendarPlus className="w-3.5 h-3.5 shrink-0" />
                 <span>Open New Quarterm</span>
@@ -577,9 +577,9 @@ export function QuartermArchivesView({
         </div>
       )}
 
-      {/* Sub-tab Switcher + Search */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-        <div className="flex items-center gap-1 p-1 bg-stone-200/80 border border-stone-300/60 rounded-xl overflow-x-auto scrollbar-none">
+      {/* Unified Sub-tab Control Dock */}
+      <div className="bg-white/75 backdrop-blur-md border border-stone-300/70 rounded-xl px-4 py-2.5 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div className="flex items-center gap-1 p-1 bg-stone-200/80 border border-stone-300/60 rounded-lg overflow-x-auto scrollbar-none">
           {(
             [
               {
@@ -646,7 +646,7 @@ export function QuartermArchivesView({
                   ? 'Filter archived defenses by student or thesis...'
                   : 'Filter archived student folders by name or ID...'
               }
-              className="w-full pl-9 pr-8 py-2 text-xs bg-white border border-stone-300/80 rounded-xl text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#A6192E] shadow-2xs"
+              className="w-full pl-9 pr-8 py-1.5 text-xs bg-white border border-stone-300/80 rounded-lg text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#A6192E] shadow-2xs"
             />
             {recordSearch && (
               <button

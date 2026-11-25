@@ -1398,9 +1398,10 @@ export function AdminPortal({
 
           {!activeFolder ? (
             /* FOLDER DIRECTORY VIEW (UNCLUTTERED BY STUDENT NAME) */
-            <div className="space-y-5">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-                <div className="flex items-center gap-1 p-1 bg-zinc-200/70 rounded-lg overflow-x-auto">
+            <div className="space-y-4 sm:space-y-5">
+              {/* Unified Control Dock */}
+              <div className="bg-white/75 backdrop-blur-md border border-stone-300/70 rounded-xl px-4 py-2.5 flex flex-col lg:flex-row lg:items-center justify-between gap-3 shadow-xs">
+                <div className="flex items-center gap-1 p-1 bg-stone-200/70 border border-stone-300/50 rounded-lg overflow-x-auto scrollbar-none">
                   {(
                     [
                       { id: 'All', label: 'All Folders' },
@@ -1413,7 +1414,7 @@ export function AdminPortal({
                       key={tab.id}
                       type="button"
                       onClick={() => setFileStatusFilter(tab.id)}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
+                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap shrink-0 ${
                         fileStatusFilter === tab.id
                           ? 'bg-white text-zinc-900 shadow-xs'
                           : 'text-zinc-600 hover:text-zinc-900'
@@ -1424,15 +1425,25 @@ export function AdminPortal({
                   ))}
                 </div>
 
-                <div className="relative w-full lg:w-80">
+                <div className="relative w-full lg:w-72">
                   <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="search"
                     value={fileSearchQuery}
                     onChange={(e) => setFileSearchQuery(e.target.value)}
                     placeholder="Filter folders by student name or ID..."
-                    className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-zinc-300 rounded-lg text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                    className="w-full pl-9 pr-8 py-1.5 text-xs bg-stone-100/80 hover:bg-white focus:bg-white border border-stone-300/70 rounded-lg text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#A6192E] shadow-2xs transition-colors"
                   />
+                  {fileSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setFileSearchQuery('')}
+                      aria-label="Clear search"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 p-0.5"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -1937,97 +1948,98 @@ export function AdminPortal({
       {/* TAB 4: DEFENSE REQUESTS TABLE */}
       {activeTab === 'requests' && (
         <div className="space-y-4 sm:space-y-5">
-          {/* Filter, Search & Export Bar */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-            <div className="flex items-center gap-1 p-1 bg-stone-200/80 border border-stone-300/60 rounded-xl overflow-x-auto scrollbar-none">
-              {(
-                [
-                  'All',
-                  'Missing Zoom Link',
-                  'Pending Review',
-                  'Confirmed',
-                  'Reschedule Requested',
-                  'Completed',
-                  'Cancelled',
-                ] as const
-              ).map((st) => {
-                const count = requestStatusCounts[st] ?? 0;
-                const isSelected = statusFilter === st;
-                return (
-                  <button
-                    key={st}
-                    type="button"
-                    onClick={() => setStatusFilter(st)}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all whitespace-nowrap shrink-0 inline-flex items-center gap-1.5 ${
-                      isSelected
-                        ? 'bg-white text-zinc-900 shadow-xs'
-                        : st === 'Missing Zoom Link' && missingZoomLinkCount > 0
-                        ? 'text-[#9A6E00] hover:text-zinc-900'
-                        : 'text-zinc-600 hover:text-zinc-900'
-                    }`}
-                  >
-                    <span>{st}</span>
-                    <span
-                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono tabular-nums font-semibold ${
+          {/* Integrated Data Container with Option A Toolbar */}
+          <div className="bg-white/75 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl overflow-hidden">
+            {/* Integrated Container Toolbar Header */}
+            <div className="px-4 py-3 bg-stone-50/70 border-b border-stone-200/80 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+              <div className="flex items-center gap-1 p-1 bg-stone-200/80 border border-stone-300/60 rounded-lg overflow-x-auto scrollbar-none">
+                {(
+                  [
+                    'All',
+                    'Missing Zoom Link',
+                    'Pending Review',
+                    'Confirmed',
+                    'Reschedule Requested',
+                    'Completed',
+                    'Cancelled',
+                  ] as const
+                ).map((st) => {
+                  const count = requestStatusCounts[st] ?? 0;
+                  const isSelected = statusFilter === st;
+                  return (
+                    <button
+                      key={st}
+                      type="button"
+                      onClick={() => setStatusFilter(st)}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap shrink-0 inline-flex items-center gap-1.5 ${
                         isSelected
-                          ? 'bg-stone-100 text-zinc-800'
-                          : 'bg-stone-300/60 text-zinc-600'
+                          ? 'bg-white text-zinc-900 shadow-xs'
+                          : st === 'Missing Zoom Link' && missingZoomLinkCount > 0
+                          ? 'text-[#9A6E00] hover:text-zinc-900'
+                          : 'text-zinc-600 hover:text-zinc-900'
                       }`}
                     >
-                      {count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="flex items-center gap-2 w-full lg:w-auto">
-              <div className="relative flex-1 lg:w-72">
-                <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search student, ID, or thesis..."
-                  className="w-full pl-9 pr-8 py-2 text-xs bg-white border border-stone-300/80 rounded-xl text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#A6192E] shadow-2xs"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery('')}
-                    aria-label="Clear search"
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 p-0.5"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
+                      <span>{st}</span>
+                      <span
+                        className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono tabular-nums font-semibold ${
+                          isSelected
+                            ? 'bg-stone-100 text-zinc-800'
+                            : 'bg-stone-300/60 text-zinc-600'
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
 
-              <button
-                type="button"
-                disabled={filteredRequests.length === 0}
-                onClick={() => {
-                  const termCode = activeQuarter?.code ?? 'SOIT';
-                  downloadDefenseScheduleCsv(
-                    filteredRequests,
-                    `ThesisDesk-${termCode}-Defense-Schedule`
-                  );
-                  showToast(
-                    `Exported ${filteredRequests.length} defense request${
-                      filteredRequests.length === 1 ? '' : 's'
-                    } to CSV.`,
-                    'success'
-                  );
-                }}
-                className="py-2 px-3.5 bg-white/90 hover:bg-white disabled:opacity-45 disabled:cursor-not-allowed border border-stone-300/80 text-zinc-800 text-xs font-medium rounded-xl transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 shadow-2xs cursor-pointer"
-              >
-                <Download className="w-3.5 h-3.5 text-[#A6192E] shrink-0" />
-                <span>Export CSV ({filteredRequests.length})</span>
-              </button>
-            </div>
-          </div>
+              <div className="flex items-center gap-2 w-full lg:w-auto">
+                <div className="relative flex-1 lg:w-64">
+                  <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search student, ID, or thesis..."
+                    className="w-full pl-9 pr-8 py-1.5 text-xs bg-white border border-stone-300 rounded-lg text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#A6192E] shadow-2xs"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      aria-label="Clear search"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 p-0.5"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
 
-          <div className="bg-white/75 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl overflow-hidden">
+                <button
+                  type="button"
+                  disabled={filteredRequests.length === 0}
+                  onClick={() => {
+                    const termCode = activeQuarter?.code ?? 'SOIT';
+                    downloadDefenseScheduleCsv(
+                      filteredRequests,
+                      `ThesisDesk-${termCode}-Defense-Schedule`
+                    );
+                    showToast(
+                      `Exported ${filteredRequests.length} defense request${
+                        filteredRequests.length === 1 ? '' : 's'
+                      } to CSV.`,
+                      'success'
+                    );
+                  }}
+                  className="py-1.5 px-3 bg-white hover:bg-stone-50 disabled:opacity-45 disabled:cursor-not-allowed border border-stone-300 text-zinc-800 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 shadow-2xs cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5 text-[#A6192E] shrink-0" />
+                  <span>Export CSV ({filteredRequests.length})</span>
+                </button>
+              </div>
+            </div>
+
             {filteredRequests.length === 0 ? (
               <div className="py-8 px-6 text-center">
                 <div className="w-10 h-10 rounded-full bg-stone-100 border border-stone-200 text-zinc-400 flex items-center justify-center mx-auto mb-2.5">
