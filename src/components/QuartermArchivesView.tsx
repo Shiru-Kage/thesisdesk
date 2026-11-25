@@ -208,28 +208,7 @@ export function QuartermArchivesView({
   if (!selectedArchive) {
     return (
       <div className="space-y-4 sm:space-y-5">
-        <div className="pb-2 border-b border-stone-300/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h1 className="text-lg sm:text-xl font-semibold text-zinc-900 tracking-tight">
-              Quarterm Archives
-            </h1>
-            <p className="text-xs text-zinc-600 mt-0.5">
-              Inspect stored online defenses, student PDF folders, and Zoom slots from concluded Quarterms.
-            </p>
-          </div>
-          {!activeQuarter && (
-            <button
-              type="button"
-              onClick={onRequestOpenNewQuarter}
-              className="self-start sm:self-auto py-1.5 px-3 bg-[#A6192E] hover:bg-[#881325] text-white text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
-            >
-              <CalendarPlus className="w-3.5 h-3.5 shrink-0" />
-              <span>Open New Quarterm</span>
-            </button>
-          )}
-        </div>
-
-        {/* Search Bar + Active Context */}
+        {/* Search Bar + Active Context + Actions */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <p className="text-xs text-zinc-600">
             <span className="font-mono tabular-nums font-semibold text-zinc-900">
@@ -250,15 +229,27 @@ export function QuartermArchivesView({
             )}
           </p>
 
-          <div className="relative w-full md:w-80">
-            <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="search"
-              value={archiveSearch}
-              onChange={(e) => setArchiveSearch(e.target.value)}
-              placeholder="Search quarterm (e.g. 1Q2627), student, thesis..."
-              className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-zinc-300 rounded-lg text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
-            />
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <div className="relative flex-1 md:w-80">
+              <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="search"
+                value={archiveSearch}
+                onChange={(e) => setArchiveSearch(e.target.value)}
+                placeholder="Search quarterm (e.g. 1Q2627), student, thesis..."
+                className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-zinc-300 rounded-lg text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+              />
+            </div>
+            {!activeQuarter && (
+              <button
+                type="button"
+                onClick={onRequestOpenNewQuarter}
+                className="py-2 px-3 bg-[#A6192E] hover:bg-[#881325] text-white text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 shadow-xs"
+              >
+                <CalendarPlus className="w-3.5 h-3.5 shrink-0" />
+                <span>Open New Quarterm</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -371,28 +362,31 @@ export function QuartermArchivesView({
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      <div className="pb-2 border-b border-stone-300/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-zinc-600">
-            <span className="font-semibold text-[#9A6E00]">Archived Quarterm</span>
-            <span aria-hidden="true">·</span>
-            <span>{selectedArchive.quarterm.label}</span>
-            <span aria-hidden="true">·</span>
-            <span className="font-mono tabular-nums">
-              Stored {formatShortDate(selectedArchive.archivedAt)} by {selectedArchive.archivedBy}
-            </span>
-          </div>
-          <h1 className="text-lg sm:text-xl font-bold font-mono tabular-nums text-zinc-900 tracking-tight mt-0.5">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white/70 backdrop-blur-md border border-stone-300/70 shadow-xs rounded-xl px-4 py-2.5">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-700">
+          <span className="px-2 py-0.5 bg-[#9A6E00]/10 text-[#9A6E00] font-semibold rounded text-[11px]">
+            Archived Quarterm
+          </span>
+          <span className="font-mono font-bold text-zinc-900 text-sm">
             {selectedArchive.quarterm.code}
-          </h1>
+          </span>
+          <span className="text-zinc-400" aria-hidden="true">·</span>
+          <span>{selectedArchive.quarterm.label}</span>
+          <span className="text-zinc-400" aria-hidden="true">·</span>
+          <span className="font-mono text-zinc-500 tabular-nums">
+            Stored {formatShortDate(selectedArchive.archivedAt)} by {selectedArchive.archivedBy}
+          </span>
           {selectedArchive.archiveNote && (
-            <p className="text-xs text-zinc-600 mt-0.5 max-w-3xl">
-              {selectedArchive.archiveNote}
-            </p>
+            <>
+              <span className="text-zinc-400" aria-hidden="true">·</span>
+              <span className="text-zinc-500 max-w-md truncate" title={selectedArchive.archiveNote}>
+                {selectedArchive.archiveNote}
+              </span>
+            </>
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 shrink-0 self-start sm:self-auto">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
             disabled={selectedArchive.appointments.length === 0}
@@ -408,7 +402,7 @@ export function QuartermArchivesView({
                 'success'
               );
             }}
-            className="py-1.5 px-3 bg-white/85 hover:bg-white disabled:opacity-45 disabled:cursor-not-allowed border border-stone-300/80 text-zinc-800 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
+            className="py-1 px-2.5 bg-white hover:bg-stone-50 disabled:opacity-45 disabled:cursor-not-allowed border border-stone-300/80 text-zinc-800 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 shadow-xs"
           >
             <Download className="w-3.5 h-3.5 text-[#A6192E] shrink-0" />
             <span>Export CSV</span>
@@ -416,10 +410,10 @@ export function QuartermArchivesView({
           <button
             type="button"
             onClick={() => setSelectedArchiveId(null)}
-            className="py-1.5 px-3 bg-white/75 hover:bg-white border border-stone-300/80 text-zinc-800 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
+            className="py-1 px-2.5 bg-white hover:bg-stone-50 border border-stone-300/80 text-zinc-800 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 shadow-xs"
           >
             <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
-            <span>All Archived Quarterms</span>
+            <span>All Quarterms</span>
           </button>
         </div>
       </div>

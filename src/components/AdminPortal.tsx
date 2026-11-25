@@ -1304,27 +1304,6 @@ export function AdminPortal({
       {/* TAB 2: SUBMITTED FILES (STUDENT FOLDERS + PDF PREVIEW) */}
       {activeTab === 'submissions' && (
         <div className="space-y-4 sm:space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-stone-300/60">
-            <div>
-              <h1 className="text-lg sm:text-xl font-semibold text-zinc-900 tracking-tight">
-                Student Submitted Files
-              </h1>
-              <p className="text-xs text-zinc-600 mt-0.5">
-                Browse submissions organized by student folder, preview PDFs inline, and verify clearances.
-              </p>
-            </div>
-            {activeFolder && (
-              <button
-                type="button"
-                onClick={() => setOpenFolderKey(null)}
-                className="self-start sm:self-auto py-1.5 px-3 bg-white/75 hover:bg-white border border-stone-300/80 text-zinc-800 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
-              >
-                <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
-                <span>All Student Folders</span>
-              </button>
-            )}
-          </div>
-
           {/* Compact 4-Column Interactive Clearance KPI Strip */}
           {!activeFolder && (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1599,6 +1578,14 @@ export function AdminPortal({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setOpenFolderKey(null)}
+                    className="py-1.5 px-3 bg-white hover:bg-stone-50 border border-stone-300 text-zinc-700 text-xs font-medium rounded-lg inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
+                    <span>All Student Folders</span>
+                  </button>
                   {activeFolder.hasUnapproved && (
                     <button
                       type="button"
@@ -1719,40 +1706,6 @@ export function AdminPortal({
       {/* TAB 3: MANAGE SLOTS */}
       {activeTab === 'slots' && (
         <div className="space-y-4 sm:space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-stone-300/60">
-            <div>
-              <h1 className="text-lg sm:text-xl font-semibold text-zinc-900 tracking-tight">
-                UOx Zoom Slot Inventory
-              </h1>
-              <p className="text-xs text-zinc-600 mt-0.5">
-                Create online defense windows, update Zoom links, and manage panel schedules.
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  onGenerateDaySlots(selectedDate);
-                  showToast(
-                    `Added standard UOx Zoom blocks for ${formatShortDate(selectedDate)}.`,
-                    'success'
-                  );
-                }}
-                className="py-1.5 px-3 bg-white border border-zinc-300 hover:bg-zinc-50 text-zinc-800 text-xs font-medium rounded-lg transition-colors whitespace-nowrap"
-              >
-                Generate Day Blocks
-              </button>
-              <button
-                type="button"
-                onClick={() => handleOpenAddSlotModal(selectedDate)}
-                className="py-2 px-3.5 bg-[#A6192E] hover:bg-[#881325] text-white text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Add Slot</span>
-              </button>
-            </div>
-          </div>
-
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             <div className="lg:col-span-7">
               <CalendarGrid
@@ -1778,9 +1731,24 @@ export function AdminPortal({
                     {formatReadableDate(selectedDate)}
                   </h2>
                 </div>
-                <span className="text-xs font-mono tabular-nums text-zinc-500">
-                  {slotsForSelectedDate.length} total
-                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onGenerateDaySlots(selectedDate);
+                      showToast(
+                        `Added standard UOx Zoom blocks for ${formatShortDate(selectedDate)}.`,
+                        'success'
+                      );
+                    }}
+                    className="py-1 px-2.5 bg-white border border-zinc-300 hover:bg-zinc-50 text-zinc-800 text-xs font-medium rounded-lg transition-colors whitespace-nowrap"
+                  >
+                    Generate Day Blocks
+                  </button>
+                  <span className="text-xs font-mono tabular-nums text-zinc-500">
+                    {slotsForSelectedDate.length} total
+                  </span>
+                </div>
               </div>
 
               {slotsForSelectedDate.length === 0 ? (
@@ -1957,38 +1925,6 @@ export function AdminPortal({
       {/* TAB 4: DEFENSE REQUESTS TABLE */}
       {activeTab === 'requests' && (
         <div className="space-y-4 sm:space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-stone-300/60">
-            <div>
-              <h1 className="text-lg sm:text-xl font-semibold text-zinc-900 tracking-tight">
-                All Defense Requests
-              </h1>
-              <p className="text-xs text-zinc-600 mt-0.5">
-                Search, filter, assign Zoom links, and approve student thesis defense reservations.
-              </p>
-            </div>
-            <button
-              type="button"
-              disabled={filteredRequests.length === 0}
-              onClick={() => {
-                const termCode = activeQuarter?.code ?? 'SOIT';
-                downloadDefenseScheduleCsv(
-                  filteredRequests,
-                  `ThesisDesk-${termCode}-Defense-Schedule`
-                );
-                showToast(
-                  `Exported ${filteredRequests.length} defense request${
-                    filteredRequests.length === 1 ? '' : 's'
-                  } to CSV.`,
-                  'success'
-                );
-              }}
-              className="self-start sm:self-auto py-1.5 px-3 bg-white/85 hover:bg-white disabled:opacity-45 disabled:cursor-not-allowed border border-stone-300/80 text-zinc-800 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
-            >
-              <Download className="w-3.5 h-3.5 text-[#A6192E] shrink-0" />
-              <span>Export CSV ({filteredRequests.length})</span>
-            </button>
-          </div>
-
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
             <div className="flex items-center gap-1 p-1 bg-zinc-200/70 rounded-lg overflow-x-auto">
               {(
@@ -2021,15 +1957,39 @@ export function AdminPortal({
               ))}
             </div>
 
-            <div className="relative w-full lg:w-72">
-              <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search student, ID, or thesis..."
-                className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-zinc-300 rounded-lg text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
-              />
+            <div className="flex items-center gap-2 w-full lg:w-auto">
+              <div className="relative flex-1 lg:w-72">
+                <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search student, ID, or thesis..."
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-zinc-300 rounded-lg text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                />
+              </div>
+
+              <button
+                type="button"
+                disabled={filteredRequests.length === 0}
+                onClick={() => {
+                  const termCode = activeQuarter?.code ?? 'SOIT';
+                  downloadDefenseScheduleCsv(
+                    filteredRequests,
+                    `ThesisDesk-${termCode}-Defense-Schedule`
+                  );
+                  showToast(
+                    `Exported ${filteredRequests.length} defense request${
+                      filteredRequests.length === 1 ? '' : 's'
+                    } to CSV.`,
+                    'success'
+                  );
+                }}
+                className="py-2 px-3 bg-white/85 hover:bg-white disabled:opacity-45 disabled:cursor-not-allowed border border-stone-300/80 text-zinc-800 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 shadow-xs"
+              >
+                <Download className="w-3.5 h-3.5 text-[#A6192E] shrink-0" />
+                <span>Export CSV ({filteredRequests.length})</span>
+              </button>
             </div>
           </div>
 
@@ -2152,15 +2112,6 @@ export function AdminPortal({
       {/* TAB 5: ZOOM ROOMS & FACULTY DIRECTORY */}
       {activeTab === 'directory' && (
         <div className="space-y-4 sm:space-y-5">
-          <div className="pb-2 border-b border-stone-300/60">
-            <h1 className="text-lg sm:text-xl font-semibold text-zinc-900 tracking-tight">
-              UOx Zoom Defense Rooms & Committee Chairs
-            </h1>
-            <p className="text-xs text-zinc-600 mt-0.5">
-              Configure default Zoom meeting links and passcodes for each Mapúa UOx online channel.
-            </p>
-          </div>
-
           <section className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl overflow-hidden">
             <div className="px-5 py-4 border-b border-zinc-200 flex items-center justify-between gap-3">
               <div>

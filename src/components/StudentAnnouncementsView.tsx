@@ -70,21 +70,6 @@ export function StudentAnnouncementsView({ announcements }: StudentAnnouncements
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      {/* Header Banner */}
-      <div className="flex items-center justify-between gap-3 pb-2 border-b border-stone-300/60">
-        <div className="flex items-center gap-2">
-          <span className="p-1 rounded-md bg-[#A6192E]/10 text-[#A6192E]">
-            <Megaphone className="w-4 h-4" />
-          </span>
-          <h1 className="text-lg sm:text-xl font-semibold text-zinc-900 tracking-tight">
-            Official Announcements & Bulletins
-          </h1>
-        </div>
-        <span className="text-xs text-zinc-500 font-mono hidden sm:inline">
-          {announcements.length} bulletin{announcements.length === 1 ? '' : 's'}
-        </span>
-      </div>
-
       {/* Main Grid: Responsive 8:4 layout on desktop, stacked on mobile */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left / Primary Column (8 cols on desktop) */}

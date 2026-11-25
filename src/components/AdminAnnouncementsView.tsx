@@ -209,30 +209,6 @@ export function AdminAnnouncementsView({
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      {/* Top Banner & Action */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2 border-b border-stone-300/60">
-        <div className="flex items-center gap-2">
-          <span className="p-1 rounded-md bg-[#A6192E]/10 text-[#A6192E]">
-            <Megaphone className="w-4 h-4" />
-          </span>
-          <h1 className="text-lg sm:text-xl font-semibold text-zinc-900 tracking-tight">
-            Announcements & Bulletins
-          </h1>
-          <span className="text-xs text-zinc-500 font-mono hidden sm:inline">
-            · {announcements.length} bulletin{announcements.length === 1 ? '' : 's'}
-          </span>
-        </div>
-
-        <button
-          type="button"
-          onClick={openCreateModal}
-          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-[#A6192E] hover:bg-[#881325] text-white text-xs font-medium rounded-lg shadow-2xs transition-colors shrink-0 cursor-pointer"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>Post Announcement</span>
-        </button>
-      </div>
-
       {/* Main Grid: Responsive 8:4 layout on desktop, stacked on mobile */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left / Primary Column (8 cols on desktop) */}
@@ -266,6 +242,15 @@ export function AdminAnnouncementsView({
                 </button>
               ))}
             </div>
+
+            <button
+              type="button"
+              onClick={openCreateModal}
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-[#A6192E] hover:bg-[#881325] text-white text-xs font-medium rounded-lg shadow-2xs transition-colors shrink-0 cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Post Bulletin</span>
+            </button>
           </div>
 
           {/* Announcements List */}
