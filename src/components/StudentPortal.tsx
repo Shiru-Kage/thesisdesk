@@ -787,20 +787,12 @@ export function StudentPortal({
           {/* Main Dashboard Grid: Row 1 - Schedule Status (Left 7) & Next Open Windows (Right 5) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
             {/* Active Defense or Current Scheduling Status */}
-            <section aria-labelledby="active-defense-heading" className="lg:col-span-7 flex flex-col justify-between">
-              <div className="flex items-center justify-between gap-4 mb-2">
-                <h2 id="active-defense-heading" className="text-sm font-semibold text-zinc-900">
-                  Current Defense Schedule
-                </h2>
-                {activeDefense && (
-                  <span className="text-xs font-mono tabular-nums text-zinc-500">
-                    {activeDefense.id}
-                  </span>
-                )}
-              </div>
-
+            <section
+              aria-labelledby="active-defense-heading"
+              className="lg:col-span-7 flex flex-col justify-between bg-white/75 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6"
+            >
               {activeDefense ? (
-                <div className="bg-white/75 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6 flex-1 flex flex-col justify-between gap-4">
+                <>
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                     <div className="space-y-2 flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-zinc-500">
@@ -808,7 +800,7 @@ export function StudentPortal({
                         <span aria-hidden="true">·</span>
                         <span>UOx Fully Online · Zoom</span>
                       </div>
-                      <h3 className="text-lg font-semibold text-zinc-900">
+                      <h3 id="active-defense-heading" className="text-lg font-semibold text-zinc-900">
                         {activeDefense.thesisTitle}
                       </h3>
                       <p className="text-xs text-zinc-600">
@@ -822,6 +814,9 @@ export function StudentPortal({
                     </div>
 
                     <div className="sm:text-right shrink-0">
+                      <span className="text-xs font-mono tabular-nums text-zinc-400 block mb-1">
+                        {activeDefense.id}
+                      </span>
                       <p className="text-sm font-semibold text-zinc-900">
                         {formatReadableDate(activeDefense.date)}
                       </p>
@@ -875,15 +870,15 @@ export function StudentPortal({
                       </button>
                     </div>
                   </div>
-                </div>
+                </>
               ) : (
-                <div className="bg-white/75 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6 flex-1 flex flex-col justify-between gap-3">
+                <>
                   <div>
                     <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded-md bg-stone-100 text-zinc-700 border border-stone-200">
                       <Lock className="w-3 h-3 text-[#A6192E]" />
                       {isClearedToSchedule ? 'Cleared to Book Slot' : 'Defense Scheduling Locked'}
                     </span>
-                    <h3 className="text-base font-semibold text-zinc-900 mt-2">
+                    <h3 id="active-defense-heading" className="text-base font-semibold text-zinc-900 mt-2">
                       {isClearedToSchedule
                         ? 'Ready to Reserve a UOx Defense Slot'
                         : 'Awaiting Faculty File Clearances'}
@@ -899,7 +894,7 @@ export function StudentPortal({
                     <button
                       type="button"
                       onClick={() => setActiveTab(isClearedToSchedule ? 'book' : 'files')}
-                      className="py-2 px-4 bg-[#A6192E] hover:bg-[#881325] text-white text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5"
+                      className="py-2 px-4 bg-[#A6192E] hover:bg-[#881325] text-white text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-2xs"
                     >
                       {isClearedToSchedule ? (
                         <>
@@ -921,7 +916,7 @@ export function StudentPortal({
                       Read Guidelines →
                     </button>
                   </div>
-                </div>
+                </>
               )}
             </section>
 
