@@ -41,6 +41,7 @@ import {
   AppointmentStatus,
   ChecklistItem,
   DefenseAppointment,
+  DefenseGuidelinesData,
   DefenseSlot,
   QuartermPeriod,
   RequiredDocumentSpec,
@@ -91,6 +92,7 @@ interface StudentPortalProps {
   onResetDemoData: () => void;
   onOpenProfileModal?: () => void;
   announcements?: Announcement[];
+  guidelines?: DefenseGuidelinesData;
 }
 
 function formatFileSize(bytes: number): string {
@@ -132,6 +134,7 @@ export function StudentPortal({
   onResetDemoData,
   onOpenProfileModal,
   announcements = [],
+  guidelines,
 }: StudentPortalProps) {
   const prefersReducedMotion = useReducedMotion();
   const [activeTab, setActiveTab] = useState<
@@ -1978,172 +1981,189 @@ export function StudentPortal({
       )}
 
       {/* TAB 4: DEFENSE GUIDELINES */}
-      {activeTab === 'guidelines' && (
-        <div className="space-y-4 sm:space-y-5">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Primary Left Column (8 cols on desktop) */}
-            <div className="lg:col-span-8 space-y-6">
-              {/* 90-Minute Session Timeline Breakdown */}
-              <section
-                aria-label="90-minute defense session breakdown"
-                className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6 space-y-4"
-              >
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <h2 className="text-sm font-semibold text-zinc-900">
-                    90-Minute Zoom Session Breakdown
-                  </h2>
-                  <span className="text-xs font-mono tabular-nums text-zinc-600">
-                    Total duration · 90 min
-                  </span>
-                </div>
+      {activeTab === 'guidelines' && (() => {
+        const totalDuration = guidelines?.sessionDurationMin ?? 90;
+        const presentationMin = guidelines?.presentationMin ?? 35;
+        const examinationMin = guidelines?.examinationMin ?? 30;
+        const openFloorMin = guidelines?.openFloorMin ?? 10;
+        const deliberationMin = guidelines?.deliberationMin ?? 15;
+        const activeProtocols = guidelines?.protocols && guidelines.protocols.length > 0
+          ? guidelines.protocols
+          : [
+              {
+                id: 'proto-clearance',
+                stepNumber: '01',
+                phase: 'Pre-Requisites',
+                title: 'Manuscript Clearance',
+                description:
+                  'Upload Chapters 1–5, Adviser Endorsement, and Turnitin Report (≤15%). All 3 files must be faculty-cleared to unlock slot scheduling.',
+              },
+              {
+                id: 'proto-attendance',
+                stepNumber: '02',
+                phase: 'Attendance',
+                title: 'Mapúa UOx Zoom Check-In',
+                description:
+                  'Join via official @mymail.mapua.edu.ph account 10 minutes prior for host admission and audio check.',
+              },
+              {
+                id: 'proto-hardware',
+                stepNumber: '03',
+                phase: 'Hardware & Media',
+                title: 'Camera & Screen-Share',
+                description:
+                  'Webcam required throughout presentation and Q&A. Format slides in 16:9 widescreen and keep an offline PDF export as backup.',
+              },
+              {
+                id: 'proto-flexibility',
+                stepNumber: '04',
+                phase: 'Flexibility',
+                title: 'Reschedule Window',
+                description:
+                  'Transfer reservations to any open Zoom slot up to 48 hours before session without re-filing committee clearance forms.',
+              },
+            ];
 
-                <div className="h-2.5 w-full rounded-md overflow-hidden flex gap-0.5 bg-stone-200/70">
-                  <div
-                    className="bg-[#A6192E] h-full"
-                    style={{ width: '38.9%' }}
-                    title="Candidate Presentation: 35 min"
-                  />
-                  <div
-                    className="bg-[#C99700] h-full"
-                    style={{ width: '33.3%' }}
-                    title="Panel Examination: 30 min"
-                  />
-                  <div
-                    className="bg-zinc-700 h-full"
-                    style={{ width: '11.1%' }}
-                    title="Open Floor Q&A: 10 min"
-                  />
-                  <div
-                    className="bg-stone-400 h-full"
-                    style={{ width: '16.7%' }}
-                    title="Closed Deliberation: 15 min"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-1">
-                  <div>
-                    <p className="text-xs font-mono tabular-nums font-semibold text-[#A6192E]">
-                      35 min
-                    </p>
-                    <p className="text-xs font-semibold text-zinc-900 mt-0.5">Presentation</p>
-                    <p className="text-[11px] text-zinc-500 mt-0.5">Slide deck & live demo</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-mono tabular-nums font-semibold text-[#9A6E00]">
-                      30 min
-                    </p>
-                    <p className="text-xs font-semibold text-zinc-900 mt-0.5">Panel Examination</p>
-                    <p className="text-[11px] text-zinc-500 mt-0.5">Committee questioning</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-mono tabular-nums font-semibold text-zinc-800">
-                      10 min
-                    </p>
-                    <p className="text-xs font-semibold text-zinc-900 mt-0.5">Open Floor</p>
-                    <p className="text-[11px] text-zinc-500 mt-0.5">Adviser & guest remarks</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-mono tabular-nums font-semibold text-zinc-600">
-                      15 min
-                    </p>
-                    <p className="text-xs font-semibold text-zinc-900 mt-0.5">Deliberation</p>
-                    <p className="text-[11px] text-zinc-500 mt-0.5">Zoom breakout room</p>
-                  </div>
-                </div>
-              </section>
-
-              {/* Visual Protocol Runbook Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-white/70 backdrop-blur-md border border-stone-300/70 shadow-2xs rounded-xl p-5 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#A6192E]/10 text-[#A6192E] border border-[#A6192E]/20">
-                      <FileText className="w-3 h-3" />
-                      <span>01. Pre-Requisites</span>
+        return (
+          <div className="space-y-4 sm:space-y-5">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              {/* Primary Left Column (8 cols on desktop) */}
+              <div className="lg:col-span-8 space-y-6">
+                {/* Session Timeline Breakdown */}
+                <section
+                  aria-label={`${totalDuration}-minute defense session breakdown`}
+                  className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6 space-y-4"
+                >
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <h2 className="text-sm font-semibold text-zinc-900">
+                      {totalDuration}-Minute Zoom Session Breakdown
+                    </h2>
+                    <span className="text-xs font-mono tabular-nums text-zinc-600">
+                      Total duration · {totalDuration} min
                     </span>
-                    <span className="text-[11px] font-mono text-zinc-400">Step 1</span>
                   </div>
-                  <h3 className="text-sm font-semibold text-zinc-900">Manuscript Clearance</h3>
-                  <p className="text-xs text-zinc-600 leading-relaxed">
-                    Upload Chapters 1–5, Adviser Endorsement, and Turnitin Report (&le;15%). All 3 files must be faculty-cleared to unlock slot scheduling.
-                  </p>
+
+                  <div className="h-2.5 w-full rounded-md overflow-hidden flex gap-0.5 bg-stone-200/70">
+                    <div
+                      className="bg-[#A6192E] h-full"
+                      style={{ width: `${(presentationMin / totalDuration) * 100}%` }}
+                      title={`Candidate Presentation: ${presentationMin} min`}
+                    />
+                    <div
+                      className="bg-[#C99700] h-full"
+                      style={{ width: `${(examinationMin / totalDuration) * 100}%` }}
+                      title={`Panel Examination: ${examinationMin} min`}
+                    />
+                    <div
+                      className="bg-zinc-700 h-full"
+                      style={{ width: `${(openFloorMin / totalDuration) * 100}%` }}
+                      title={`Open Floor Q&A: ${openFloorMin} min`}
+                    />
+                    <div
+                      className="bg-stone-400 h-full"
+                      style={{ width: `${(deliberationMin / totalDuration) * 100}%` }}
+                      title={`Closed Deliberation: ${deliberationMin} min`}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-1">
+                    <div>
+                      <p className="text-xs font-mono tabular-nums font-semibold text-[#A6192E]">
+                        {presentationMin} min
+                      </p>
+                      <p className="text-xs font-semibold text-zinc-900 mt-0.5">Presentation</p>
+                      <p className="text-[11px] text-zinc-500 mt-0.5">Slide deck & live demo</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-mono tabular-nums font-semibold text-[#9A6E00]">
+                        {examinationMin} min
+                      </p>
+                      <p className="text-xs font-semibold text-zinc-900 mt-0.5">Panel Examination</p>
+                      <p className="text-[11px] text-zinc-500 mt-0.5">Committee questioning</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-mono tabular-nums font-semibold text-zinc-800">
+                        {openFloorMin} min
+                      </p>
+                      <p className="text-xs font-semibold text-zinc-900 mt-0.5">Open Floor</p>
+                      <p className="text-[11px] text-zinc-500 mt-0.5">Adviser & guest remarks</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-mono tabular-nums font-semibold text-zinc-600">
+                        {deliberationMin} min
+                      </p>
+                      <p className="text-xs font-semibold text-zinc-900 mt-0.5">Deliberation</p>
+                      <p className="text-[11px] text-zinc-500 mt-0.5">Zoom breakout room</p>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Visual Protocol Runbook Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {activeProtocols.map((proto, idx) => (
+                    <div
+                      key={proto.id || idx}
+                      className="bg-white/70 backdrop-blur-md border border-stone-300/70 shadow-2xs rounded-xl p-5 space-y-3"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold border ${
+                            idx === 0
+                              ? 'bg-[#A6192E]/10 text-[#A6192E] border-[#A6192E]/20'
+                              : idx === 1
+                              ? 'bg-amber-500/10 text-amber-800 border-amber-500/20'
+                              : idx === 2
+                              ? 'bg-zinc-100 text-zinc-700 border-zinc-200'
+                              : 'bg-blue-500/10 text-blue-800 border-blue-500/20'
+                          }`}
+                        >
+                          {idx === 0 && <FileText className="w-3 h-3" />}
+                          {idx === 1 && <Video className="w-3 h-3" />}
+                          {idx === 2 && <Clock className="w-3 h-3" />}
+                          {idx === 3 && <RefreshCw className="w-3 h-3" />}
+                          <span>{proto.stepNumber || `0${idx + 1}`}. {proto.phase}</span>
+                        </span>
+                        <span className="text-[11px] font-mono text-zinc-400">Step {idx + 1}</span>
+                      </div>
+                      <h3 className="text-sm font-semibold text-zinc-900">{proto.title}</h3>
+                      <p className="text-xs text-zinc-600 leading-relaxed">{proto.description}</p>
+                    </div>
+                  ))}
                 </div>
 
-                <div className="bg-white/70 backdrop-blur-md border border-stone-300/70 shadow-2xs rounded-xl p-5 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-500/10 text-amber-800 border border-amber-500/20">
-                      <Video className="w-3 h-3" />
-                      <span>02. Attendance</span>
-                    </span>
-                    <span className="text-[11px] font-mono text-zinc-400">Step 2</span>
+                {/* Quick UOx Technical Reference */}
+                <section
+                  aria-label="UOx technical readiness standards"
+                  className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl overflow-hidden"
+                >
+                  <div className="px-5 py-3.5 border-b border-stone-200/80">
+                    <h2 className="text-sm font-semibold text-zinc-900">
+                      UOx Technical Readiness Standards
+                    </h2>
                   </div>
-                  <h3 className="text-sm font-semibold text-zinc-900">Mapúa UOx Zoom Check-In</h3>
-                  <p className="text-xs text-zinc-600 leading-relaxed">
-                    Join via official <span className="font-mono text-[11px] text-zinc-800">@mymail.mapua.edu.ph</span> account 10 minutes prior for host admission and audio check.
-                  </p>
-                </div>
-
-                <div className="bg-white/70 backdrop-blur-md border border-stone-300/70 shadow-2xs rounded-xl p-5 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-zinc-100 text-zinc-700 border border-zinc-200">
-                      <Clock className="w-3 h-3" />
-                      <span>03. Hardware & Media</span>
-                    </span>
-                    <span className="text-[11px] font-mono text-zinc-400">Step 3</span>
-                  </div>
-                  <h3 className="text-sm font-semibold text-zinc-900">Camera & Screen-Share</h3>
-                  <p className="text-xs text-zinc-600 leading-relaxed">
-                    Webcam required throughout presentation and Q&A. Format slides in 16:9 widescreen and keep an offline PDF export as backup.
-                  </p>
-                </div>
-
-                <div className="bg-white/70 backdrop-blur-md border border-stone-300/70 shadow-2xs rounded-xl p-5 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-blue-500/10 text-blue-800 border border-blue-500/20">
-                      <RefreshCw className="w-3 h-3" />
-                      <span>04. Flexibility</span>
-                    </span>
-                    <span className="text-[11px] font-mono text-zinc-400">Step 4</span>
-                  </div>
-                  <h3 className="text-sm font-semibold text-zinc-900">Reschedule Window</h3>
-                  <p className="text-xs text-zinc-600 leading-relaxed">
-                    Transfer reservations to any open Zoom slot up to 48 hours before session without re-filing committee clearance forms.
-                  </p>
-                </div>
+                  <dl className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-stone-200/80 text-xs">
+                    <div className="p-4 sm:p-5">
+                      <dt className="font-semibold text-zinc-900">Early Check-In</dt>
+                      <dd className="text-zinc-600 mt-1 leading-relaxed">
+                        Join <span className="font-mono tabular-nums text-zinc-900">{guidelines?.earlyCheckInMin ?? 10} min</span> prior
+                        for host admission and microphone verification.
+                      </dd>
+                    </div>
+                    <div className="p-4 sm:p-5">
+                      <dt className="font-semibold text-zinc-900">Backup Connectivity</dt>
+                      <dd className="text-zinc-600 mt-1 leading-relaxed">
+                        {guidelines?.backupAdvice ?? 'Keep mobile hotspot ready and share slide PDF with your adviser before the call.'}
+                      </dd>
+                    </div>
+                    <div className="p-4 sm:p-5">
+                      <dt className="font-semibold text-zinc-900">Recording & Quorum</dt>
+                      <dd className="text-zinc-600 mt-1 leading-relaxed">
+                        {guidelines?.quorumNote ?? 'Sessions are cloud-recorded by the SOIT chair once panel quorum is present.'}
+                      </dd>
+                    </div>
+                  </dl>
+                </section>
               </div>
-
-              {/* Quick UOx Technical Reference */}
-              <section
-                aria-label="UOx technical readiness standards"
-                className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl overflow-hidden"
-              >
-                <div className="px-5 py-3.5 border-b border-stone-200/80">
-                  <h2 className="text-sm font-semibold text-zinc-900">
-                    UOx Technical Readiness Standards
-                  </h2>
-                </div>
-                <dl className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-stone-200/80 text-xs">
-                  <div className="p-4 sm:p-5">
-                    <dt className="font-semibold text-zinc-900">Early Check-In</dt>
-                    <dd className="text-zinc-600 mt-1 leading-relaxed">
-                      Join <span className="font-mono tabular-nums text-zinc-900">10 min</span> prior
-                      for host admission and microphone verification.
-                    </dd>
-                  </div>
-                  <div className="p-4 sm:p-5">
-                    <dt className="font-semibold text-zinc-900">Backup Connectivity</dt>
-                    <dd className="text-zinc-600 mt-1 leading-relaxed">
-                      Keep mobile hotspot ready and share slide PDF with your adviser before the call.
-                    </dd>
-                  </div>
-                  <div className="p-4 sm:p-5">
-                    <dt className="font-semibold text-zinc-900">Recording & Quorum</dt>
-                    <dd className="text-zinc-600 mt-1 leading-relaxed">
-                      Sessions are cloud-recorded by the SOIT chair once panel quorum is present.
-                    </dd>
-                  </div>
-                </dl>
-              </section>
-            </div>
 
             {/* Right / Context Rail (4 cols on desktop, stacks below on mobile) */}
             <aside className="lg:col-span-4 space-y-5">
@@ -2232,7 +2252,8 @@ export function StudentPortal({
             </aside>
           </div>
         </div>
-      )}
+      );
+    })()}
 
       {/* BOOKING MODAL */}
       <AnimatePresence>

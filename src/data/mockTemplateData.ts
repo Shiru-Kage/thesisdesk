@@ -3,6 +3,7 @@ import {
   ArchivedQuarterm,
   ChecklistItem,
   DefenseAppointment,
+  DefenseGuidelinesData,
   DefenseSlot,
   FacultyChair,
   QuartermPeriod,
@@ -184,6 +185,54 @@ export const REQUIRED_DOCUMENTS: RequiredDocumentSpec[] = [
 
 // All demo file submissions removed
 export const INITIAL_FILE_SUBMISSIONS: StudentFileSubmission[] = [];
+
+export const INITIAL_DEFENSE_GUIDELINES: DefenseGuidelinesData = {
+  id: 'defense_guidelines',
+  sessionDurationMin: 90,
+  presentationMin: 35,
+  examinationMin: 30,
+  openFloorMin: 10,
+  deliberationMin: 15,
+  protocols: [
+    {
+      id: 'proto-clearance',
+      stepNumber: '01',
+      phase: 'Pre-Requisites',
+      title: 'Manuscript Clearance',
+      description:
+        'Upload Chapters 1–5, Adviser Endorsement, and Turnitin Report (≤15%). All 3 files must be faculty-cleared to unlock slot scheduling.',
+    },
+    {
+      id: 'proto-attendance',
+      stepNumber: '02',
+      phase: 'Attendance',
+      title: 'Mapúa UOx Zoom Check-In',
+      description:
+        'Join via official @mymail.mapua.edu.ph account 10 minutes prior for host admission and audio check.',
+    },
+    {
+      id: 'proto-hardware',
+      stepNumber: '03',
+      phase: 'Hardware & Media',
+      title: 'Camera & Screen-Share',
+      description:
+        'Webcam required throughout presentation and Q&A. Format slides in 16:9 widescreen and keep an offline PDF export as backup.',
+    },
+    {
+      id: 'proto-flexibility',
+      stepNumber: '04',
+      phase: 'Flexibility',
+      title: 'Reschedule Window',
+      description:
+        'Transfer reservations to any open Zoom slot up to 48 hours before session without re-filing committee clearance forms.',
+    },
+  ],
+  earlyCheckInMin: 10,
+  backupAdvice:
+    'Keep mobile hotspot ready and share slide PDF with your adviser before the call.',
+  quorumNote:
+    'Sessions are cloud-recorded by the SOIT chair once panel quorum is present.',
+};
 
 const QUARTER_ORDINALS: Record<number, string> = {
   1: '1st Quarter',

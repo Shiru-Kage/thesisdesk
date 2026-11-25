@@ -12,6 +12,7 @@ import {
   INITIAL_ACTIVE_QUARTER,
   INITIAL_ANNOUNCEMENTS,
   INITIAL_CHECKLIST,
+  INITIAL_DEFENSE_GUIDELINES,
   INITIAL_FACULTY,
   INITIAL_SLOTS,
   INITIAL_ZOOM_ROOMS,
@@ -23,6 +24,7 @@ import {
   ArchivedQuarterm,
   ChecklistItem,
   DefenseAppointment,
+  DefenseGuidelinesData,
   DefenseSlot,
   FacultyChair,
   FileReviewStatus,
@@ -63,6 +65,7 @@ interface PersistedPortalState {
   archivedQuarters: ArchivedQuarterm[];
   registeredUsers?: UserAccount[];
   announcements?: Announcement[];
+  guidelines?: DefenseGuidelinesData;
 }
 
 function loadPersistedState(): Partial<PersistedPortalState> | null {
@@ -126,6 +129,9 @@ export default function App() {
   );
   const [announcements, setAnnouncements] = useState<Announcement[]>(
     () => persisted?.announcements ?? INITIAL_ANNOUNCEMENTS
+  );
+  const [guidelines, setGuidelines] = useState<DefenseGuidelinesData>(
+    () => persisted?.guidelines ?? INITIAL_DEFENSE_GUIDELINES
   );
 
   const initialSeededRef = useRef(false);
@@ -311,6 +317,24 @@ export default function App() {
       }
     });
 
+    // 8. Subscribe to Faculty Roster
+    const unsubFaculty = subscribeToCollection<FacultyChair>('faculty', (records) => {
+      if (records && records.length > 0) {
+        setFaculty(records);
+      } else if (!initialSeededRef.current) {
+        batchSaveDocuments('faculty', INITIAL_FACULTY);
+      }
+    });
+
+    // 9. Subscribe to Defense Guidelines Config
+    const unsubGuidelines = subscribeToDoc<DefenseGuidelinesData>('config', 'defense_guidelines', (data) => {
+      if (data) {
+        setGuidelines(data);
+      } else if (!initialSeededRef.current) {
+        saveDocument('config', INITIAL_DEFENSE_GUIDELINES);
+      }
+    });
+
     initialSeededRef.current = true;
 
     return () => {
@@ -321,6 +345,8 @@ export default function App() {
       unsubArchives?.();
       unsubUsers?.();
       unsubAnnouncements?.();
+      unsubFaculty?.();
+      unsubGuidelines?.();
     };
   }, []);
 
@@ -340,6 +366,7 @@ export default function App() {
         archivedQuarters,
         registeredUsers,
         announcements,
+        guidelines,
       };
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     } catch {
@@ -356,6 +383,7 @@ export default function App() {
     archivedQuarters,
     registeredUsers,
     announcements,
+    guidelines,
   ]);
 
   const isQuarterOpen = !activeQuarter || activeQuarter.status === 'Open';
@@ -873,6 +901,62 @@ export default function App() {
     );
   };
 
+  const handleAddFaculty = (payload: {
+    name: string;
+    title: string;
+    email: string;
+    department: string;
+    program?: string;
+    available: boolean;
+  }) => {
+    const newMember: FacultyChair = {
+      id: `FAC-${Date.now().toString().slice(-4)}`,
+      name: payload.name.trim(),
+      title: payload.title.trim() || 'Faculty Panelist · SOIT',
+      department: payload.department,
+      program: payload.program || `B.S. ${payload.department} · Mapúa UOx`,
+      email: payload.email.trim(),
+      activeDefenses: 0,
+      available: payload.available,
+    };
+    saveDocument('faculty', newMember);
+    setFaculty((prev) => [...prev, newMember]);
+
+    const facultyUser: UserAccount = {
+      id: `usr-${newMember.id.toLowerCase()}`,
+      name: newMember.name,
+      email: newMember.email,
+      role: 'admin',
+      department: newMember.department,
+      program: newMember.program,
+      avatarUrl: '',
+      academicTitle: newMember.title,
+      available: newMember.available,
+    };
+    registerOrUpdateUser(facultyUser);
+    setRegisteredUsers((prev) => {
+      const exists = prev.some(
+        (u) => u.email.toLowerCase() === facultyUser.email.toLowerCase()
+      );
+      if (exists) {
+        return prev.map((u) =>
+          u.email.toLowerCase() === facultyUser.email.toLowerCase() ? facultyUser : u
+        );
+      }
+      return [...prev, facultyUser];
+    });
+  };
+
+  const handleUpdateGuidelines = (updated: DefenseGuidelinesData) => {
+    const enriched: DefenseGuidelinesData = {
+      ...updated,
+      updatedAt: new Date().toISOString(),
+      updatedBy: currentUser?.name ?? 'SOIT Coordinator',
+    };
+    setGuidelines(enriched);
+    saveDocument('config', enriched);
+  };
+
   // --------------------------------------------------------------------------
   // Quarterm Period Lifecycle
   // --------------------------------------------------------------------------
@@ -1020,6 +1104,8 @@ export default function App() {
     avatarUrl: string;
     department: string;
     program?: string;
+    available?: boolean;
+    academicTitle?: string;
   }) => {
     if (!currentUser) return;
     const updatedUser: UserAccount = {
@@ -1074,6 +1160,48 @@ export default function App() {
           return a;
         })
       );
+    } else {
+      // Sync faculty availability and program with faculty roster
+      setFaculty((prev) => {
+        const found = prev.some(
+          (f) =>
+            f.email.toLowerCase() === updatedUser.email.toLowerCase() ||
+            f.name.toLowerCase() === updatedUser.name.toLowerCase()
+        );
+        if (found) {
+          return prev.map((f) => {
+            if (
+              f.email.toLowerCase() === updatedUser.email.toLowerCase() ||
+              f.name.toLowerCase() === updatedUser.name.toLowerCase()
+            ) {
+              const updated: FacultyChair = {
+                ...f,
+                name: updatedUser.name,
+                department: updatedUser.department,
+                program: updatedData.program || f.program,
+                title: updatedData.academicTitle || f.title,
+                available:
+                  updatedData.available !== undefined ? updatedData.available : f.available,
+              };
+              saveDocument('faculty', updated);
+              return updated;
+            }
+            return f;
+          });
+        }
+        const newFaculty: FacultyChair = {
+          id: `FAC-${Date.now().toString().slice(-4)}`,
+          name: updatedUser.name,
+          title: updatedData.academicTitle || 'Faculty Panelist · SOIT',
+          department: updatedUser.department,
+          program: updatedData.program || `B.S. ${updatedUser.department} · Mapúa UOx`,
+          email: updatedUser.email,
+          activeDefenses: 0,
+          available: updatedData.available ?? true,
+        };
+        saveDocument('faculty', newFaculty);
+        return [...prev, newFaculty];
+      });
     }
     setIsProfileModalOpen(false);
   };
@@ -1153,6 +1281,7 @@ export default function App() {
           todayIso={TODAY_ISO}
           initialSlot={preSelectedSlot}
           announcements={announcements}
+          guidelines={guidelines}
           onUploadFile={handleUploadStudentFile}
           onRemoveFile={handleRemoveStudentFile}
           onBookSlot={handleBookSlot}
@@ -1206,6 +1335,9 @@ export default function App() {
         onToggleZoomRoomAvailability={handleToggleZoomRoomAvailability}
         onUpdateZoomRoomLink={handleUpdateZoomRoomLink}
         onToggleFacultyAvailability={handleToggleFacultyAvailability}
+        onAddFaculty={handleAddFaculty}
+        guidelines={guidelines}
+        onUpdateGuidelines={handleUpdateGuidelines}
         onSwitchRole={handleSwitchRole}
         onSignOut={handleSignOut}
         onResetDemoData={handleResetDemoData}

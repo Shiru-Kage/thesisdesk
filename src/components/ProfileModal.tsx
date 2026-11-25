@@ -1,6 +1,6 @@
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { Camera, Trash2, User, X, Check } from 'lucide-react';
+import { Camera, Trash2, User, X, Check, CheckCircle2, Clock } from 'lucide-react';
 import { UserAccount } from '../types/defense';
 
 interface ProfileModalProps {
@@ -13,6 +13,8 @@ interface ProfileModalProps {
     avatarUrl: string;
     department: string;
     program?: string;
+    available?: boolean;
+    academicTitle?: string;
   }) => void;
 }
 
@@ -28,6 +30,9 @@ export function ProfileModal({
   const [name, setName] = useState(user.name);
   const [studentId, setStudentId] = useState(user.studentId ?? '');
   const [department, setDepartment] = useState(user.department);
+  const [program, setProgram] = useState(user.program ?? 'B.S. Information Technology · Mapúa UOx');
+  const [academicTitle, setAcademicTitle] = useState(user.academicTitle ?? 'Faculty Panelist · SOIT');
+  const [available, setAvailable] = useState<boolean>(user.available ?? true);
   const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl ?? '');
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -36,6 +41,9 @@ export function ProfileModal({
       setName(user.name);
       setStudentId(user.studentId ?? '');
       setDepartment(user.department);
+      setProgram(user.program ?? (user.role === 'student' ? `B.S. ${user.department} · Mapúa UOx` : 'B.S. Information Technology'));
+      setAcademicTitle(user.academicTitle ?? 'Faculty Panelist · SOIT');
+      setAvailable(user.available ?? true);
       setAvatarUrl(user.avatarUrl ?? '');
       setErrorMsg('');
     }
@@ -101,7 +109,7 @@ export function ProfileModal({
     const updatedProgram =
       user.role === 'student'
         ? `B.S. ${department} · Mapúa UOx`
-        : undefined;
+        : program.trim();
 
     onSave({
       name: trimmedName,
@@ -109,6 +117,8 @@ export function ProfileModal({
       avatarUrl: avatarUrl.trim(),
       department,
       program: updatedProgram,
+      available: user.role === 'admin' ? available : undefined,
+      academicTitle: user.role === 'admin' ? academicTitle.trim() : undefined,
     });
     onClose();
   };
@@ -245,20 +255,79 @@ export function ProfileModal({
                   />
                 </div>
 
-                {user.role === 'student' && (
-                  <div>
-                    <label htmlFor="profile-student-id" className="block text-xs font-semibold text-zinc-800 mb-1">
-                      Student Number
-                    </label>
-                    <input
-                      id="profile-student-id"
-                      type="text"
-                      value={studentId}
-                      onChange={(e) => setStudentId(e.target.value)}
-                      placeholder="e.g. 2026100001"
-                      className="w-full px-3.5 py-2 text-sm font-mono tabular-nums bg-white border border-stone-300 rounded-lg text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
-                    />
-                  </div>
+                {user.role === 'admin' && (
+                  <>
+                    <div>
+                      <label htmlFor="profile-title" className="block text-xs font-semibold text-zinc-800 mb-1">
+                        Academic Title / Position
+                      </label>
+                      <input
+                        id="profile-title"
+                        type="text"
+                        value={academicTitle}
+                        onChange={(e) => setAcademicTitle(e.target.value)}
+                        placeholder="e.g. Associate Professor · SOIT"
+                        className="w-full px-3.5 py-2 text-sm bg-white border border-stone-300 rounded-lg text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="profile-program" className="block text-xs font-semibold text-zinc-800 mb-1">
+                        Assigned Program Specialization
+                      </label>
+                      <select
+                        id="profile-program"
+                        value={program}
+                        onChange={(e) => setProgram(e.target.value)}
+                        className="w-full px-3.5 py-2 text-sm bg-white border border-stone-300 rounded-lg text-zinc-900 focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                      >
+                        <option value="B.S. Information Technology · Mapúa UOx">B.S. Information Technology · Mapúa UOx</option>
+                        <option value="B.S. Computer Science · Mapúa UOx">B.S. Computer Science · Mapúa UOx</option>
+                        <option value="B.S. Data Science · Mapúa UOx">B.S. Data Science · Mapúa UOx</option>
+                        <option value="B.S. Information Systems · Mapúa UOx">B.S. Information Systems · Mapúa UOx</option>
+                        <option value="School of Information Technology (All Programs)">School of Information Technology (All Programs)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-zinc-800 mb-1.5">
+                        Defense Panel Availability Status
+                      </label>
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <button
+                          type="button"
+                          onClick={() => setAvailable(true)}
+                          className={`p-2.5 rounded-lg border text-left text-xs font-medium transition-all flex items-center gap-2 ${
+                            available
+                              ? 'bg-emerald-50 border-emerald-400 text-emerald-900 ring-1 ring-emerald-400 shadow-2xs'
+                              : 'bg-white border-stone-300 text-zinc-600 hover:bg-stone-50'
+                          }`}
+                        >
+                          <CheckCircle2 className={`w-4 h-4 shrink-0 ${available ? 'text-emerald-600' : 'text-zinc-400'}`} />
+                          <div>
+                            <p className="font-semibold leading-tight">Available</p>
+                            <p className="text-[10px] text-zinc-500 mt-0.5">Ready for panel chairing</p>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setAvailable(false)}
+                          className={`p-2.5 rounded-lg border text-left text-xs font-medium transition-all flex items-center gap-2 ${
+                            !available
+                              ? 'bg-rose-50 border-rose-400 text-rose-900 ring-1 ring-rose-400 shadow-2xs'
+                              : 'bg-white border-stone-300 text-zinc-600 hover:bg-stone-50'
+                          }`}
+                        >
+                          <Clock className={`w-4 h-4 shrink-0 ${!available ? 'text-rose-600' : 'text-zinc-400'}`} />
+                          <div>
+                            <p className="font-semibold leading-tight">On Leave</p>
+                            <p className="text-[10px] text-zinc-500 mt-0.5">Exclude from defense slots</p>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  </>
                 )}
 
                 <div>

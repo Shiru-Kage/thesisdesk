@@ -4,6 +4,7 @@ import {
   AlertCircle,
   Archive,
   ArrowLeft,
+  BookOpen,
   CalendarCog,
   CalendarDays,
   CalendarPlus,
@@ -26,9 +27,11 @@ import {
   Pencil,
   Plus,
   RotateCcw,
+  Save,
   Search,
   Trash2,
   Unlock,
+  UserPlus,
   Video,
   X,
 } from 'lucide-react';
@@ -37,9 +40,11 @@ import {
   AppointmentStatus,
   ArchivedQuarterm,
   DefenseAppointment,
+  DefenseGuidelinesData,
   DefenseSlot,
   FacultyChair,
   FileReviewStatus,
+  ProtocolCard,
   QuartermPeriod,
   RequiredDocumentSpec,
   StudentFileSubmission,
@@ -49,6 +54,7 @@ import {
 import {
   buildQuartermCode,
   getNextQuartermSuggestion,
+  INITIAL_DEFENSE_GUIDELINES,
 } from '../data/mockTemplateData';
 import { PortalLayout, NavItem, QuartermBannerInfo } from './PortalLayout';
 import { CalendarGrid } from './CalendarGrid';
@@ -116,6 +122,16 @@ interface AdminPortalProps {
     payload: { zoomLink: string; meetingId: string; passcode: string }
   ) => void;
   onToggleFacultyAvailability: (facultyId: string) => void;
+  onAddFaculty?: (payload: {
+    name: string;
+    title: string;
+    email: string;
+    department: string;
+    program?: string;
+    available: boolean;
+  }) => void;
+  guidelines?: DefenseGuidelinesData;
+  onUpdateGuidelines?: (updated: DefenseGuidelinesData) => void;
   onSwitchRole: () => void;
   onSignOut: () => void;
   onResetDemoData: () => void;
@@ -153,6 +169,9 @@ export function AdminPortal({
   onToggleZoomRoomAvailability,
   onUpdateZoomRoomLink,
   onToggleFacultyAvailability,
+  onAddFaculty,
+  guidelines,
+  onUpdateGuidelines,
   onSwitchRole,
   onSignOut,
   onResetDemoData,
@@ -163,7 +182,7 @@ export function AdminPortal({
   onDeleteAnnouncement,
 }: AdminPortalProps) {
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'announcements' | 'submissions' | 'slots' | 'requests' | 'directory' | 'archives'
+    'overview' | 'announcements' | 'submissions' | 'slots' | 'requests' | 'directory' | 'archives' | 'guidelines'
   >('overview');
   const [calYear, setCalYear] = useState(2026);
   const [calMonth, setCalMonth] = useState(10);
@@ -230,6 +249,99 @@ export function AdminPortal({
   const [newZoomPasscode, setNewZoomPasscode] = useState(defaultZoomRoom?.passcode ?? '');
   const [newDepartment, setNewDepartment] = useState('Information Technology');
   const [newChair, setNewChair] = useState(faculty[0]?.name ?? '');
+
+  // Add Faculty Modal State
+  const [isAddFacultyOpen, setIsAddFacultyOpen] = useState(false);
+  const [newFacultyName, setNewFacultyName] = useState('');
+  const [newFacultyEmail, setNewFacultyEmail] = useState('');
+  const [newFacultyTitle, setNewFacultyTitle] = useState('Associate Professor · SOIT');
+  const [newFacultyDept, setNewFacultyDept] = useState('Information Technology');
+  const [newFacultyProgram, setNewFacultyProgram] = useState('B.S. Information Technology · Mapúa UOx');
+  const [newFacultyAvailable, setNewFacultyAvailable] = useState(true);
+
+  // Defense Guidelines Management State
+  const activeGuidelines = guidelines ?? INITIAL_DEFENSE_GUIDELINES;
+  const [guideTotalDuration, setGuideTotalDuration] = useState(activeGuidelines.sessionDurationMin);
+  const [guidePresentation, setGuidePresentation] = useState(activeGuidelines.presentationMin);
+  const [guideExamination, setGuideExamination] = useState(activeGuidelines.examinationMin);
+  const [guideOpenFloor, setGuideOpenFloor] = useState(activeGuidelines.openFloorMin);
+  const [guideDeliberation, setGuideDeliberation] = useState(activeGuidelines.deliberationMin);
+  const [guideProtocols, setGuideProtocols] = useState<ProtocolCard[]>(activeGuidelines.protocols);
+  const [guideCheckIn, setGuideCheckIn] = useState(activeGuidelines.earlyCheckInMin);
+  const [guideBackupAdvice, setGuideBackupAdvice] = useState(activeGuidelines.backupAdvice);
+  const [guideQuorumNote, setGuideQuorumNote] = useState(activeGuidelines.quorumNote);
+
+  useEffect(() => {
+    if (guidelines) {
+      setGuideTotalDuration(guidelines.sessionDurationMin);
+      setGuidePresentation(guidelines.presentationMin);
+      setGuideExamination(guidelines.examinationMin);
+      setGuideOpenFloor(guidelines.openFloorMin);
+      setGuideDeliberation(guidelines.deliberationMin);
+      setGuideProtocols(guidelines.protocols);
+      setGuideCheckIn(guidelines.earlyCheckInMin);
+      setGuideBackupAdvice(guidelines.backupAdvice);
+      setGuideQuorumNote(guidelines.quorumNote);
+    }
+  }, [guidelines]);
+
+  const handleAddFacultySubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!newFacultyName.trim() || !newFacultyEmail.trim()) {
+      showToast('Please provide both full name and official email.', 'warning');
+      return;
+    }
+    onAddFaculty?.({
+      name: newFacultyName.trim(),
+      email: newFacultyEmail.trim().toLowerCase(),
+      title: newFacultyTitle.trim(),
+      department: newFacultyDept.trim(),
+      program: newFacultyProgram.trim(),
+      available: newFacultyAvailable,
+    });
+    showToast(`Added faculty committee chair ${newFacultyName.trim()} (${newFacultyEmail.trim()}).`, 'success');
+    setIsAddFacultyOpen(false);
+    setNewFacultyName('');
+    setNewFacultyEmail('');
+  };
+
+  const handleUpdateProtocolCard = (index: number, field: keyof ProtocolCard, value: string) => {
+    setGuideProtocols((prev) =>
+      prev.map((card, i) => (i === index ? { ...card, [field]: value } : card))
+    );
+  };
+
+  const handleSaveGuidelines = () => {
+    const updated: DefenseGuidelinesData = {
+      id: activeGuidelines.id || 'soit-defense-guidelines',
+      sessionDurationMin: guideTotalDuration,
+      presentationMin: guidePresentation,
+      examinationMin: guideExamination,
+      openFloorMin: guideOpenFloor,
+      deliberationMin: guideDeliberation,
+      protocols: guideProtocols,
+      earlyCheckInMin: guideCheckIn,
+      backupAdvice: guideBackupAdvice.trim(),
+      quorumNote: guideQuorumNote.trim(),
+      updatedAt: new Date().toISOString(),
+      updatedBy: user.name,
+    };
+    onUpdateGuidelines?.(updated);
+    showToast('Defense guidelines saved and published to student portals.', 'success');
+  };
+
+  const handleResetGuidelines = () => {
+    setGuideTotalDuration(INITIAL_DEFENSE_GUIDELINES.sessionDurationMin);
+    setGuidePresentation(INITIAL_DEFENSE_GUIDELINES.presentationMin);
+    setGuideExamination(INITIAL_DEFENSE_GUIDELINES.examinationMin);
+    setGuideOpenFloor(INITIAL_DEFENSE_GUIDELINES.openFloorMin);
+    setGuideDeliberation(INITIAL_DEFENSE_GUIDELINES.deliberationMin);
+    setGuideProtocols(INITIAL_DEFENSE_GUIDELINES.protocols);
+    setGuideCheckIn(INITIAL_DEFENSE_GUIDELINES.earlyCheckInMin);
+    setGuideBackupAdvice(INITIAL_DEFENSE_GUIDELINES.backupAdvice);
+    setGuideQuorumNote(INITIAL_DEFENSE_GUIDELINES.quorumNote);
+    showToast('Reset guidelines fields to Mapúa SOIT standard template.', 'info');
+  };
 
   const inspectedAppointment = useMemo(
     () =>
@@ -725,6 +837,7 @@ export function AdminPortal({
       badgeCount: pendingQueue.length,
     },
     { id: 'directory', label: 'Zoom Rooms & Faculty', icon: <Video className="w-4 h-4" /> },
+    { id: 'guidelines', label: 'Defense Guidelines', icon: <BookOpen className="w-4 h-4" /> },
     {
       id: 'archives',
       label: 'Quarterm Archives',
@@ -740,6 +853,7 @@ export function AdminPortal({
     slots: '/assets/portal/image_7b399ac3.png',
     requests: '/assets/portal/image_40c3523c.png',
     directory: '/assets/portal/image_7b399ac3.png',
+    guidelines: '/assets/portal/image_40c3523c.png',
     archives: '/assets/portal/image_ed324830.png',
   };
 
@@ -2413,30 +2527,48 @@ export function AdminPortal({
           </section>
 
           <section className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-zinc-200">
-              <h2 className="text-base font-semibold text-zinc-900">
-                Faculty Committee Chairs
-              </h2>
+            <div className="px-5 py-4 border-b border-zinc-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <h2 className="text-base font-semibold text-zinc-900">
+                  Faculty Committee Chairs & Panel Evaluators
+                </h2>
+                <p className="text-xs text-zinc-500 mt-0.5">
+                  Assigned defense chairs, program evaluators, and academic coordinators.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddFacultyOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg text-white bg-[#A6192E] hover:bg-[#8B1425] transition-colors shadow-xs shrink-0 self-start sm:self-auto cursor-pointer"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Add Faculty Member</span>
+              </button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-zinc-200 bg-stone-900/[0.04] text-xs font-medium text-zinc-500">
                     <th className="py-3 px-4">Faculty Member</th>
-                    <th className="py-3 px-4">Program</th>
+                    <th className="py-3 px-4">Official Email</th>
+                    <th className="py-3 px-4">Program & Department</th>
                     <th className="py-3 px-4 text-right">Assigned Defenses</th>
-                    <th className="py-3 px-4 text-right">Status</th>
+                    <th className="py-3 px-4 text-right">Availability</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 text-sm">
                   {faculty.map((member) => (
-                    <tr key={member.id}>
+                    <tr key={member.id} className="hover:bg-zinc-50/70 transition-colors">
                       <td className="py-3 px-4 whitespace-nowrap">
                         <p className="font-medium text-zinc-900">{member.name}</p>
                         <p className="text-xs text-zinc-500">{member.title}</p>
                       </td>
-                      <td className="py-3 px-4 text-zinc-600 whitespace-nowrap">
-                        {member.department}
+                      <td className="py-3 px-4 whitespace-nowrap font-mono text-xs text-zinc-600">
+                        {member.email || '—'}
+                      </td>
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <p className="text-xs font-semibold text-zinc-800">{member.program || member.department}</p>
+                        <p className="text-[11px] text-zinc-500">{member.department}</p>
                       </td>
                       <td className="py-3 px-4 text-right font-mono tabular-nums text-zinc-800">
                         {member.activeDefenses}
@@ -2445,7 +2577,7 @@ export function AdminPortal({
                         <button
                           type="button"
                           onClick={() => onToggleFacultyAvailability(member.id)}
-                          className={`py-1.5 px-3 text-xs font-medium rounded-md transition-colors ${
+                          className={`py-1.5 px-3 text-xs font-medium rounded-md transition-colors cursor-pointer ${
                             member.available
                               ? 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
                               : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
@@ -2459,6 +2591,330 @@ export function AdminPortal({
                 </tbody>
               </table>
             </div>
+          </section>
+        </div>
+      )}
+
+      {/* TAB 7: DEFENSE GUIDELINES */}
+      {activeTab === 'guidelines' && (
+        <div className="space-y-5">
+          {/* Header Action Bar */}
+          <section className="bg-white/70 backdrop-blur-md border border-stone-300/80 shadow-[0_4px_24px_rgba(24,24,27,0.05)] rounded-xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-lg bg-[#A6192E]/10 border border-[#A6192E]/20 text-[#A6192E] flex items-center justify-center shrink-0">
+                <BookOpen className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-lg font-bold text-zinc-900 tracking-tight">
+                    Academic Defense Guidelines & Protocol Runbook
+                  </h1>
+                  <span className="px-2 py-0.5 text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full">
+                    Live Syncing
+                  </span>
+                </div>
+                <p className="text-xs text-zinc-600 mt-1 max-w-2xl leading-relaxed">
+                  Configure presentation duration allocations, committee examination rules, candidate protocol runbook cards, and technical readiness requirements. Changes publish immediately to all student portals.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={handleResetGuidelines}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-zinc-700 bg-white hover:bg-stone-50 border border-stone-300 rounded-lg transition-colors cursor-pointer"
+                title="Reset to default Mapúa SOIT template"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset Defaults</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveGuidelines}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-[#A6192E] hover:bg-[#881325] rounded-lg transition-colors shadow-xs cursor-pointer"
+              >
+                <Save className="w-3.5 h-3.5" />
+                <span>Save Guidelines</span>
+              </button>
+            </div>
+          </section>
+
+          {/* Session Duration Allocation Card */}
+          <section className="bg-white/70 backdrop-blur-md border border-stone-300/80 shadow-[0_4px_24px_rgba(24,24,27,0.05)] rounded-xl p-5 sm:p-6 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-200 pb-3">
+              <div>
+                <h2 className="text-sm font-bold text-zinc-900">
+                  Standard Session Breakdown ({guideTotalDuration} Minutes)
+                </h2>
+                <p className="text-xs text-zinc-500">
+                  Allocate presentation, question and answer, and committee deliberation time limits.
+                </p>
+              </div>
+              <div className="text-xs font-mono text-zinc-600 bg-stone-100 px-2.5 py-1 rounded-md border border-stone-200">
+                Sum: {guidePresentation + guideExamination + guideOpenFloor + guideDeliberation} / {guideTotalDuration} min
+              </div>
+            </div>
+
+            {/* Visual Live Stacked Bar */}
+            <div className="space-y-2">
+              <div className="w-full h-4 rounded-full overflow-hidden flex bg-stone-200 border border-stone-300/80">
+                <div
+                  style={{ width: `${(guidePresentation / guideTotalDuration) * 100}%` }}
+                  className="bg-amber-400 transition-all duration-300"
+                  title={`Candidate Presentation: ${guidePresentation} min`}
+                />
+                <div
+                  style={{ width: `${(guideExamination / guideTotalDuration) * 100}%` }}
+                  className="bg-[#A6192E] transition-all duration-300"
+                  title={`Panel Examination: ${guideExamination} min`}
+                />
+                <div
+                  style={{ width: `${(guideOpenFloor / guideTotalDuration) * 100}%` }}
+                  className="bg-zinc-700 transition-all duration-300"
+                  title={`Open Floor: ${guideOpenFloor} min`}
+                />
+                <div
+                  style={{ width: `${(guideDeliberation / guideTotalDuration) * 100}%` }}
+                  className="bg-emerald-600 transition-all duration-300"
+                  title={`Committee Deliberation: ${guideDeliberation} min`}
+                />
+              </div>
+
+              {/* Legend & Percentages */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                <div className="flex items-center gap-1.5 text-zinc-700">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0" />
+                  <span className="font-medium">Presentation:</span>
+                  <span className="font-mono text-zinc-500">{guidePresentation}m</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-zinc-700">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#A6192E] shrink-0" />
+                  <span className="font-medium">Examination:</span>
+                  <span className="font-mono text-zinc-500">{guideExamination}m</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-zinc-700">
+                  <span className="w-2.5 h-2.5 rounded-full bg-zinc-700 shrink-0" />
+                  <span className="font-medium">Open Floor:</span>
+                  <span className="font-mono text-zinc-500">{guideOpenFloor}m</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-zinc-700">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 shrink-0" />
+                  <span className="font-medium">Deliberation:</span>
+                  <span className="font-mono text-zinc-500">{guideDeliberation}m</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Minute Inputs Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-2">
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">
+                  Total Session (min)
+                </label>
+                <input
+                  type="number"
+                  min="30"
+                  max="180"
+                  step="5"
+                  value={guideTotalDuration}
+                  onChange={(e) => setGuideTotalDuration(Math.max(1, parseInt(e.target.value) || 90))}
+                  className="w-full px-3 py-2 text-sm font-mono border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">
+                  Presentation (min)
+                </label>
+                <input
+                  type="number"
+                  min="5"
+                  max="60"
+                  step="5"
+                  value={guidePresentation}
+                  onChange={(e) => setGuidePresentation(Math.max(1, parseInt(e.target.value) || 25))}
+                  className="w-full px-3 py-2 text-sm font-mono border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">
+                  Examination (min)
+                </label>
+                <input
+                  type="number"
+                  min="5"
+                  max="90"
+                  step="5"
+                  value={guideExamination}
+                  onChange={(e) => setGuideExamination(Math.max(1, parseInt(e.target.value) || 40))}
+                  className="w-full px-3 py-2 text-sm font-mono border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">
+                  Open Floor (min)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="30"
+                  step="5"
+                  value={guideOpenFloor}
+                  onChange={(e) => setGuideOpenFloor(Math.max(0, parseInt(e.target.value) || 10))}
+                  className="w-full px-3 py-2 text-sm font-mono border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">
+                  Deliberation (min)
+                </label>
+                <input
+                  type="number"
+                  min="5"
+                  max="45"
+                  step="5"
+                  value={guideDeliberation}
+                  onChange={(e) => setGuideDeliberation(Math.max(1, parseInt(e.target.value) || 15))}
+                  className="w-full px-3 py-2 text-sm font-mono border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* 4 Protocol Runbook Cards Editor */}
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-bold text-zinc-900">
+                  Four-Phase Candidate Protocol Runbook Cards
+                </h2>
+                <p className="text-xs text-zinc-500">
+                  The four key procedural milestones displayed to thesis candidates on their defense guidelines screen.
+                </p>
+              </div>
+              <span className="text-xs font-medium text-zinc-500">4 Cards Configured</span>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {guideProtocols.map((protocol, idx) => (
+                <div
+                  key={protocol.id || protocol.stepNumber || idx}
+                  className="bg-white/70 backdrop-blur-md border border-stone-300/80 rounded-xl p-4 sm:p-5 shadow-xs space-y-3"
+                >
+                  <div className="flex items-center justify-between gap-3 border-b border-zinc-200 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-md bg-[#A6192E]/10 text-[#A6192E] font-bold text-xs flex items-center justify-center font-mono">
+                        {protocol.stepNumber}
+                      </span>
+                      <span className="text-xs font-bold text-zinc-800">
+                        Card #{idx + 1}
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      value={protocol.phase}
+                      onChange={(e) => handleUpdateProtocolCard(idx, 'phase', e.target.value)}
+                      placeholder="Phase Label (e.g., Phase 1: Pre-Defense Clearance)"
+                      className="text-xs font-medium text-[#A6192E] bg-stone-50 border border-stone-200 rounded px-2 py-1 max-w-[220px] focus:outline-none focus:ring-1 focus:ring-[#A6192E]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-zinc-600 mb-1">
+                      Card Title
+                    </label>
+                    <input
+                      type="text"
+                      value={protocol.title}
+                      onChange={(e) => handleUpdateProtocolCard(idx, 'title', e.target.value)}
+                      placeholder="Title of this protocol requirement"
+                      className="w-full px-3 py-1.5 text-xs font-semibold text-zinc-900 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-zinc-600 mb-1">
+                      Protocol Instructions & Rule Details
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={protocol.description}
+                      onChange={(e) => handleUpdateProtocolCard(idx, 'description', e.target.value)}
+                      placeholder="Detailed instructions for student candidates..."
+                      className="w-full px-3 py-2 text-xs text-zinc-700 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E] resize-none leading-relaxed"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Technical Readiness & Quorum Standards Card */}
+          <section className="bg-white/70 backdrop-blur-md border border-stone-300/80 shadow-[0_4px_24px_rgba(24,24,27,0.05)] rounded-xl p-5 sm:p-6 space-y-4">
+            <div className="border-b border-zinc-200 pb-3">
+              <h2 className="text-sm font-bold text-zinc-900">
+                Technical Readiness & Remote Continuity Standards
+              </h2>
+              <p className="text-xs text-zinc-500">
+                Hardware check-in timings, emergency hotspot provisions, and official quorum expectations.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">
+                  Early Check-In Window (Minutes)
+                </label>
+                <input
+                  type="number"
+                  min="5"
+                  max="45"
+                  step="5"
+                  value={guideCheckIn}
+                  onChange={(e) => setGuideCheckIn(Math.max(1, parseInt(e.target.value) || 15))}
+                  className="w-full px-3 py-2 text-xs font-mono border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                />
+                <p className="text-[11px] text-zinc-500 mt-1">Recommended buffer for audio, mic, and screen share testing.</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">
+                  Secondary Connectivity Advice
+                </label>
+                <input
+                  type="text"
+                  value={guideBackupAdvice}
+                  onChange={(e) => setGuideBackupAdvice(e.target.value)}
+                  placeholder="e.g., Secondary mobile hotspot or LTE tethering"
+                  className="w-full px-3 py-2 text-xs text-zinc-800 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                />
+                <p className="text-[11px] text-zinc-500 mt-1">Recommended fallback if home broadband drops.</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">
+                  Quorum & Cloud Recording Policy
+                </label>
+                <input
+                  type="text"
+                  value={guideQuorumNote}
+                  onChange={(e) => setGuideQuorumNote(e.target.value)}
+                  placeholder="e.g., Session is cloud-recorded; 2/3 faculty quorum required"
+                  className="w-full px-3 py-2 text-xs text-zinc-800 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                />
+                <p className="text-[11px] text-zinc-500 mt-1">Stated policy regarding recording and faculty attendance.</p>
+              </div>
+            </div>
+
+            {activeGuidelines.updatedAt && (
+              <div className="pt-3 border-t border-zinc-200/80 flex items-center justify-between text-[11px] text-zinc-500">
+                <span>
+                  Last saved: {formatReadableDate(activeGuidelines.updatedAt)}
+                  {activeGuidelines.updatedBy ? ` by ${activeGuidelines.updatedBy}` : ''}
+                </span>
+                <span className="font-mono text-zinc-400">Mapúa SOIT Protocol System</span>
+              </div>
+            )}
           </section>
         </div>
       )}
@@ -2650,18 +3106,206 @@ export function AdminPortal({
                 <button
                   type="button"
                   onClick={() => setAddSlotModalOpen(false)}
-                  className="py-2 px-4 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors"
+                  className="py-2 px-4 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="py-2 px-4 text-sm font-medium text-white bg-[#A6192E] hover:bg-[#881325] rounded-lg transition-colors"
+                  className="py-2 px-4 text-sm font-medium text-white bg-[#A6192E] hover:bg-[#881325] rounded-lg transition-colors cursor-pointer"
                 >
                   Publish Slot
                 </button>
               </div>
             </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ADD FACULTY COMMITTEE CHAIR MODAL */}
+      <AnimatePresence>
+        {isAddFacultyOpen && (
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-faculty-title"
+            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0 }}
+            transition={{ duration: prefersReducedMotion ? 0.01 : 0.16 }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setIsAddFacultyOpen(false);
+            }}
+            className="fixed inset-0 z-50 bg-zinc-950/55 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          >
+            <motion.div
+              initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, scale: 0.97, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.98, y: 6 }}
+              transition={
+                prefersReducedMotion
+                  ? { duration: 0.01 }
+                  : { duration: 0.2, ease: [0.16, 1, 0.3, 1] }
+              }
+              className="bg-white border border-stone-300 rounded-xl max-w-md w-full p-6 shadow-2xl my-8"
+            >
+              <div className="flex items-start justify-between gap-4 pb-4 border-b border-zinc-200">
+                <div>
+                  <h2 id="add-faculty-title" className="text-xl font-semibold text-zinc-900">
+                    Add Faculty Member
+                  </h2>
+                  <p className="text-xs text-zinc-500 mt-0.5">
+                    Register a faculty chair or evaluator into the defense committee directory.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsAddFacultyOpen(false)}
+                  aria-label="Close modal"
+                  className="p-1.5 text-zinc-400 hover:text-zinc-700 rounded-md cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddFacultySubmit} className="mt-5 space-y-4">
+                <div>
+                  <label htmlFor="faculty-name" className="block text-xs font-semibold text-zinc-700 mb-1">
+                    Full Name & Honorifics *
+                  </label>
+                  <input
+                    id="faculty-name"
+                    type="text"
+                    required
+                    placeholder="e.g., Dr. Juan Dela Cruz"
+                    value={newFacultyName}
+                    onChange={(e) => setNewFacultyName(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="faculty-email" className="block text-xs font-semibold text-zinc-700 mb-1">
+                    Official Institutional Email *
+                  </label>
+                  <input
+                    id="faculty-email"
+                    type="email"
+                    required
+                    placeholder="e.g., jdelacruz@mapua.edu.ph"
+                    value={newFacultyEmail}
+                    onChange={(e) => setNewFacultyEmail(e.target.value)}
+                    className="w-full px-3 py-2 text-sm font-mono border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                  />
+                  <p className="text-[11px] text-zinc-500 mt-1">
+                    Used for faculty sign-in and defense panel notifications.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label htmlFor="faculty-title" className="block text-xs font-semibold text-zinc-700 mb-1">
+                      Academic Rank / Title
+                    </label>
+                    <input
+                      id="faculty-title"
+                      type="text"
+                      placeholder="e.g., Associate Professor"
+                      value={newFacultyTitle}
+                      onChange={(e) => setNewFacultyTitle(e.target.value)}
+                      className="w-full px-3 py-2 text-xs border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="faculty-dept" className="block text-xs font-semibold text-zinc-700 mb-1">
+                      Department
+                    </label>
+                    <select
+                      id="faculty-dept"
+                      value={newFacultyDept}
+                      onChange={(e) => setNewFacultyDept(e.target.value)}
+                      className="w-full px-3 py-2 text-xs border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                    >
+                      <option value="Information Technology">Information Technology</option>
+                      <option value="Computer Science">Computer Science</option>
+                      <option value="Information Systems">Information Systems</option>
+                      <option value="Data Science">Data Science</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="faculty-prog" className="block text-xs font-semibold text-zinc-700 mb-1">
+                    Program Specialization
+                  </label>
+                  <select
+                    id="faculty-prog"
+                    value={newFacultyProgram}
+                    onChange={(e) => setNewFacultyProgram(e.target.value)}
+                    className="w-full px-3 py-2 text-xs border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                  >
+                    <option value="B.S. Information Technology · Mapúa UOx">B.S. Information Technology · Mapúa UOx</option>
+                    <option value="B.S. Computer Science · Mapúa UOx">B.S. Computer Science · Mapúa UOx</option>
+                    <option value="B.S. Information Systems · Mapúa UOx">B.S. Information Systems · Mapúa UOx</option>
+                    <option value="Master in Information Technology">Master in Information Technology</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
+                    Initial Committee Availability
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setNewFacultyAvailable(true)}
+                      className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                        newFacultyAvailable
+                          ? 'border-emerald-500 bg-emerald-50/70 text-emerald-900 shadow-xs'
+                          : 'border-zinc-200 hover:border-zinc-300 text-zinc-600'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-xs font-semibold">Available</span>
+                        {newFacultyAvailable && <Check className="w-3.5 h-3.5 text-emerald-600" />}
+                      </div>
+                      <p className="text-[10px] text-zinc-500">Eligible for defense slots</p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNewFacultyAvailable(false)}
+                      className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                        !newFacultyAvailable
+                          ? 'border-zinc-400 bg-zinc-100 text-zinc-900 shadow-xs'
+                          : 'border-zinc-200 hover:border-zinc-300 text-zinc-600'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-xs font-semibold">On Leave</span>
+                        {!newFacultyAvailable && <Check className="w-3.5 h-3.5 text-zinc-600" />}
+                      </div>
+                      <p className="text-[10px] text-zinc-500">Temporarily excluded</p>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-zinc-200 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddFacultyOpen(false)}
+                    className="py-2 px-4 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="py-2 px-4 text-sm font-medium text-white bg-[#A6192E] hover:bg-[#881325] rounded-lg transition-colors cursor-pointer"
+                  >
+                    Register Faculty Member
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </motion.div>
         )}

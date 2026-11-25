@@ -16,6 +16,8 @@ export interface UserAccount {
   studentId?: string;
   program?: string;
   avatarUrl: string;
+  academicTitle?: string;
+  available?: boolean;
 }
 
 export interface DefenseSlot {
@@ -91,6 +93,30 @@ export interface FacultyChair {
   email: string;
   activeDefenses: number;
   available: boolean;
+  program?: string;
+}
+
+export interface ProtocolCard {
+  id: string;
+  stepNumber: string;
+  phase: string;
+  title: string;
+  description: string;
+}
+
+export interface DefenseGuidelinesData {
+  id: string;
+  sessionDurationMin: number;
+  presentationMin: number;
+  examinationMin: number;
+  openFloorMin: number;
+  deliberationMin: number;
+  protocols: ProtocolCard[];
+  earlyCheckInMin: number;
+  backupAdvice: string;
+  quorumNote: string;
+  updatedAt?: string;
+  updatedBy?: string;
 }
 
 export interface ChecklistItem {
