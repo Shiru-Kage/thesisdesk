@@ -721,8 +721,8 @@ export function AdminPortal({
     >
       {/* TAB 1: SCHEDULE OVERVIEW */}
       {activeTab === 'overview' && (
-        <div className="space-y-6">
-          <div className="pb-3 border-b border-stone-300/60">
+        <div className="space-y-4 sm:space-y-5">
+          <div className="pb-2.5 border-b border-stone-300/60">
             <p className="text-xs font-semibold text-[#9A6E00]">
               {user.department} · Coordinator Console
               {activeQuarter && (
@@ -2145,7 +2145,7 @@ export function AdminPortal({
 
       {/* TAB 5: ZOOM ROOMS & FACULTY DIRECTORY */}
       {activeTab === 'directory' && (
-        <div className="space-y-8">
+        <div className="space-y-5">
           <div>
             <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight">
               UOx Zoom Defense Rooms & Committee Chairs

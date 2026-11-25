@@ -573,16 +573,16 @@ export function StudentPortal({
 
       {/* TAB 1: OVERVIEW */}
       {activeTab === 'overview' && (
-        <div className="space-y-8">
-          <div className="pb-5 border-b border-stone-300/60 flex items-start justify-between gap-4">
+        <div className="space-y-4 sm:space-y-5">
+          <div className="pb-3 border-b border-stone-300/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <div>
-              <p className="text-xs font-medium text-zinc-600">
+              <p className="text-xs font-semibold text-[#9A6E00]">
                 {user.program ?? 'SOIT Candidate'}
                 <span className="mx-1.5 text-zinc-400" aria-hidden="true">
                   ·
                 </span>
                 Student No.{' '}
-                <span className="font-mono tabular-nums text-zinc-800">
+                <span className="font-mono tabular-nums text-zinc-800 font-medium">
                   {user.studentId || 'Pending ID'}
                 </span>
                 {activeQuarter && (
@@ -590,13 +590,13 @@ export function StudentPortal({
                     <span className="mx-1.5 text-zinc-400" aria-hidden="true">
                       ·
                     </span>
-                    <span className="font-mono tabular-nums text-[#9A6E00] font-medium">
+                    <span className="font-mono tabular-nums font-bold">
                       {activeQuarter.code}
                     </span>
                   </>
                 )}
               </p>
-              <h1 className="text-2xl sm:text-3xl font-semibold text-zinc-900 tracking-tight mt-1">
+              <h1 className="text-xl sm:text-2xl font-semibold text-zinc-900 tracking-tight mt-0.5">
                 Welcome back, {user.name.split(' ')[0]}
               </h1>
             </div>
@@ -604,10 +604,10 @@ export function StudentPortal({
               <button
                 type="button"
                 onClick={onOpenProfileModal}
-                className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-zinc-700 bg-white/80 hover:bg-white border border-stone-300 rounded-lg shadow-xs hover:border-stone-400 transition-colors shrink-0"
+                className="self-start sm:self-auto inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-700 bg-white/80 hover:bg-white border border-stone-300 rounded-lg shadow-2xs hover:border-stone-400 transition-colors shrink-0 cursor-pointer"
               >
-                <UserCog className="w-4 h-4 text-zinc-600" />
-                Edit Profile
+                <UserCog className="w-3.5 h-3.5 text-zinc-600" />
+                <span>Edit Profile</span>
               </button>
             )}
           </div>

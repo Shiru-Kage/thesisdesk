@@ -208,9 +208,9 @@ export function AdminAnnouncementsView({
   }, [announcements, searchQuery, selectedCategory]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-5">
       {/* Top Banner & Action */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-300/60">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2.5 border-b border-stone-300/60">
         <div>
           <div className="flex items-center gap-2">
             <span className="p-1.5 rounded-lg bg-[#A6192E]/10 text-[#A6192E]">

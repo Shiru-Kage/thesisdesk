@@ -327,7 +327,7 @@ export function PortalLayout({
           </div>
         </header>
 
-        <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 xl:px-10 py-6 sm:py-8">
+        <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 xl:px-10 pt-3.5 sm:pt-4 pb-8 sm:pb-10">
           <motion.div
             key={activeTab}
             initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
