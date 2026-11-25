@@ -337,6 +337,14 @@ export function StudentPortal({
     return set;
   }, [studentAppointments]);
 
+  const appointmentStatusCounts = useMemo(() => {
+    const counts: Record<string, number> = { All: studentAppointments.length };
+    studentAppointments.forEach((a) => {
+      counts[a.status] = (counts[a.status] ?? 0) + 1;
+    });
+    return counts;
+  }, [studentAppointments]);
+
   const filteredAppointments = useMemo(() => {
     return studentAppointments
       .filter((a) => (statusFilter === 'All' ? true : a.status === statusFilter))
@@ -346,6 +354,7 @@ export function StudentPortal({
         return (
           a.thesisTitle.toLowerCase().includes(q) ||
           a.id.toLowerCase().includes(q) ||
+          a.advisorName.toLowerCase().includes(q) ||
           a.zoomRoomName.toLowerCase().includes(q)
         );
       });
@@ -1566,58 +1575,100 @@ export function StudentPortal({
       {/* TAB 3: MY APPOINTMENTS */}
       {activeTab === 'appointments' && (
         <div className="space-y-4 sm:space-y-5">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div className="flex items-center gap-1 p-1 bg-zinc-200/70 rounded-lg overflow-x-auto">
-              {(
-                ['All', 'Confirmed', 'Pending Review', 'Reschedule Requested', 'Completed'] as const
-              ).map((st) => (
-                <button
-                  key={st}
-                  type="button"
-                  onClick={() => setStatusFilter(st)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
-                    statusFilter === st
-                      ? 'bg-white text-zinc-900 shadow-xs'
-                      : 'text-zinc-600 hover:text-zinc-900'
-                  }`}
-                >
-                  {st}
-                </button>
-              ))}
-            </div>
+          <div className="bg-white/75 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl overflow-hidden">
+            {/* Integrated Container Toolbar */}
+            <div className="px-4 py-3 bg-stone-50/70 border-b border-stone-200/80 flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div className="flex items-center gap-1 p-1 bg-stone-200/70 border border-stone-300/50 rounded-lg overflow-x-auto scrollbar-none">
+                {(
+                  ['All', 'Confirmed', 'Pending Review', 'Reschedule Requested', 'Completed'] as const
+                ).map((st) => {
+                  const count = appointmentStatusCounts[st] ?? 0;
+                  const isSelected = statusFilter === st;
+                  return (
+                    <button
+                      key={st}
+                      type="button"
+                      onClick={() => setStatusFilter(st)}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap shrink-0 inline-flex items-center gap-1.5 ${
+                        isSelected
+                          ? 'bg-white text-zinc-900 shadow-xs'
+                          : 'text-zinc-600 hover:text-zinc-900'
+                      }`}
+                    >
+                      <span>{st}</span>
+                      <span
+                        className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono tabular-nums font-semibold ${
+                          isSelected
+                            ? 'bg-stone-100 text-zinc-800'
+                            : 'bg-stone-300/60 text-zinc-600'
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
 
-            <div className="relative w-full md:w-64">
-              <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search title or ID..."
-                className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-zinc-300 rounded-lg text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
-              />
-            </div>
-          </div>
-
-          <div className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl overflow-hidden">
-            {filteredAppointments.length === 0 ? (
-              <div className="p-10 text-center">
-                <p className="text-sm font-medium text-zinc-900">
-                  No matching appointments found
-                </p>
-                <p className="text-xs text-zinc-500 mt-1">
-                  Adjust your status filter or schedule a new thesis defense window.
-                </p>
-                {(statusFilter !== 'All' || searchQuery.trim() !== '') && (
+              <div className="relative w-full md:w-72">
+                <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search title, ID, or adviser..."
+                  className="w-full pl-9 pr-8 py-1.5 text-xs bg-white border border-stone-300/80 rounded-lg text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#A6192E] shadow-2xs"
+                />
+                {searchQuery && (
                   <button
                     type="button"
-                    onClick={() => {
-                      setStatusFilter('All');
-                      setSearchQuery('');
-                    }}
-                    className="mt-4 py-1.5 px-3.5 text-xs font-medium text-zinc-800 bg-white hover:bg-stone-50 border border-stone-300 rounded-lg transition-colors whitespace-nowrap"
+                    onClick={() => setSearchQuery('')}
+                    aria-label="Clear search"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 p-0.5"
                   >
-                    Clear Filters
+                    <X className="w-3.5 h-3.5" />
                   </button>
+                )}
+              </div>
+            </div>
+
+            {filteredAppointments.length === 0 ? (
+              <div className="py-8 px-6 text-center">
+                <div className="w-10 h-10 rounded-full bg-stone-100 border border-stone-200 text-zinc-400 flex items-center justify-center mx-auto mb-2.5">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <p className="text-sm font-semibold text-zinc-900">
+                  {studentAppointments.length === 0
+                    ? 'No defense reservations booked yet'
+                    : 'No defense reservations match your criteria'}
+                </p>
+                <p className="text-xs text-zinc-500 mt-1 max-w-md mx-auto">
+                  {studentAppointments.length === 0
+                    ? 'Once you upload the required pre-defense files and gain faculty approval, reserve an open Zoom slot to track your defense here.'
+                    : 'Try clearing your search terms or choosing another status tab to view your booked appointments.'}
+                </p>
+                {studentAppointments.length === 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('book')}
+                    className="mt-4 py-1.5 px-3.5 bg-[#A6192E] hover:bg-[#881325] text-white text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer shadow-2xs"
+                  >
+                    <CalendarDays className="w-3.5 h-3.5" />
+                    <span>Book Defense Slot</span>
+                  </button>
+                ) : (
+                  (statusFilter !== 'All' || searchQuery.trim() !== '') && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStatusFilter('All');
+                        setSearchQuery('');
+                      }}
+                      className="mt-4 py-1.5 px-3.5 text-xs font-medium text-zinc-800 bg-white hover:bg-stone-50 border border-stone-300 rounded-lg transition-colors whitespace-nowrap shadow-2xs cursor-pointer"
+                    >
+                      Clear Filters
+                    </button>
+                  )
                 )}
               </div>
             ) : (
