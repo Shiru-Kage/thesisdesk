@@ -359,10 +359,17 @@ export function QuartermArchivesView({
                   : 100;
 
               return (
-                <button
+                <div
                   key={arc.id}
-                  type="button"
+                  role="button"
+                  tabIndex={0}
                   onClick={() => handleOpenArchive(arc.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleOpenArchive(arc.id);
+                    }
+                  }}
                   className="group bg-white/75 hover:bg-white backdrop-blur-md border border-stone-300/80 hover:border-[#A6192E]/50 shadow-[0_4px_24px_rgba(24,24,27,0.04)] hover:shadow-md rounded-2xl p-5 text-left transition-all flex flex-col justify-between gap-4 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6192E]"
                 >
                   <div className="space-y-3">
@@ -445,13 +452,38 @@ export function QuartermArchivesView({
                       <span className="text-zinc-500 text-[11px]">
                         {uniqueStudentCount} candidate folder{uniqueStudentCount === 1 ? '' : 's'}
                       </span>
-                      <span className="inline-flex items-center gap-1 font-semibold text-xs text-[#A6192E] group-hover:translate-x-0.5 transition-transform shrink-0">
-                        <span>Inspect Archive</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {arc.appointments.length > 0 && (
+                          <button
+                            type="button"
+                            title={`Export ${arc.quarterm.code} defense schedule CSV`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              downloadDefenseScheduleCsv(
+                                arc.appointments,
+                                `ThesisDesk-${arc.quarterm.code}-Archive`
+                              );
+                              onNotify?.(
+                                `Exported ${arc.appointments.length} archived defense record${
+                                  arc.appointments.length === 1 ? '' : 's'
+                                } from ${arc.quarterm.code}.`,
+                                'success'
+                              );
+                            }}
+                            className="py-1 px-2 text-[11px] font-medium text-zinc-700 bg-white hover:bg-stone-50 border border-stone-300 rounded-md transition-colors inline-flex items-center gap-1 shadow-2xs hover:border-[#A6192E]/40"
+                          >
+                            <Download className="w-3 h-3 text-[#A6192E]" />
+                            <span>CSV</span>
+                          </button>
+                        )}
+                        <span className="inline-flex items-center gap-1 font-semibold text-xs text-[#A6192E] group-hover:translate-x-0.5 transition-transform shrink-0">
+                          <span>Inspect</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>

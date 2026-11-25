@@ -508,9 +508,18 @@ export function StudentPortal({
     e.preventDefault();
     setDragOverDocId(null);
     const file = e.dataTransfer.files?.[0];
-    if (file) {
-      handleUploadedFile(requirementId, file);
+    if (!file) return;
+    const isPdf =
+      file.type === 'application/pdf' ||
+      file.name.toLowerCase().endsWith('.pdf');
+    if (!isPdf) {
+      showToast(
+        'Only PDF documents (.pdf) are accepted for thesis defense submissions.',
+        'warning'
+      );
+      return;
     }
+    handleUploadedFile(requirementId, file);
   };
 
   const handleBookingSubmit = (e: FormEvent) => {

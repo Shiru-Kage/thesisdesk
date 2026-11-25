@@ -460,7 +460,7 @@ export function PdfPreviewModal({
                       transform: `scale(${zoomPercent / 100})`,
                       transformOrigin: 'top center',
                     }}
-                    className="w-full max-w-[816px] min-h-[1056px] bg-white text-zinc-900 rounded-sm shadow-2xl border border-stone-300 p-10 sm:p-14 docx-rendered-content transition-transform space-y-4"
+                    className="w-full max-w-[816px] min-w-[320px] sm:min-w-[720px] shrink-0 min-h-[1056px] bg-white text-zinc-900 rounded-sm shadow-2xl border border-stone-300 p-6 sm:p-14 docx-rendered-content transition-transform space-y-4"
                   >
                     <div
                       dangerouslySetInnerHTML={{ __html: docxHtml }}
@@ -505,7 +505,7 @@ export function PdfPreviewModal({
                     transform: `scale(${zoomPercent / 100})`,
                     transformOrigin: 'top center',
                   }}
-                  className="w-full max-w-[816px] min-h-[1056px] bg-white text-zinc-900 rounded-sm shadow-2xl border border-stone-300 p-10 sm:p-14 font-mono text-xs whitespace-pre-wrap transition-transform"
+                  className="w-full max-w-[816px] min-w-[320px] sm:min-w-[720px] shrink-0 min-h-[1056px] bg-white text-zinc-900 rounded-sm shadow-2xl border border-stone-300 p-6 sm:p-14 font-mono text-xs whitespace-pre-wrap transition-transform"
                 >
                   {textContent}
                 </div>
@@ -516,7 +516,7 @@ export function PdfPreviewModal({
                     transform: `scale(${zoomPercent / 100})`,
                     transformOrigin: 'top center',
                   }}
-                  className="w-full max-w-[816px] min-h-[1056px] bg-white text-zinc-900 rounded-sm shadow-xl border border-stone-300 p-10 sm:p-14 space-y-6 flex flex-col justify-between transition-transform"
+                  className="w-full max-w-[816px] min-w-[320px] sm:min-w-[720px] shrink-0 min-h-[1056px] bg-white text-zinc-900 rounded-sm shadow-xl border border-stone-300 p-6 sm:p-14 space-y-6 flex flex-col justify-between transition-transform"
                 >
                   {/* Document Letterhead */}
                   <div className="border-b border-stone-300 pb-4 flex items-start justify-between gap-4">

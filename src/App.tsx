@@ -40,6 +40,7 @@ import {
   subscribeToCollection,
   subscribeToDoc,
   saveDocument,
+  bookAppointmentAtomically,
   removeDocument,
   saveActiveQuarter,
   batchSaveDocuments,
@@ -529,6 +530,18 @@ export default function App() {
       return;
     }
 
+    // Safety guard: Completed defenses cannot re-book unless rescheduling or re-cleared
+    const alreadyDefended = appointments.find(
+      (a) =>
+        (a.studentEmail.toLowerCase() === currentUser.email.toLowerCase() ||
+          a.studentId === currentUser.studentId) &&
+        a.status === 'Completed' &&
+        a.id !== rescheduleFromId
+    );
+    if (alreadyDefended) {
+      return;
+    }
+
     // First-Come, First-Served: Ensure slot is not already held by another candidate
     const slotAlreadyHeld = appointments.find(
       (a) => a.slotId === slot.id && a.status !== 'Cancelled' && a.id !== rescheduleFromId
@@ -561,7 +574,11 @@ export default function App() {
       createdAt: new Date().toISOString(),
     };
 
-    saveDocument('appointments', newAppointment);
+    bookAppointmentAtomically(newAppointment).then((res) => {
+      if (!res.success && res.reason) {
+        console.warn('Booking rejected:', res.reason);
+      }
+    });
 
     // Clean purge: permanently remove superseded appointment if rescheduling
     if (rescheduleFromId) {
@@ -909,6 +926,11 @@ export default function App() {
 
     saveDocument('archivedQuarterms', snapshot);
     saveActiveQuarter(null);
+
+    // Clean live collections in Firestore to prevent re-hydration before a new quarter is opened
+    slots.forEach((s) => removeDocument('slots', s.id).catch(() => {}));
+    appointments.forEach((a) => removeDocument('appointments', a.id).catch(() => {}));
+    fileSubmissions.forEach((f) => removeDocument('fileSubmissions', f.id).catch(() => {}));
 
     setArchivedQuarters((prev) => [snapshot, ...prev]);
     setSlots([]);

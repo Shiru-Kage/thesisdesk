@@ -55,6 +55,7 @@ export function AppointmentDetailDrawer({
   const [feedbackNote, setFeedbackNote] = useState('');
   const [zoomLinkInput, setZoomLinkInput] = useState('');
   const [zoomPasscodeInput, setZoomPasscodeInput] = useState('');
+  const [zoomValidationError, setZoomValidationError] = useState<string | null>(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -63,6 +64,7 @@ export function AppointmentDetailDrawer({
       setFeedbackNote(appointment.adminFeedback ?? '');
       setZoomLinkInput(appointment.zoomLink ?? '');
       setZoomPasscodeInput(appointment.zoomPasscode ?? '');
+      setZoomValidationError(null);
       setConfirmCancel(false);
       setCopied(false);
     }
@@ -229,10 +231,23 @@ export function AppointmentDetailDrawer({
                     id="drawer-zoom-link"
                     type="url"
                     value={zoomLinkInput}
-                    onChange={(e) => setZoomLinkInput(e.target.value)}
+                    onChange={(e) => {
+                      setZoomLinkInput(e.target.value);
+                      if (zoomValidationError) setZoomValidationError(null);
+                    }}
                     placeholder="https://mapua-edu-ph.zoom.us/j/..."
-                    className="w-full px-3 py-2 text-xs font-mono bg-white border border-zinc-300 rounded-lg text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                    className={`w-full px-3 py-2 text-xs font-mono bg-white border rounded-lg text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#A6192E] ${
+                      zoomValidationError
+                        ? 'border-red-500 ring-1 ring-red-500 bg-red-50/20'
+                        : 'border-zinc-300'
+                    }`}
                   />
+                  {zoomValidationError && (
+                    <p className="text-[11px] font-medium text-red-600 mt-1 flex items-center gap-1">
+                      <span>⚠</span>
+                      <span>{zoomValidationError}</span>
+                    </p>
+                  )}
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-end gap-2">
                   <div className="flex-1">
@@ -434,6 +449,12 @@ export function AppointmentDetailDrawer({
                     disabled={hasPendingDocumentReview}
                     onClick={() => {
                       if (hasPendingDocumentReview) return;
+                      if (!currentZoomDetails.zoomLink.trim()) {
+                        setZoomValidationError('Please enter or assign a valid Zoom link before approving the defense.');
+                        const el = document.getElementById('drawer-zoom-link');
+                        el?.focus();
+                        return;
+                      }
                       onAdminUpdateStatus(
                         appointment.id,
                         'Confirmed',

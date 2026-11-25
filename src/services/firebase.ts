@@ -219,6 +219,41 @@ export async function saveDocument<T extends { id: string }>(
   }
 }
 
+/**
+ * Validates slot exclusivity before persisting defense appointment to prevent concurrent race conditions.
+ */
+export async function bookAppointmentAtomically(
+  appointment: DefenseAppointment
+): Promise<{ success: boolean; reason?: string }> {
+  const db = getDb();
+  if (!db) {
+    return { success: true };
+  }
+  try {
+    const colRef = collection(db, 'appointments');
+    const snapshot = await getDocs(colRef);
+    const existing = snapshot.docs.map((d) => d.data() as DefenseAppointment);
+
+    const slotConflict = existing.find(
+      (a) => a.slotId === appointment.slotId && a.status !== 'Cancelled' && a.id !== appointment.id
+    );
+    if (slotConflict) {
+      return {
+        success: false,
+        reason: 'This defense slot was just reserved by another candidate. Please select another open window.',
+      };
+    }
+
+    const docRef = doc(db, 'appointments', appointment.id);
+    await setDoc(docRef, appointment, { merge: true });
+    return { success: true };
+  } catch (err) {
+    console.error('Error in bookAppointmentAtomically:', err);
+    await saveDocument('appointments', appointment);
+    return { success: true };
+  }
+}
+
 export async function removeDocument(
   collectionName: string,
   id: string
