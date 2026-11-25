@@ -1937,97 +1937,6 @@ export function AdminPortal({
       {/* TAB 4: DEFENSE REQUESTS TABLE */}
       {activeTab === 'requests' && (
         <div className="space-y-4 sm:space-y-5">
-          {/* Defense Requests Snapshot KPI Strip */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <button
-              type="button"
-              onClick={() => setStatusFilter('All')}
-              className={`p-4 sm:p-5 rounded-xl border text-left transition-all ${
-                statusFilter === 'All'
-                  ? 'bg-white border-[#A6192E] shadow-sm ring-1 ring-[#A6192E]/20'
-                  : 'bg-white/65 hover:bg-white/90 border-stone-300/70 shadow-xs'
-              }`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-medium text-zinc-500">Total Requests</span>
-                <ClipboardList className="w-4 h-4 text-zinc-400" />
-              </div>
-              <p className="text-2xl sm:text-3xl font-semibold font-mono tabular-nums text-zinc-900 mt-1.5">
-                {appointments.length}
-              </p>
-              <p className="text-xs text-zinc-500 mt-1 truncate">
-                Active in {activeQuarter?.code ?? 'SOIT'}
-              </p>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setStatusFilter('Missing Zoom Link')}
-              className={`p-4 sm:p-5 rounded-xl border text-left transition-all ${
-                statusFilter === 'Missing Zoom Link'
-                  ? 'bg-amber-50/80 border-[#9A6E00] shadow-sm ring-1 ring-[#9A6E00]/20'
-                  : 'bg-white/65 hover:bg-white/90 border-stone-300/70 shadow-xs'
-              }`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-medium text-zinc-500">Missing Zoom Link</span>
-                <Video className={`w-4 h-4 ${missingZoomLinkCount > 0 ? 'text-[#9A6E00]' : 'text-zinc-400'}`} />
-              </div>
-              <p className={`text-2xl sm:text-3xl font-semibold font-mono tabular-nums mt-1.5 ${
-                missingZoomLinkCount > 0 ? 'text-[#9A6E00]' : 'text-zinc-900'
-              }`}>
-                {missingZoomLinkCount}
-              </p>
-              <p className="text-xs text-zinc-500 mt-1 truncate">
-                {missingZoomLinkCount > 0 ? 'Action required by coordinator' : 'All channels configured'}
-              </p>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setStatusFilter('Pending Review')}
-              className={`p-4 sm:p-5 rounded-xl border text-left transition-all ${
-                statusFilter === 'Pending Review'
-                  ? 'bg-rose-50/80 border-[#A6192E] shadow-sm ring-1 ring-[#A6192E]/20'
-                  : 'bg-white/65 hover:bg-white/90 border-stone-300/70 shadow-xs'
-              }`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-medium text-zinc-500">Pending Review</span>
-                <Clock className={`w-4 h-4 ${requestStatusCounts['Pending Review'] > 0 ? 'text-[#A6192E]' : 'text-zinc-400'}`} />
-              </div>
-              <p className={`text-2xl sm:text-3xl font-semibold font-mono tabular-nums mt-1.5 ${
-                requestStatusCounts['Pending Review'] > 0 ? 'text-[#A6192E]' : 'text-zinc-900'
-              }`}>
-                {requestStatusCounts['Pending Review']}
-              </p>
-              <p className="text-xs text-zinc-500 mt-1 truncate">
-                Awaiting committee approval
-              </p>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setStatusFilter('Confirmed')}
-              className={`p-4 sm:p-5 rounded-xl border text-left transition-all ${
-                statusFilter === 'Confirmed'
-                  ? 'bg-emerald-50/80 border-emerald-600 shadow-sm ring-1 ring-emerald-600/20'
-                  : 'bg-white/65 hover:bg-white/90 border-stone-300/70 shadow-xs'
-              }`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-medium text-zinc-500">Confirmed</span>
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              </div>
-              <p className="text-2xl sm:text-3xl font-semibold font-mono tabular-nums text-emerald-700 mt-1.5">
-                {requestStatusCounts['Confirmed']}
-              </p>
-              <p className="text-xs text-zinc-500 mt-1 truncate">
-                Scheduled & locked
-              </p>
-            </button>
-          </div>
-
           {/* Filter, Search & Export Bar */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
             <div className="flex items-center gap-1 p-1 bg-stone-200/80 border border-stone-300/60 rounded-xl overflow-x-auto scrollbar-none">
@@ -2120,27 +2029,42 @@ export function AdminPortal({
 
           <div className="bg-white/75 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl overflow-hidden">
             {filteredRequests.length === 0 ? (
-              <div className="p-12 text-center">
-                <div className="w-12 h-12 rounded-full bg-stone-100 border border-stone-200 text-zinc-400 flex items-center justify-center mx-auto mb-3">
-                  <ClipboardList className="w-6 h-6" />
+              <div className="py-8 px-6 text-center">
+                <div className="w-10 h-10 rounded-full bg-stone-100 border border-stone-200 text-zinc-400 flex items-center justify-center mx-auto mb-2.5">
+                  <ClipboardList className="w-5 h-5" />
                 </div>
                 <p className="text-sm font-semibold text-zinc-900">
-                  No defense requests match your criteria
+                  {appointments.length === 0
+                    ? `No defense reservations booked yet in ${activeQuarter?.code ?? 'SOIT'}`
+                    : 'No defense requests match your filter'}
                 </p>
-                <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
-                  Try clearing your search terms or choosing another status tab to see stored student reservations.
+                <p className="text-xs text-zinc-500 mt-1 max-w-md mx-auto leading-relaxed">
+                  {appointments.length === 0
+                    ? 'Student candidates must upload required pre-defense files and obtain faculty approval to book an open Zoom slot. Once booked, reservations appear here for committee review and Zoom link assignment.'
+                    : 'Clear your search query or select another status filter above.'}
                 </p>
-                {(statusFilter !== 'All' || searchQuery.trim() !== '') && (
+                {appointments.length === 0 ? (
                   <button
                     type="button"
-                    onClick={() => {
-                      setStatusFilter('All');
-                      setSearchQuery('');
-                    }}
-                    className="mt-4 py-1.5 px-4 text-xs font-medium text-zinc-800 bg-white hover:bg-stone-50 border border-stone-300 rounded-lg transition-colors whitespace-nowrap shadow-2xs cursor-pointer"
+                    onClick={() => setActiveTab('slots')}
+                    className="mt-3.5 py-1.5 px-3.5 text-xs font-medium text-white bg-[#A6192E] hover:bg-[#881325] rounded-lg transition-colors whitespace-nowrap shadow-2xs cursor-pointer inline-flex items-center gap-1.5"
                   >
-                    Reset Filter & Search
+                    <span>Manage Zoom Slots</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
                   </button>
+                ) : (
+                  (statusFilter !== 'All' || searchQuery.trim() !== '') && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStatusFilter('All');
+                        setSearchQuery('');
+                      }}
+                      className="mt-3.5 py-1.5 px-4 text-xs font-medium text-zinc-800 bg-white hover:bg-stone-50 border border-stone-300 rounded-lg transition-colors whitespace-nowrap shadow-2xs cursor-pointer"
+                    >
+                      Clear Filters
+                    </button>
+                  )
                 )}
               </div>
             ) : (
