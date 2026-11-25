@@ -351,6 +351,18 @@ export function AdminPortal({
     [appointments]
   );
 
+  const requestStatusCounts = useMemo(() => {
+    return {
+      All: appointments.length,
+      'Missing Zoom Link': missingZoomLinkCount,
+      'Pending Review': appointments.filter((a) => a.status === 'Pending Review').length,
+      Confirmed: appointments.filter((a) => a.status === 'Confirmed').length,
+      'Reschedule Requested': appointments.filter((a) => a.status === 'Reschedule Requested').length,
+      Completed: appointments.filter((a) => a.status === 'Completed').length,
+      Cancelled: appointments.filter((a) => a.status === 'Cancelled').length,
+    };
+  }, [appointments, missingZoomLinkCount]);
+
   const filteredRequests = useMemo(() => {
     return appointments
       .filter((a) => {
@@ -1925,8 +1937,100 @@ export function AdminPortal({
       {/* TAB 4: DEFENSE REQUESTS TABLE */}
       {activeTab === 'requests' && (
         <div className="space-y-4 sm:space-y-5">
+          {/* Defense Requests Snapshot KPI Strip */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <button
+              type="button"
+              onClick={() => setStatusFilter('All')}
+              className={`p-4 sm:p-5 rounded-xl border text-left transition-all ${
+                statusFilter === 'All'
+                  ? 'bg-white border-[#A6192E] shadow-sm ring-1 ring-[#A6192E]/20'
+                  : 'bg-white/65 hover:bg-white/90 border-stone-300/70 shadow-xs'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-medium text-zinc-500">Total Requests</span>
+                <ClipboardList className="w-4 h-4 text-zinc-400" />
+              </div>
+              <p className="text-2xl sm:text-3xl font-semibold font-mono tabular-nums text-zinc-900 mt-1.5">
+                {appointments.length}
+              </p>
+              <p className="text-xs text-zinc-500 mt-1 truncate">
+                Active in {activeQuarter?.code ?? 'SOIT'}
+              </p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setStatusFilter('Missing Zoom Link')}
+              className={`p-4 sm:p-5 rounded-xl border text-left transition-all ${
+                statusFilter === 'Missing Zoom Link'
+                  ? 'bg-amber-50/80 border-[#9A6E00] shadow-sm ring-1 ring-[#9A6E00]/20'
+                  : 'bg-white/65 hover:bg-white/90 border-stone-300/70 shadow-xs'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-medium text-zinc-500">Missing Zoom Link</span>
+                <Video className={`w-4 h-4 ${missingZoomLinkCount > 0 ? 'text-[#9A6E00]' : 'text-zinc-400'}`} />
+              </div>
+              <p className={`text-2xl sm:text-3xl font-semibold font-mono tabular-nums mt-1.5 ${
+                missingZoomLinkCount > 0 ? 'text-[#9A6E00]' : 'text-zinc-900'
+              }`}>
+                {missingZoomLinkCount}
+              </p>
+              <p className="text-xs text-zinc-500 mt-1 truncate">
+                {missingZoomLinkCount > 0 ? 'Action required by coordinator' : 'All channels configured'}
+              </p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setStatusFilter('Pending Review')}
+              className={`p-4 sm:p-5 rounded-xl border text-left transition-all ${
+                statusFilter === 'Pending Review'
+                  ? 'bg-rose-50/80 border-[#A6192E] shadow-sm ring-1 ring-[#A6192E]/20'
+                  : 'bg-white/65 hover:bg-white/90 border-stone-300/70 shadow-xs'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-medium text-zinc-500">Pending Review</span>
+                <Clock className={`w-4 h-4 ${requestStatusCounts['Pending Review'] > 0 ? 'text-[#A6192E]' : 'text-zinc-400'}`} />
+              </div>
+              <p className={`text-2xl sm:text-3xl font-semibold font-mono tabular-nums mt-1.5 ${
+                requestStatusCounts['Pending Review'] > 0 ? 'text-[#A6192E]' : 'text-zinc-900'
+              }`}>
+                {requestStatusCounts['Pending Review']}
+              </p>
+              <p className="text-xs text-zinc-500 mt-1 truncate">
+                Awaiting committee approval
+              </p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setStatusFilter('Confirmed')}
+              className={`p-4 sm:p-5 rounded-xl border text-left transition-all ${
+                statusFilter === 'Confirmed'
+                  ? 'bg-emerald-50/80 border-emerald-600 shadow-sm ring-1 ring-emerald-600/20'
+                  : 'bg-white/65 hover:bg-white/90 border-stone-300/70 shadow-xs'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-medium text-zinc-500">Confirmed</span>
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              </div>
+              <p className="text-2xl sm:text-3xl font-semibold font-mono tabular-nums text-emerald-700 mt-1.5">
+                {requestStatusCounts['Confirmed']}
+              </p>
+              <p className="text-xs text-zinc-500 mt-1 truncate">
+                Scheduled & locked
+              </p>
+            </button>
+          </div>
+
+          {/* Filter, Search & Export Bar */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-            <div className="flex items-center gap-1 p-1 bg-zinc-200/70 rounded-lg overflow-x-auto">
+            <div className="flex items-center gap-1 p-1 bg-stone-200/80 border border-stone-300/60 rounded-xl overflow-x-auto scrollbar-none">
               {(
                 [
                   'All',
@@ -1937,24 +2041,35 @@ export function AdminPortal({
                   'Completed',
                   'Cancelled',
                 ] as const
-              ).map((st) => (
-                <button
-                  key={st}
-                  type="button"
-                  onClick={() => setStatusFilter(st)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
-                    statusFilter === st
-                      ? 'bg-white text-zinc-900 shadow-xs'
-                      : st === 'Missing Zoom Link' && missingZoomLinkCount > 0
-                      ? 'text-[#9A6E00] hover:text-zinc-900'
-                      : 'text-zinc-600 hover:text-zinc-900'
-                  }`}
-                >
-                  {st === 'Missing Zoom Link' && missingZoomLinkCount > 0
-                    ? `Missing Zoom Link (${missingZoomLinkCount})`
-                    : st}
-                </button>
-              ))}
+              ).map((st) => {
+                const count = requestStatusCounts[st] ?? 0;
+                const isSelected = statusFilter === st;
+                return (
+                  <button
+                    key={st}
+                    type="button"
+                    onClick={() => setStatusFilter(st)}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all whitespace-nowrap shrink-0 inline-flex items-center gap-1.5 ${
+                      isSelected
+                        ? 'bg-white text-zinc-900 shadow-xs'
+                        : st === 'Missing Zoom Link' && missingZoomLinkCount > 0
+                        ? 'text-[#9A6E00] hover:text-zinc-900'
+                        : 'text-zinc-600 hover:text-zinc-900'
+                    }`}
+                  >
+                    <span>{st}</span>
+                    <span
+                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono tabular-nums font-semibold ${
+                        isSelected
+                          ? 'bg-stone-100 text-zinc-800'
+                          : 'bg-stone-300/60 text-zinc-600'
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
             <div className="flex items-center gap-2 w-full lg:w-auto">
@@ -1965,8 +2080,18 @@ export function AdminPortal({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search student, ID, or thesis..."
-                  className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-zinc-300 rounded-lg text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                  className="w-full pl-9 pr-8 py-2 text-xs bg-white border border-stone-300/80 rounded-xl text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#A6192E] shadow-2xs"
                 />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    aria-label="Clear search"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 p-0.5"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
 
               <button
@@ -1985,7 +2110,7 @@ export function AdminPortal({
                     'success'
                   );
                 }}
-                className="py-2 px-3 bg-white/85 hover:bg-white disabled:opacity-45 disabled:cursor-not-allowed border border-stone-300/80 text-zinc-800 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 shadow-xs"
+                className="py-2 px-3.5 bg-white/90 hover:bg-white disabled:opacity-45 disabled:cursor-not-allowed border border-stone-300/80 text-zinc-800 text-xs font-medium rounded-xl transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 shadow-2xs cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5 text-[#A6192E] shrink-0" />
                 <span>Export CSV ({filteredRequests.length})</span>
@@ -1993,14 +2118,17 @@ export function AdminPortal({
             </div>
           </div>
 
-          <div className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl overflow-hidden">
+          <div className="bg-white/75 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl overflow-hidden">
             {filteredRequests.length === 0 ? (
-              <div className="p-10 text-center">
-                <p className="text-sm font-medium text-zinc-900">
-                  No defense requests match your filter
+              <div className="p-12 text-center">
+                <div className="w-12 h-12 rounded-full bg-stone-100 border border-stone-200 text-zinc-400 flex items-center justify-center mx-auto mb-3">
+                  <ClipboardList className="w-6 h-6" />
+                </div>
+                <p className="text-sm font-semibold text-zinc-900">
+                  No defense requests match your criteria
                 </p>
-                <p className="text-xs text-zinc-500 mt-1">
-                  Clear search terms or choose another status tab.
+                <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
+                  Try clearing your search terms or choosing another status tab to see stored student reservations.
                 </p>
                 {(statusFilter !== 'All' || searchQuery.trim() !== '') && (
                   <button
@@ -2009,9 +2137,9 @@ export function AdminPortal({
                       setStatusFilter('All');
                       setSearchQuery('');
                     }}
-                    className="mt-4 py-1.5 px-3.5 text-xs font-medium text-zinc-800 bg-white hover:bg-stone-50 border border-stone-300 rounded-lg transition-colors whitespace-nowrap"
+                    className="mt-4 py-1.5 px-4 text-xs font-medium text-zinc-800 bg-white hover:bg-stone-50 border border-stone-300 rounded-lg transition-colors whitespace-nowrap shadow-2xs cursor-pointer"
                   >
-                    Clear Filters
+                    Reset Filter & Search
                   </button>
                 )}
               </div>
@@ -2019,83 +2147,116 @@ export function AdminPortal({
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-zinc-200 bg-stone-900/[0.04] text-xs font-medium text-zinc-500">
-                      <th className="py-3 px-4">ID</th>
+                    <tr className="border-b border-stone-200 bg-stone-100/70 text-[11px] font-semibold uppercase tracking-wider text-zinc-600">
                       <th className="py-3 px-4">Candidate</th>
-                      <th className="py-3 px-4">Thesis Title</th>
-                      <th className="py-3 px-4">Schedule</th>
+                      <th className="py-3 px-4">Thesis Manuscript</th>
+                      <th className="py-3 px-4">Defense Window</th>
                       <th className="py-3 px-4">Zoom Channel</th>
                       <th className="py-3 px-4">Status</th>
                       <th className="py-3 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-100 text-sm">
+                  <tbody className="divide-y divide-stone-200/70 text-sm">
                     {filteredRequests.map((appt) => (
-                      <tr key={appt.id} className="hover:bg-stone-900/[0.04] transition-colors">
-                        <td className="py-3 px-4 font-mono text-xs tabular-nums text-zinc-500 whitespace-nowrap">
-                          {appt.id}
+                      <tr key={appt.id} className="hover:bg-stone-900/[0.03] transition-colors">
+                        <td className="py-3.5 px-4 whitespace-nowrap">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-stone-200/80 border border-stone-300/80 text-zinc-700 flex items-center justify-center font-semibold text-xs shrink-0 font-mono">
+                              {appt.studentName
+                                .split(' ')
+                                .map((n) => n[0])
+                                .slice(0, 2)
+                                .join('')}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-zinc-900 truncate">
+                                {appt.studentName}
+                              </p>
+                              <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-zinc-500 font-mono">
+                                <span>{appt.studentId}</span>
+                                <span aria-hidden="true">·</span>
+                                <span className="font-sans font-medium text-zinc-600">
+                                  {appt.department}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
                         </td>
-                        <td className="py-3 px-4 whitespace-nowrap">
-                          <p className="font-medium text-zinc-900">{appt.studentName}</p>
-                          <p className="text-xs text-zinc-500">{appt.department}</p>
-                        </td>
-                        <td className="py-3 px-4 min-w-[220px] max-w-xs">
+                        <td className="py-3.5 px-4 min-w-[220px] max-w-xs">
                           <button
                             type="button"
                             onClick={() => setInspectedAppointment(appt)}
-                            className="font-medium text-zinc-900 hover:text-[#A6192E] text-left line-clamp-1"
+                            className="font-medium text-zinc-900 hover:text-[#A6192E] text-left line-clamp-1 group flex items-center gap-1 cursor-pointer"
                           >
-                            {appt.thesisTitle}
+                            <span className="truncate">{appt.thesisTitle}</span>
                           </button>
-                          <p className="text-xs text-zinc-500 truncate">
-                            Adviser: {appt.advisorName}
+                          <p className="text-xs text-zinc-500 truncate mt-0.5">
+                            Adviser: <span className="text-zinc-700">{appt.advisorName}</span>
                           </p>
                         </td>
-                        <td className="py-3 px-4 whitespace-nowrap">
-                          <p className="text-zinc-900 font-medium">
-                            {formatShortDate(appt.date)}
-                          </p>
-                          <p className="text-xs font-mono tabular-nums text-zinc-500">
-                            {formatTimeRange(appt.startTime, appt.endTime)}
-                          </p>
-                        </td>
-                        <td className="py-3 px-4 whitespace-nowrap">
-                          <p className="text-zinc-800">{appt.zoomRoomName}</p>
-                          {appt.zoomLink ? (
-                            <p className="text-xs text-emerald-700 font-medium flex items-center gap-1">
-                              <Link2 className="w-3 h-3 shrink-0" />
-                              <span>Zoom Link Set</span>
+                        <td className="py-3.5 px-4 whitespace-nowrap">
+                          <div className="space-y-0.5">
+                            <p className="text-xs font-semibold text-zinc-900 flex items-center gap-1.5">
+                              <CalendarDays className="w-3.5 h-3.5 text-[#A6192E] shrink-0" />
+                              <span>{formatShortDate(appt.date)}</span>
                             </p>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => setInspectedAppointment(appt)}
-                              className="text-xs font-medium text-[#9A6E00] hover:underline"
-                            >
-                              + Assign Zoom Link
-                            </button>
-                          )}
+                            <p className="text-[11px] font-mono tabular-nums text-zinc-500 pl-5">
+                              {formatTimeRange(appt.startTime, appt.endTime)}
+                            </p>
+                          </div>
                         </td>
-                        <td className="py-3 px-4 whitespace-nowrap">
+                        <td className="py-3.5 px-4 whitespace-nowrap">
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium text-zinc-800 flex items-center gap-1.5">
+                              <Video className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                              <span className="truncate max-w-[140px]">{appt.zoomRoomName}</span>
+                            </p>
+                            {appt.zoomLink ? (
+                              <div className="flex items-center gap-1.5">
+                                <a
+                                  href={appt.zoomLink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 hover:underline bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded cursor-pointer"
+                                >
+                                  <Link2 className="w-3 h-3 shrink-0" />
+                                  <span>Join Zoom</span>
+                                </a>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setInspectedAppointment(appt)}
+                                className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#9A6E00] hover:text-amber-800 bg-[#9A6E00]/10 hover:bg-[#9A6E00]/15 border border-[#9A6E00]/30 px-2 py-0.5 rounded transition-colors cursor-pointer"
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#9A6E00] animate-pulse shrink-0" />
+                                <span>+ Assign Zoom</span>
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4 whitespace-nowrap">
                           <StatusLabel status={appt.status} />
                         </td>
-                        <td className="py-3 px-4 text-right whitespace-nowrap">
+                        <td className="py-3.5 px-4 text-right whitespace-nowrap">
                           <div className="inline-flex items-center gap-1.5">
                             {appt.status === 'Pending Review' && (
                               <button
                                 type="button"
                                 onClick={() => handleQuickApproveAppointment(appt)}
-                                className="py-1.5 px-2.5 text-xs font-medium text-white bg-[#A6192E] hover:bg-[#881325] rounded-md transition-colors"
+                                className="py-1.5 px-2.5 text-xs font-medium text-white bg-[#A6192E] hover:bg-[#881325] rounded-lg transition-colors shadow-2xs cursor-pointer inline-flex items-center gap-1"
                               >
-                                Approve
+                                <Check className="w-3 h-3" />
+                                <span>Approve</span>
                               </button>
                             )}
                             <button
                               type="button"
                               onClick={() => setInspectedAppointment(appt)}
-                              className="py-1.5 px-2.5 text-xs font-medium text-zinc-700 bg-stone-900/[0.06] hover:bg-stone-900/[0.10] border border-stone-300/60 rounded-md transition-colors"
+                              className="py-1.5 px-2.5 text-xs font-medium text-zinc-700 bg-white hover:bg-stone-50 border border-stone-300 rounded-lg transition-colors shadow-2xs cursor-pointer inline-flex items-center gap-1"
                             >
-                              Inspect
+                              <Eye className="w-3 h-3 text-zinc-500" />
+                              <span>Inspect</span>
                             </button>
                           </div>
                         </td>

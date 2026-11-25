@@ -2,15 +2,20 @@ import { useMemo, useState } from 'react';
 import {
   Archive,
   ArrowLeft,
+  CalendarCheck,
+  CalendarDays,
   CalendarPlus,
   CheckCircle2,
   ChevronRight,
+  Clock,
   Download,
   Eye,
   FileText,
   Folder,
   FolderOpen,
   Search,
+  Video,
+  X,
 } from 'lucide-react';
 import {
   ArchivedQuarterm,
@@ -63,6 +68,19 @@ export function QuartermArchivesView({
     });
     return map;
   }, [requiredDocuments]);
+
+  const totalArchivedDefenses = useMemo(
+    () => archivedQuarters.reduce((sum, q) => sum + q.appointments.length, 0),
+    [archivedQuarters]
+  );
+  const totalArchivedFiles = useMemo(
+    () => archivedQuarters.reduce((sum, q) => sum + q.fileSubmissions.length, 0),
+    [archivedQuarters]
+  );
+  const totalArchivedSlots = useMemo(
+    () => archivedQuarters.reduce((sum, q) => sum + q.slots.length, 0),
+    [archivedQuarters]
+  );
 
   const filteredArchives = useMemo(() => {
     const q = archiveSearch.trim().toLowerCase();
@@ -208,19 +226,61 @@ export function QuartermArchivesView({
   if (!selectedArchive) {
     return (
       <div className="space-y-4 sm:space-y-5">
+        {/* Top Overall Archive KPI Strip */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-white/70 backdrop-blur-md border border-stone-300/70 shadow-xs rounded-xl p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-medium text-zinc-500">Concluded Quarterms</span>
+              <Archive className="w-4 h-4 text-[#A6192E]" />
+            </div>
+            <p className="text-2xl sm:text-3xl font-semibold font-mono tabular-nums text-zinc-900 mt-1.5">
+              {archivedQuarters.length}
+            </p>
+            <p className="text-xs text-zinc-500 mt-1">
+              Historical terms archived & sealed
+            </p>
+          </div>
+
+          <div className="bg-white/70 backdrop-blur-md border border-stone-300/70 shadow-xs rounded-xl p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-medium text-zinc-500">Archived Defenses</span>
+              <CalendarCheck className="w-4 h-4 text-emerald-600" />
+            </div>
+            <p className="text-2xl sm:text-3xl font-semibold font-mono tabular-nums text-zinc-900 mt-1.5">
+              {totalArchivedDefenses}
+            </p>
+            <p className="text-xs text-zinc-500 mt-1">
+              Total oral examinations recorded
+            </p>
+          </div>
+
+          <div className="bg-white/70 backdrop-blur-md border border-stone-300/70 shadow-xs rounded-xl p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-medium text-zinc-500">Verified Manuscripts</span>
+              <FolderOpen className="w-4 h-4 text-[#9A6E00]" />
+            </div>
+            <p className="text-2xl sm:text-3xl font-semibold font-mono tabular-nums text-zinc-900 mt-1.5">
+              {totalArchivedFiles}
+            </p>
+            <p className="text-xs text-zinc-500 mt-1">
+              Preserved student PDF documents
+            </p>
+          </div>
+        </div>
+
         {/* Search Bar + Active Context + Actions */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <p className="text-xs text-zinc-600">
             <span className="font-mono tabular-nums font-semibold text-zinc-900">
-              {archivedQuarters.length}
+              {filteredArchives.length}
             </span>{' '}
-            archived quarterm{archivedQuarters.length === 1 ? '' : 's'} stored
+            quarterm{filteredArchives.length === 1 ? '' : 's'} displayed
             {activeQuarter && (
               <>
                 <span className="mx-1.5 text-zinc-400" aria-hidden="true">
                   ·
                 </span>
-                Active Quarterm:{' '}
+                Active Term:{' '}
                 <span className="font-mono font-semibold text-zinc-900">
                   {activeQuarter.code}
                 </span>{' '}
@@ -237,14 +297,24 @@ export function QuartermArchivesView({
                 value={archiveSearch}
                 onChange={(e) => setArchiveSearch(e.target.value)}
                 placeholder="Search quarterm (e.g. 1Q2627), student, thesis..."
-                className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-zinc-300 rounded-lg text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+                className="w-full pl-9 pr-8 py-2 text-xs bg-white border border-stone-300/80 rounded-xl text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#A6192E] shadow-2xs"
               />
+              {archiveSearch && (
+                <button
+                  type="button"
+                  onClick={() => setArchiveSearch('')}
+                  aria-label="Clear search"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 p-0.5"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
             {!activeQuarter && (
               <button
                 type="button"
                 onClick={onRequestOpenNewQuarter}
-                className="py-2 px-3 bg-[#A6192E] hover:bg-[#881325] text-white text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 shadow-xs"
+                className="py-2 px-3.5 bg-[#A6192E] hover:bg-[#881325] text-white text-xs font-medium rounded-xl transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 shadow-2xs cursor-pointer"
               >
                 <CalendarPlus className="w-3.5 h-3.5 shrink-0" />
                 <span>Open New Quarterm</span>
@@ -254,18 +324,21 @@ export function QuartermArchivesView({
         </div>
 
         {filteredArchives.length === 0 ? (
-          <div className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-10 text-center">
-            <p className="text-sm font-medium text-zinc-900">
+          <div className="bg-white/70 backdrop-blur-md border border-stone-300/70 shadow-xs rounded-xl p-12 text-center">
+            <div className="w-12 h-12 rounded-full bg-stone-100 border border-stone-200 text-zinc-400 flex items-center justify-center mx-auto mb-3">
+              <Archive className="w-6 h-6" />
+            </div>
+            <p className="text-sm font-semibold text-zinc-900">
               No archived Quarterms match your search
             </p>
-            <p className="text-xs text-zinc-500 mt-1">
-              Clear your search filter or archive a closed Quarterm from Schedule Overview.
+            <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
+              Clear your search filter or archive a concluded Quarterm from Schedule Overview.
             </p>
             {archiveSearch.trim() && (
               <button
                 type="button"
                 onClick={() => setArchiveSearch('')}
-                className="mt-4 py-1.5 px-3.5 text-xs font-medium text-zinc-800 bg-white hover:bg-stone-50 border border-stone-300 rounded-lg transition-colors whitespace-nowrap"
+                className="mt-4 py-1.5 px-4 text-xs font-medium text-zinc-800 bg-white hover:bg-stone-50 border border-stone-300 rounded-lg transition-colors whitespace-nowrap shadow-2xs cursor-pointer"
               >
                 Clear Search
               </button>
@@ -280,68 +353,100 @@ export function QuartermArchivesView({
               const uniqueStudentCount = new Set(
                 arc.fileSubmissions.map((s) => s.studentEmail.toLowerCase())
               ).size;
+              const completionPercent =
+                arc.appointments.length > 0
+                  ? Math.round((completedCount / arc.appointments.length) * 100)
+                  : 100;
 
               return (
                 <button
                   key={arc.id}
                   type="button"
                   onClick={() => handleOpenArchive(arc.id)}
-                  className="group bg-white/68 hover:bg-white/92 backdrop-blur-md border border-stone-300/75 hover:border-[#A6192E]/45 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 text-left transition-all flex flex-col justify-between gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6192E]"
+                  className="group bg-white/75 hover:bg-white backdrop-blur-md border border-stone-300/80 hover:border-[#A6192E]/50 shadow-[0_4px_24px_rgba(24,24,27,0.04)] hover:shadow-md rounded-2xl p-5 text-left transition-all flex flex-col justify-between gap-4 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6192E]"
                 >
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-[#A6192E]/10 text-[#A6192E] border border-[#A6192E]/20 flex items-center justify-center shrink-0">
-                        <Archive className="w-5 h-5" />
+                      <div className="inline-flex items-center gap-2">
+                        <span className="px-2.5 py-1 bg-[#A6192E]/10 text-[#A6192E] font-mono font-bold text-sm rounded-lg border border-[#A6192E]/20">
+                          {arc.quarterm.code}
+                        </span>
+                        <span className="px-2 py-0.5 bg-stone-100 text-zinc-600 font-medium text-[11px] rounded-md border border-stone-200">
+                          Archived
+                        </span>
                       </div>
                       <span className="text-xs font-mono tabular-nums text-zinc-500">
-                        Archived {formatShortDate(arc.archivedAt)}
+                        {formatShortDate(arc.archivedAt)}
                       </span>
                     </div>
 
                     <div>
-                      <h2 className="text-xl font-bold font-mono tabular-nums text-zinc-900 group-hover:text-[#A6192E] transition-colors">
-                        {arc.quarterm.code}
-                      </h2>
-                      <p className="text-xs font-medium text-zinc-600 mt-0.5">
+                      <h2 className="text-base font-semibold text-zinc-900 group-hover:text-[#A6192E] transition-colors">
                         {arc.quarterm.label}
+                      </h2>
+                      <p className="text-xs font-mono text-zinc-500 mt-0.5">
+                        AY {arc.quarterm.academicYear}
                       </p>
                     </div>
 
                     {arc.archiveNote && (
-                      <p className="text-xs text-zinc-500 line-clamp-2 leading-relaxed">
+                      <div className="p-2.5 rounded-lg bg-stone-100/70 border border-stone-200/60 text-xs text-zinc-600 line-clamp-2 leading-relaxed">
                         {arc.archiveNote}
-                      </p>
+                      </div>
                     )}
                   </div>
 
                   <div className="space-y-3">
                     <div className="grid grid-cols-3 gap-2 pt-3 border-t border-stone-200/80">
-                      <div>
-                        <p className="text-[11px] text-zinc-500">Defenses</p>
-                        <p className="text-sm font-semibold font-mono tabular-nums text-zinc-900 mt-0.5">
+                      <div className="space-y-0.5">
+                        <p className="text-[11px] text-zinc-500 flex items-center gap-1">
+                          <CalendarCheck className="w-3 h-3 text-zinc-400" />
+                          <span>Defenses</span>
+                        </p>
+                        <p className="text-sm font-semibold font-mono tabular-nums text-zinc-900">
                           {arc.appointments.length}
                         </p>
                       </div>
-                      <div>
-                        <p className="text-[11px] text-zinc-500">Student PDFs</p>
-                        <p className="text-sm font-semibold font-mono tabular-nums text-zinc-900 mt-0.5">
+                      <div className="space-y-0.5">
+                        <p className="text-[11px] text-zinc-500 flex items-center gap-1">
+                          <FileText className="w-3 h-3 text-zinc-400" />
+                          <span>PDFs</span>
+                        </p>
+                        <p className="text-sm font-semibold font-mono tabular-nums text-zinc-900">
                           {arc.fileSubmissions.length}
                         </p>
                       </div>
-                      <div>
-                        <p className="text-[11px] text-zinc-500">Zoom Slots</p>
-                        <p className="text-sm font-semibold font-mono tabular-nums text-zinc-900 mt-0.5">
+                      <div className="space-y-0.5">
+                        <p className="text-[11px] text-zinc-500 flex items-center gap-1">
+                          <Video className="w-3 h-3 text-zinc-400" />
+                          <span>Zoom</span>
+                        </p>
+                        <p className="text-sm font-semibold font-mono tabular-nums text-zinc-900">
                           {arc.slots.length}
                         </p>
                       </div>
                     </div>
 
+                    {/* Completion rate bar */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-[11px] text-zinc-500 font-mono">
+                        <span>{completedCount}/{arc.appointments.length} Defenses Completed</span>
+                        <span>{completionPercent}%</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-stone-200 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[#A6192E] rounded-full transition-all"
+                          style={{ width: `${completionPercent}%` }}
+                        />
+                      </div>
+                    </div>
+
                     <div className="pt-2.5 border-t border-stone-200/70 flex items-center justify-between gap-2 text-xs">
-                      <span className="text-zinc-500 font-mono tabular-nums">
-                        {completedCount} completed · {uniqueStudentCount} folders
+                      <span className="text-zinc-500 text-[11px]">
+                        {uniqueStudentCount} candidate folder{uniqueStudentCount === 1 ? '' : 's'}
                       </span>
-                      <span className="inline-flex items-center gap-0.5 font-medium text-zinc-700 group-hover:text-[#A6192E] shrink-0">
-                        <span>Inspect</span>
+                      <span className="inline-flex items-center gap-1 font-semibold text-xs text-[#A6192E] group-hover:translate-x-0.5 transition-transform shrink-0">
+                        <span>Inspect Archive</span>
                         <ChevronRight className="w-3.5 h-3.5" />
                       </span>
                     </div>
@@ -421,77 +526,112 @@ export function QuartermArchivesView({
       {/* 4-Column Archive Snapshot KPI Strip */}
       {!activeArchiveFolder && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-4 sm:p-5">
-            <p className="text-xs font-medium text-zinc-500">Total Defenses</p>
+          <div className="bg-white/70 backdrop-blur-md border border-stone-300/70 shadow-xs rounded-xl p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-medium text-zinc-500">Total Defenses</span>
+              <CalendarCheck className="w-4 h-4 text-emerald-600" />
+            </div>
             <p className="text-2xl sm:text-3xl font-semibold font-mono tabular-nums text-zinc-900 mt-1.5">
               {selectedArchive.appointments.length}
             </p>
-            <p className="text-xs text-zinc-500 mt-1">{completedCount} completed</p>
+            <p className="text-xs text-zinc-500 mt-1">{completedCount} completed oral exams</p>
           </div>
-          <div className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-4 sm:p-5">
-            <p className="text-xs font-medium text-zinc-500">Student Folders</p>
+
+          <div className="bg-white/70 backdrop-blur-md border border-stone-300/70 shadow-xs rounded-xl p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-medium text-zinc-500">Student Folders</span>
+              <FolderOpen className="w-4 h-4 text-[#9A6E00]" />
+            </div>
             <p className="text-2xl sm:text-3xl font-semibold font-mono tabular-nums text-zinc-900 mt-1.5">
               {archiveFileFolders.length}
             </p>
             <p className="text-xs text-zinc-500 mt-1">
-              {selectedArchive.fileSubmissions.length} archived PDFs
+              {selectedArchive.fileSubmissions.length} archived PDF manuscripts
             </p>
           </div>
-          <div className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-4 sm:p-5">
-            <p className="text-xs font-medium text-zinc-500">Defense Slots</p>
+
+          <div className="bg-white/70 backdrop-blur-md border border-stone-300/70 shadow-xs rounded-xl p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-medium text-zinc-500">Defense Slots</span>
+              <Video className="w-4 h-4 text-[#A6192E]" />
+            </div>
             <p className="text-2xl sm:text-3xl font-semibold font-mono tabular-nums text-[#A6192E] mt-1.5">
               {selectedArchive.slots.length}
             </p>
-            <p className="text-xs text-zinc-500 mt-1">Configured in term</p>
+            <p className="text-xs text-zinc-500 mt-1">Configured term windows</p>
           </div>
-          <div className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-4 sm:p-5">
-            <p className="text-xs font-medium text-zinc-500">Quarterm Window</p>
+
+          <div className="bg-white/70 backdrop-blur-md border border-stone-300/70 shadow-xs rounded-xl p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-medium text-zinc-500">Quarterm Window</span>
+              <Clock className="w-4 h-4 text-zinc-400" />
+            </div>
             <p className="text-sm font-semibold font-mono tabular-nums text-zinc-900 mt-2">
               {formatShortDate(selectedArchive.quarterm.openedAt)} –{' '}
               {formatShortDate(
                 selectedArchive.quarterm.closedAt ?? selectedArchive.archivedAt
               )}
             </p>
-            <p className="text-xs text-zinc-500 mt-1">Read-only archive</p>
+            <p className="text-xs text-zinc-500 mt-1">Read-only historical snapshot</p>
           </div>
         </div>
       )}
 
       {/* Sub-tab Switcher + Search */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-        <div className="flex items-center gap-1 p-1 bg-zinc-200/70 rounded-lg overflow-x-auto">
+        <div className="flex items-center gap-1 p-1 bg-stone-200/80 border border-stone-300/60 rounded-xl overflow-x-auto scrollbar-none">
           {(
             [
               {
                 id: 'defenses',
-                label: `Defenses (${selectedArchive.appointments.length})`,
+                label: 'Defenses',
+                count: selectedArchive.appointments.length,
+                icon: CalendarCheck,
               },
               {
                 id: 'files',
-                label: `Submitted Files (${selectedArchive.fileSubmissions.length})`,
+                label: 'Submitted Files',
+                count: selectedArchive.fileSubmissions.length,
+                icon: Folder,
               },
               {
                 id: 'slots',
-                label: `Defense Slots (${selectedArchive.slots.length})`,
+                label: 'Defense Slots',
+                count: selectedArchive.slots.length,
+                icon: Video,
               },
             ] as const
-          ).map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => {
-                setDetailTab(tab.id);
-                setOpenFolderKey(null);
-              }}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
-                detailTab === tab.id
-                  ? 'bg-white text-zinc-900 shadow-xs'
-                  : 'text-zinc-600 hover:text-zinc-900'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+          ).map((tab) => {
+            const Icon = tab.icon;
+            const isSelected = detailTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => {
+                  setDetailTab(tab.id);
+                  setOpenFolderKey(null);
+                }}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all whitespace-nowrap shrink-0 inline-flex items-center gap-1.5 ${
+                  isSelected
+                    ? 'bg-white text-zinc-900 shadow-xs'
+                    : 'text-zinc-600 hover:text-zinc-900'
+                }`}
+              >
+                <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-[#A6192E]' : 'text-zinc-400'}`} />
+                <span>{tab.label}</span>
+                <span
+                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono tabular-nums font-semibold ${
+                    isSelected
+                      ? 'bg-stone-100 text-zinc-800'
+                      : 'bg-stone-300/60 text-zinc-600'
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {detailTab !== 'slots' && (
@@ -506,8 +646,18 @@ export function QuartermArchivesView({
                   ? 'Filter archived defenses by student or thesis...'
                   : 'Filter archived student folders by name or ID...'
               }
-              className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-zinc-300 rounded-lg text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
+              className="w-full pl-9 pr-8 py-2 text-xs bg-white border border-stone-300/80 rounded-xl text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#A6192E] shadow-2xs"
             />
+            {recordSearch && (
+              <button
+                type="button"
+                onClick={() => setRecordSearch('')}
+                aria-label="Clear search"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 p-0.5"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -536,65 +686,84 @@ export function QuartermArchivesView({
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-zinc-200 bg-stone-900/[0.04] text-xs font-medium text-zinc-500">
-                    <th className="py-3 px-4">ID</th>
+                  <tr className="border-b border-stone-200 bg-stone-100/70 text-[11px] font-semibold uppercase tracking-wider text-zinc-600">
                     <th className="py-3 px-4">Candidate</th>
-                    <th className="py-3 px-4">Thesis Title</th>
-                    <th className="py-3 px-4">Schedule</th>
-                    <th className="py-3 px-4">Zoom Room</th>
+                    <th className="py-3 px-4">Thesis Manuscript</th>
+                    <th className="py-3 px-4">Defense Schedule</th>
+                    <th className="py-3 px-4">Zoom Channel</th>
                     <th className="py-3 px-4">Status</th>
                     <th className="py-3 px-4 text-right">Details</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100 text-sm">
+                <tbody className="divide-y divide-stone-200/70 text-sm">
                   {filteredArchiveAppointments.map((appt) => (
                     <tr
                       key={appt.id}
-                      className="hover:bg-stone-900/[0.04] transition-colors"
+                      className="hover:bg-stone-900/[0.03] transition-colors"
                     >
-                      <td className="py-3 px-4 font-mono text-xs tabular-nums text-zinc-500 whitespace-nowrap">
-                        {appt.id}
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-full bg-stone-200/80 border border-stone-300/80 text-zinc-700 flex items-center justify-center font-semibold text-xs shrink-0 font-mono">
+                            {appt.studentName
+                              .split(' ')
+                              .map((n) => n[0])
+                              .slice(0, 2)
+                              .join('')}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-zinc-900 truncate">
+                              {appt.studentName}
+                            </p>
+                            <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-zinc-500 font-mono">
+                              <span>{appt.studentId}</span>
+                              <span aria-hidden="true">·</span>
+                              <span className="font-sans font-medium text-zinc-600">
+                                {appt.program}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
                       </td>
-                      <td className="py-3 px-4 whitespace-nowrap">
-                        <p className="font-medium text-zinc-900">{appt.studentName}</p>
-                        <p className="text-xs text-zinc-500">{appt.program}</p>
-                      </td>
-                      <td className="py-3 px-4 min-w-[220px] max-w-xs">
+                      <td className="py-3.5 px-4 min-w-[220px] max-w-xs">
                         <button
                           type="button"
                           onClick={() => setInspectedAppointment(appt)}
-                          className="font-medium text-zinc-900 hover:text-[#A6192E] text-left line-clamp-1"
+                          className="font-medium text-zinc-900 hover:text-[#A6192E] text-left line-clamp-1 cursor-pointer"
                         >
                           {appt.thesisTitle}
                         </button>
-                        <p className="text-xs text-zinc-500 truncate">
-                          Adviser: {appt.advisorName}
+                        <p className="text-xs text-zinc-500 truncate mt-0.5">
+                          Adviser: <span className="text-zinc-700">{appt.advisorName}</span>
                         </p>
                       </td>
-                      <td className="py-3 px-4 whitespace-nowrap">
-                        <p className="text-zinc-900 font-medium">
-                          {formatShortDate(appt.date)}
-                        </p>
-                        <p className="text-xs font-mono tabular-nums text-zinc-500">
-                          {formatTimeRange(appt.startTime, appt.endTime)}
-                        </p>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div className="space-y-0.5">
+                          <p className="text-xs font-semibold text-zinc-900 flex items-center gap-1.5">
+                            <CalendarDays className="w-3.5 h-3.5 text-[#A6192E] shrink-0" />
+                            <span>{formatShortDate(appt.date)}</span>
+                          </p>
+                          <p className="text-[11px] font-mono tabular-nums text-zinc-500 pl-5">
+                            {formatTimeRange(appt.startTime, appt.endTime)}
+                          </p>
+                        </div>
                       </td>
-                      <td className="py-3 px-4 whitespace-nowrap">
-                        <p className="text-zinc-800">{appt.zoomRoomName}</p>
-                        <p className="text-xs font-mono text-zinc-500 truncate max-w-[210px]">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <p className="text-xs font-medium text-zinc-800">{appt.zoomRoomName}</p>
+                        <p className="text-[11px] font-mono text-zinc-500 truncate max-w-[210px] mt-0.5">
                           {appt.zoomLink || 'No Zoom link stored'}
                         </p>
                       </td>
-                      <td className="py-3 px-4 whitespace-nowrap">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
                         <StatusLabel status={appt.status} />
                       </td>
-                      <td className="py-3 px-4 text-right whitespace-nowrap">
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
                         <button
                           type="button"
                           onClick={() => setInspectedAppointment(appt)}
-                          className="py-1.5 px-2.5 text-xs font-medium text-zinc-700 bg-stone-900/[0.06] hover:bg-stone-900/[0.10] border border-stone-300/60 rounded-md transition-colors"
+                          className="py-1.5 px-2.5 text-xs font-medium text-zinc-700 bg-white hover:bg-stone-50 border border-stone-300 rounded-lg transition-colors inline-flex items-center gap-1 shadow-2xs cursor-pointer"
                         >
-                          Inspect
+                          <Eye className="w-3 h-3 text-zinc-500" />
+                          <span>Inspect</span>
                         </button>
                       </td>
                     </tr>
