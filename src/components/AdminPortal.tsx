@@ -974,242 +974,262 @@ export function AdminPortal({
             </button>
           </div>
 
-          {/* Main Dashboard 2-Column Grid: Balanced Desktop Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Left Column (7 cols): Pending Approval Queue + Quick Schedule Slots Snapshot */}
-            <div className="lg:col-span-7 space-y-6">
-              {/* Pending Queue */}
-              <section className="bg-white/70 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6">
-                <div className="flex items-center justify-between gap-4 mb-4">
-                  <div>
-                    <h2 className="text-base font-semibold text-zinc-900">
-                      Pending Approval Queue
-                    </h2>
-                    <p className="text-xs text-zinc-500 mt-0.5">
-                      Approve candidate reservations or inspect committee conflicts.
-                    </p>
-                  </div>
-                  <span className="text-xs font-mono tabular-nums text-zinc-500">
-                    {pendingQueue.length} items
-                  </span>
-                </div>
-
-                {pendingQueue.length === 0 ? (
-                  <div className="py-7 px-4 text-center rounded-lg bg-stone-50/70 border border-stone-200/80">
-                    <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-700 mx-auto flex items-center justify-center mb-2.5">
-                      <CheckCircle2 className="w-5 h-5" />
-                    </div>
-                    <p className="text-sm font-semibold text-zinc-900">All Candidate Requests Reviewed</p>
-                    <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
-                      No student defense reservations currently require committee approval.
-                    </p>
-                    <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab('requests')}
-                        className="px-3 py-1.5 text-xs font-medium text-zinc-700 bg-white hover:bg-stone-100 border border-stone-300 rounded-md transition-colors"
-                      >
-                        View All Requests
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab('submissions')}
-                        className="px-3 py-1.5 text-xs font-medium text-[#A6192E] bg-[#A6192E]/10 hover:bg-[#A6192E]/15 rounded-md transition-colors"
-                      >
-                        Inspect Submitted Files ({pendingFilesCount} pending)
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-zinc-100">
-                    {pendingQueue.map((appt) => (
-                      <div
-                        key={appt.id}
-                        className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                      >
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-500">
-                            <span className="font-mono tabular-nums">{appt.id}</span>
-                            <span aria-hidden="true">·</span>
-                            <StatusLabel status={appt.status} />
-                            <span aria-hidden="true">·</span>
-                            <span>{appt.department}</span>
-                          </div>
-                          <p className="text-sm font-semibold text-zinc-900 mt-1 truncate">
-                            {appt.studentName} — {appt.thesisTitle}
-                          </p>
-                          <p className="text-xs text-zinc-500 mt-0.5">
-                            {formatShortDate(appt.date)} ·{' '}
-                            <span className="font-mono tabular-nums">
-                              {formatTimeRange(appt.startTime, appt.endTime)}
-                            </span>{' '}
-                            · {appt.zoomRoomName}
-                            {!appt.zoomLink && (
-                              <span className="text-[#9A6E00] font-medium"> · Needs Zoom link</span>
-                            )}
-                          </p>
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => setInspectedAppointment(appt)}
-                            className="py-1.5 px-3 text-xs font-medium text-zinc-700 bg-stone-900/[0.06] hover:bg-stone-900/[0.10] border border-stone-300/60 rounded-md transition-colors whitespace-nowrap"
-                          >
-                            {appt.zoomLink ? 'Review' : 'Set Zoom Link'}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleQuickApproveAppointment(appt)}
-                            className="py-1.5 px-3 text-xs font-medium text-white bg-[#A6192E] hover:bg-[#881325] rounded-md transition-colors whitespace-nowrap"
-                          >
-                            Approve
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </section>
-
-              {/* Quick Schedule Inventory Preview on Overview */}
-              <section className="bg-white/70 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-stone-200/80">
-                  <div>
-                    <h2 className="text-base font-semibold text-zinc-900">
-                      Configured Defense Slots Snapshot
-                    </h2>
-                    <p className="text-xs text-zinc-500 mt-0.5">
-                      Live snapshot of online oral defense windows open for student reservation in {activeQuarter ? activeQuarter.code : 'this term'}.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('slots')}
-                    className="self-start sm:self-auto py-1.5 px-3 text-xs font-semibold text-[#881325] hover:text-[#6B0F1D] bg-stone-100 hover:bg-stone-200/70 border border-stone-300/80 rounded-lg whitespace-nowrap transition-colors cursor-pointer"
-                  >
-                    Manage Full Inventory →
-                  </button>
-                </div>
-
-                {slots.length === 0 ? (
-                  <div className="py-8 text-center">
-                    <p className="text-sm font-medium text-zinc-800">No time slots created yet</p>
-                    <p className="text-xs text-zinc-500 mt-1">
-                      Click "Add Defense Slot" in the top header or switch to Manage Slots to generate UOx Zoom blocks.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {slots.slice(0, 6).map((slot) => {
-                      const appt = appointmentsBySlotId[slot.id];
-                      const isAvailable = !appt && !slot.isBlocked;
-                      return (
-                        <div
-                          key={slot.id}
-                          className="p-3.5 rounded-lg bg-stone-50/80 border border-stone-200/90 flex flex-col justify-between gap-2.5"
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <p className="text-xs font-semibold text-[#A6192E] font-mono tabular-nums">
-                                {formatReadableDate(slot.date)}
-                              </p>
-                              <p className="text-sm font-semibold text-zinc-900 font-mono tabular-nums mt-0.5">
-                                {formatTimeRange(slot.startTime, slot.endTime)}
-                              </p>
-                            </div>
-                            <span
-                              className={`px-2 py-0.5 rounded text-[11px] font-semibold ${
-                                isAvailable
-                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                  : slot.isBlocked
-                                  ? 'bg-stone-200 text-stone-600'
-                                  : 'bg-rose-50 text-rose-700 border border-rose-200'
-                              }`}
-                            >
-                              {isAvailable ? 'Open' : slot.isBlocked ? 'Blocked' : 'Reserved'}
-                            </span>
-                          </div>
-                          <div className="text-xs text-zinc-600 pt-1 border-t border-stone-200/60 flex items-center justify-between gap-2">
-                            <span className="truncate">{slot.zoomRoomName}</span>
-                            <span className="font-mono text-[11px] text-zinc-400 shrink-0">{slot.id}</span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </section>
-            </div>
-
-            {/* Right Column (5 cols): Confirmed Defenses + Virtual Readiness & Fast Actions */}
-            <div className="lg:col-span-5 space-y-6">
-              {/* Confirmed Upcoming */}
-              <section className="bg-white/70 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6">
-                <div className="flex items-center justify-between gap-4 mb-4">
+          {/* Row 1: Operations Queue & Confirmed Defenses */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            {/* Pending Queue */}
+            <section className="lg:col-span-7 flex flex-col justify-between bg-white/70 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6">
+              <div className="flex items-center justify-between gap-4 mb-4">
+                <div>
                   <h2 className="text-base font-semibold text-zinc-900">
-                    Upcoming Confirmed
+                    Pending Approval Queue
                   </h2>
+                  <p className="text-xs text-zinc-500 mt-0.5">
+                    Approve candidate reservations or inspect committee conflicts.
+                  </p>
+                </div>
+                <span className="text-xs font-mono tabular-nums text-zinc-500">
+                  {pendingQueue.length} items
+                </span>
+              </div>
+
+              {pendingQueue.length === 0 ? (
+                <div className="py-7 px-4 text-center rounded-lg bg-stone-50/70 border border-stone-200/80 flex-1 flex flex-col items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-700 mx-auto flex items-center justify-center mb-2.5">
+                    <CheckCircle2 className="w-5 h-5" />
+                  </div>
+                  <p className="text-sm font-semibold text-zinc-900">All Candidate Requests Reviewed</p>
+                  <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
+                    No student defense reservations currently require committee approval.
+                  </p>
+                  <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('requests')}
+                      className="px-3 py-1.5 text-xs font-medium text-zinc-700 bg-white hover:bg-stone-100 border border-stone-300 rounded-md transition-colors"
+                    >
+                      View All Requests
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('submissions')}
+                      className="px-3 py-1.5 text-xs font-medium text-[#A6192E] bg-[#A6192E]/10 hover:bg-[#A6192E]/15 rounded-md transition-colors"
+                    >
+                      Inspect Submitted Files ({pendingFilesCount} pending)
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="divide-y divide-zinc-100 flex-1">
+                  {pendingQueue.map((appt) => (
+                    <div
+                      key={appt.id}
+                      className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-500">
+                          <span className="font-mono tabular-nums">{appt.id}</span>
+                          <span aria-hidden="true">·</span>
+                          <StatusLabel status={appt.status} />
+                          <span aria-hidden="true">·</span>
+                          <span>{appt.department}</span>
+                        </div>
+                        <p className="text-sm font-semibold text-zinc-900 mt-1 truncate">
+                          {appt.studentName} — {appt.thesisTitle}
+                        </p>
+                        <p className="text-xs text-zinc-500 mt-0.5">
+                          {formatShortDate(appt.date)} ·{' '}
+                          <span className="font-mono tabular-nums">
+                            {formatTimeRange(appt.startTime, appt.endTime)}
+                          </span>{' '}
+                          · {appt.zoomRoomName}
+                          {!appt.zoomLink && (
+                            <span className="text-[#9A6E00] font-medium"> · Needs Zoom link</span>
+                          )}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setInspectedAppointment(appt)}
+                          className="py-1.5 px-3 text-xs font-medium text-zinc-700 bg-stone-900/[0.06] hover:bg-stone-900/[0.10] border border-stone-300/60 rounded-md transition-colors whitespace-nowrap"
+                        >
+                          {appt.zoomLink ? 'Review' : 'Set Zoom Link'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleQuickApproveAppointment(appt)}
+                          className="py-1.5 px-3 text-xs font-medium text-white bg-[#A6192E] hover:bg-[#881325] rounded-md transition-colors whitespace-nowrap"
+                        >
+                          Approve
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* Confirmed Upcoming */}
+            <section className="lg:col-span-5 flex flex-col justify-between bg-white/70 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6">
+              <div className="flex items-center justify-between gap-4 mb-4">
+                <h2 className="text-base font-semibold text-zinc-900">
+                  Upcoming Confirmed
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('slots')}
+                  className="text-xs font-medium text-[#A6192E] hover:underline whitespace-nowrap"
+                >
+                  Manage slots
+                </button>
+              </div>
+
+              {confirmedUpcoming.length === 0 ? (
+                <div className="py-7 px-4 text-center rounded-lg bg-stone-50/70 border border-stone-200/80 flex-1 flex flex-col items-center justify-center">
+                  <CalendarDays className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
+                  <p className="text-sm font-semibold text-zinc-900">No Confirmed Defenses Yet</p>
+                  <p className="text-xs text-zinc-500 mt-1 max-w-xs mx-auto">
+                    Confirmed student defense reservations will be listed here with direct Zoom access links.
+                  </p>
                   <button
                     type="button"
-                    onClick={() => setActiveTab('slots')}
-                    className="text-xs font-medium text-[#A6192E] hover:underline whitespace-nowrap"
+                    onClick={() => handleOpenAddSlotModal()}
+                    className="mt-3.5 px-3 py-1.5 text-xs font-medium text-[#A6192E] bg-[#A6192E]/10 hover:bg-[#A6192E]/15 rounded-md transition-colors inline-flex items-center gap-1.5"
                   >
-                    Manage slots
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Defense Slot</span>
                   </button>
                 </div>
+              ) : (
+                <div className="divide-y divide-zinc-100 flex-1">
+                  {confirmedUpcoming.map((appt) => (
+                    <button
+                      key={appt.id}
+                      type="button"
+                      onClick={() => setInspectedAppointment(appt)}
+                      className="w-full py-3 text-left hover:bg-stone-50 px-2 -mx-2 rounded-md transition-colors"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-semibold text-[#A6192E] font-mono tabular-nums">
+                          {formatShortDate(appt.date)} · {appt.startTime}
+                        </span>
+                        <span
+                          className={`text-xs font-medium ${
+                            appt.zoomLink ? 'text-emerald-700' : 'text-[#9A6E00]'
+                          }`}
+                        >
+                          {appt.zoomLink ? 'Zoom Ready' : 'Set Zoom Link'}
+                        </span>
+                      </div>
+                      <p className="text-sm font-medium text-zinc-900 mt-1 truncate">
+                        {appt.studentName}
+                      </p>
+                      <p className="text-xs text-zinc-500 truncate mt-0.5">
+                        {appt.zoomRoomName} · Chair: {appt.advisorName}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
 
-                {confirmedUpcoming.length === 0 ? (
-                  <div className="py-7 px-4 text-center rounded-lg bg-stone-50/70 border border-stone-200/80">
-                    <CalendarDays className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
-                    <p className="text-sm font-semibold text-zinc-900">No Confirmed Defenses Yet</p>
-                    <p className="text-xs text-zinc-500 mt-1 max-w-xs mx-auto">
-                      Confirmed student defense reservations will be listed here with direct Zoom access links.
-                    </p>
+          {/* Row 2: Slots Inventory Snapshot & Virtual Channel Readiness */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            {/* Quick Schedule Inventory Preview on Overview */}
+            <section className="lg:col-span-7 flex flex-col justify-between bg-white/70 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-stone-200/80">
+                <div>
+                  <h2 className="text-base font-semibold text-zinc-900">
+                    Configured Defense Slots Snapshot
+                  </h2>
+                  <p className="text-xs text-zinc-500 mt-0.5">
+                    Live snapshot of online oral defense windows open for student reservation in {activeQuarter ? activeQuarter.code : 'this term'}.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('slots')}
+                  className="self-start sm:self-auto py-1.5 px-3 text-xs font-semibold text-[#881325] hover:text-[#6B0F1D] bg-stone-100 hover:bg-stone-200/70 border border-stone-300/80 rounded-lg whitespace-nowrap transition-colors cursor-pointer"
+                >
+                  Manage Full Inventory →
+                </button>
+              </div>
+
+              {slots.length === 0 ? (
+                <div className="py-7 px-4 text-center rounded-lg bg-stone-50/70 border border-stone-200/80 flex-1 flex flex-col items-center justify-center">
+                  <CalendarPlus className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
+                  <p className="text-sm font-semibold text-zinc-900">No Time Slots Created Yet</p>
+                  <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
+                    Click "Add Defense Slot" in the top header or generate standard UOx Zoom blocks.
+                  </p>
+                  <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2">
                     <button
                       type="button"
                       onClick={() => handleOpenAddSlotModal()}
-                      className="mt-3.5 px-3 py-1.5 text-xs font-medium text-[#A6192E] bg-[#A6192E]/10 hover:bg-[#A6192E]/15 rounded-md transition-colors inline-flex items-center gap-1.5"
+                      className="px-3 py-1.5 text-xs font-medium text-white bg-[#A6192E] hover:bg-[#881325] rounded-md transition-colors inline-flex items-center gap-1.5"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Add Defense Slot</span>
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onGenerateDaySlots(selectedDate);
+                        showToast(`Generated standard UOx Zoom blocks for ${formatShortDate(selectedDate)}.`, 'success');
+                      }}
+                      className="px-3 py-1.5 text-xs font-medium text-zinc-700 bg-white hover:bg-stone-100 border border-stone-300 rounded-md transition-colors"
+                    >
+                      Generate Day Blocks
+                    </button>
                   </div>
-                ) : (
-                  <div className="divide-y divide-zinc-100">
-                    {confirmedUpcoming.map((appt) => (
-                      <button
-                        key={appt.id}
-                        type="button"
-                        onClick={() => setInspectedAppointment(appt)}
-                        className="w-full py-3 text-left hover:bg-stone-50 px-2 -mx-2 rounded-md transition-colors"
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
+                  {slots.slice(0, 6).map((slot) => {
+                    const appt = appointmentsBySlotId[slot.id];
+                    const isAvailable = !appt && !slot.isBlocked;
+                    return (
+                      <div
+                        key={slot.id}
+                        className="p-3.5 rounded-lg bg-stone-50/80 border border-stone-200/90 flex flex-col justify-between gap-2.5"
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-semibold text-[#A6192E] font-mono tabular-nums">
-                            {formatShortDate(appt.date)} · {appt.startTime}
-                          </span>
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="text-xs font-semibold text-[#A6192E] font-mono tabular-nums">
+                              {formatReadableDate(slot.date)}
+                            </p>
+                            <p className="text-sm font-semibold text-zinc-900 font-mono tabular-nums mt-0.5">
+                              {formatTimeRange(slot.startTime, slot.endTime)}
+                            </p>
+                          </div>
                           <span
-                            className={`text-xs font-medium ${
-                              appt.zoomLink ? 'text-emerald-700' : 'text-[#9A6E00]'
+                            className={`px-2 py-0.5 rounded text-[11px] font-semibold ${
+                              isAvailable
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : slot.isBlocked
+                                ? 'bg-stone-200 text-stone-600'
+                                : 'bg-rose-50 text-rose-700 border border-rose-200'
                             }`}
                           >
-                            {appt.zoomLink ? 'Zoom Ready' : 'Set Zoom Link'}
+                            {isAvailable ? 'Open' : slot.isBlocked ? 'Blocked' : 'Reserved'}
                           </span>
                         </div>
-                        <p className="text-sm font-medium text-zinc-900 mt-1 truncate">
-                          {appt.studentName}
-                        </p>
-                        <p className="text-xs text-zinc-500 truncate mt-0.5">
-                          {appt.zoomRoomName} · Chair: {appt.advisorName}
-                        </p>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </section>
+                        <div className="text-xs text-zinc-600 pt-1 border-t border-stone-200/60 flex items-center justify-between gap-2">
+                          <span className="truncate">{slot.zoomRoomName}</span>
+                          <span className="font-mono text-[11px] text-zinc-400 shrink-0">{slot.id}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
 
-              {/* UOx Defense Operations & Quick Action Center */}
-              <section className="bg-white/70 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6 space-y-4">
+            {/* UOx Defense Operations & Quick Action Center */}
+            <section className="lg:col-span-5 flex flex-col justify-between bg-white/70 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6 space-y-4">
+              <div>
                 <div className="flex items-center justify-between gap-2 pb-3 border-b border-stone-200/80">
                   <div className="flex items-center gap-2">
                     <span className="p-1 rounded-md bg-[#A6192E]/10 text-[#A6192E]">
@@ -1224,61 +1244,68 @@ export function AdminPortal({
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  {zoomRooms.map((room) => (
-                    <div
-                      key={room.id}
-                      className="p-2.5 rounded-lg bg-stone-50 border border-stone-200/70 flex items-center justify-between gap-2 text-xs"
-                    >
-                      <span className="font-medium text-zinc-800 truncate">{room.name}</span>
-                      <span
-                        className={`w-2 h-2 rounded-full shrink-0 ${
-                          room.available ? 'bg-emerald-500' : 'bg-zinc-300'
-                        }`}
-                      />
-                    </div>
-                  ))}
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  {zoomRooms.map((room) => {
+                    const shortName = room.name
+                      .replace(/Zoom Defense\s*/i, '')
+                      .replace(/\s*\(.*?\)/, '')
+                      .trim();
+                    return (
+                      <div
+                        key={room.id}
+                        title={room.name}
+                        className="p-2.5 rounded-lg bg-stone-50 border border-stone-200/70 flex items-center justify-between gap-2 text-xs"
+                      >
+                        <span className="font-medium text-zinc-800 truncate">{shortName}</span>
+                        <span
+                          className={`w-2 h-2 rounded-full shrink-0 ${
+                            room.available ? 'bg-emerald-500' : 'bg-zinc-300'
+                          }`}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
+              </div>
 
-                <div className="pt-2 border-t border-stone-200/80 space-y-2">
-                  <p className="text-xs font-semibold text-zinc-700">Coordinator Fast Shortcuts</p>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('announcements')}
-                      className="p-2 text-left bg-stone-100 hover:bg-stone-200/70 rounded-lg border border-stone-300/60 font-medium text-zinc-800 transition-colors flex items-center justify-between"
-                    >
-                      <span>Announcements</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('submissions')}
-                      className="p-2 text-left bg-stone-100 hover:bg-stone-200/70 rounded-lg border border-stone-300/60 font-medium text-zinc-800 transition-colors flex items-center justify-between"
-                    >
-                      <span>Student Files</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('directory')}
-                      className="p-2 text-left bg-stone-100 hover:bg-stone-200/70 rounded-lg border border-stone-300/60 font-medium text-zinc-800 transition-colors flex items-center justify-between"
-                    >
-                      <span>Zoom Channels</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('archives')}
-                      className="p-2 text-left bg-stone-100 hover:bg-stone-200/70 rounded-lg border border-stone-300/60 font-medium text-zinc-800 transition-colors flex items-center justify-between"
-                    >
-                      <span>Term Archives</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
-                    </button>
-                  </div>
+              <div className="pt-2 border-t border-stone-200/80 space-y-2">
+                <p className="text-xs font-semibold text-zinc-700">Coordinator Fast Shortcuts</p>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('announcements')}
+                    className="p-2 text-left bg-stone-100 hover:bg-stone-200/70 rounded-lg border border-stone-300/60 font-medium text-zinc-800 transition-colors flex items-center justify-between"
+                  >
+                    <span>Announcements</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('submissions')}
+                    className="p-2 text-left bg-stone-100 hover:bg-stone-200/70 rounded-lg border border-stone-300/60 font-medium text-zinc-800 transition-colors flex items-center justify-between"
+                  >
+                    <span>Student Files</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('directory')}
+                    className="p-2 text-left bg-stone-100 hover:bg-stone-200/70 rounded-lg border border-stone-300/60 font-medium text-zinc-800 transition-colors flex items-center justify-between"
+                  >
+                    <span>Zoom Channels</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('archives')}
+                    className="p-2 text-left bg-stone-100 hover:bg-stone-200/70 rounded-lg border border-stone-300/60 font-medium text-zinc-800 transition-colors flex items-center justify-between"
+                  >
+                    <span>Term Archives</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
+                  </button>
                 </div>
-              </section>
-            </div>
+              </div>
+            </section>
           </div>
         </div>
       )}

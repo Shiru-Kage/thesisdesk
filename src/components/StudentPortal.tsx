@@ -813,200 +813,150 @@ export function StudentPortal({
             );
           })()}
 
-          {/* Main Dashboard 2-Column Grid: Balanced Desktop Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Left Column (7 cols on desktop): Active Defense / Status + Zoom Prep Checklist */}
-            <div className="lg:col-span-7 space-y-6">
-              {/* Active Defense or Current Scheduling Status */}
-              <section aria-labelledby="active-defense-heading">
-                <div className="flex items-center justify-between gap-4 mb-3">
-                  <h2 id="active-defense-heading" className="text-sm font-semibold text-zinc-900">
-                    Current Defense Schedule
-                  </h2>
-                  {activeDefense && (
-                    <span className="text-xs font-mono tabular-nums text-zinc-500">
-                      {activeDefense.id}
-                    </span>
-                  )}
-                </div>
-
-                {activeDefense ? (
-                  <div className="bg-white/75 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6 space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                      <div className="space-y-2 flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-zinc-500">
-                          <StatusLabel status={activeDefense.status} />
-                          <span aria-hidden="true">·</span>
-                          <span>UOx Fully Online · Zoom</span>
-                        </div>
-                        <h3 className="text-lg font-semibold text-zinc-900">
-                          {activeDefense.thesisTitle}
-                        </h3>
-                        <p className="text-xs text-zinc-600">
-                          Adviser:{' '}
-                          <span className="text-zinc-900 font-medium">{activeDefense.advisorName}</span>
-                          <span className="mx-1.5 text-zinc-300" aria-hidden="true">
-                            ·
-                          </span>
-                          Panel: {activeDefense.committeeMembers.join(', ')}
-                        </p>
-                      </div>
-
-                      <div className="sm:text-right shrink-0">
-                        <p className="text-sm font-semibold text-zinc-900">
-                          {formatReadableDate(activeDefense.date)}
-                        </p>
-                        <p className="text-xs font-mono tabular-nums text-[#A6192E] font-medium mt-0.5">
-                          {formatTimeRange(activeDefense.startTime, activeDefense.endTime)}
-                        </p>
-                        <p className="text-[11px] text-zinc-500 mt-0.5">
-                          {activeDefense.zoomRoomName}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Zoom Link Bar */}
-                    <div className="pt-3 border-t border-stone-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <Video className="w-4 h-4 text-[#A6192E] shrink-0" />
-                        <span className="truncate text-zinc-800">
-                          {activeDefense.zoomLink || 'Zoom link pending coordinator assignment'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => setInspectedAppointmentId(activeDefense.id)}
-                          className="py-1.5 px-3 text-xs font-medium text-zinc-700 bg-stone-100 hover:bg-stone-200 border border-stone-300 rounded-md transition-colors"
-                        >
-                          Details
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!isClearedToSchedule) {
-                              setActiveTab('files');
-                              showToast(
-                                'Submit and get professor approval for all required files before rescheduling.',
-                                'warning'
-                              );
-                              return;
-                            }
-                            setRescheduleTarget(activeDefense);
-                            setActiveTab('book');
-                          }}
-                          className={`py-1.5 px-3 text-xs font-medium rounded-md transition-colors inline-flex items-center gap-1 ${
-                            isClearedToSchedule
-                              ? 'text-[#A6192E] bg-[#A6192E]/10 hover:bg-[#A6192E]/15'
-                              : 'text-zinc-500 bg-stone-100'
-                          }`}
-                        >
-                          {!isClearedToSchedule && <Lock className="w-3 h-3 shrink-0" />}
-                          <span>Reschedule</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="bg-white/75 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6 space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded-md bg-stone-100 text-zinc-700 border border-stone-200">
-                          <Lock className="w-3 h-3 text-[#A6192E]" />
-                          {isClearedToSchedule ? 'Cleared to Book Slot' : 'Defense Scheduling Locked'}
-                        </span>
-                        <h3 className="text-base font-semibold text-zinc-900 mt-2">
-                          {isClearedToSchedule
-                            ? 'Ready to Reserve a UOx Defense Slot'
-                            : 'Awaiting Faculty File Clearances'}
-                        </h3>
-                        <p className="text-xs text-zinc-600 mt-1 leading-relaxed">
-                          {isClearedToSchedule
-                            ? 'All required thesis documents are approved by faculty. Select an open committee window from the panel on the right.'
-                            : `${submittedRequiredCount}/${requiredDocs.length} files submitted (${approvedRequiredCount}/${requiredDocs.length} approved). Upload all required documents and await faculty approval to unlock booking.`}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="pt-2 flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab(isClearedToSchedule ? 'book' : 'files')}
-                        className="py-2 px-4 bg-[#A6192E] hover:bg-[#881325] text-white text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5"
-                      >
-                        {isClearedToSchedule ? (
-                          <>
-                            <CalendarDays className="w-3.5 h-3.5 shrink-0" />
-                            <span>Select Defense Slot</span>
-                          </>
-                        ) : (
-                          <>
-                            <FileText className="w-3.5 h-3.5 shrink-0" />
-                            <span>Go to Files to Submit</span>
-                          </>
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab('guidelines')}
-                        className="py-2 px-3 text-xs font-medium text-zinc-600 hover:text-zinc-900 transition-colors"
-                      >
-                        Read Guidelines →
-                      </button>
-                    </div>
-                  </div>
+          {/* Main Dashboard Grid: Row 1 - Schedule Status (Left 7) & Next Open Windows (Right 5) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            {/* Active Defense or Current Scheduling Status */}
+            <section aria-labelledby="active-defense-heading" className="lg:col-span-7 flex flex-col justify-between">
+              <div className="flex items-center justify-between gap-4 mb-2">
+                <h2 id="active-defense-heading" className="text-sm font-semibold text-zinc-900">
+                  Current Defense Schedule
+                </h2>
+                {activeDefense && (
+                  <span className="text-xs font-mono tabular-nums text-zinc-500">
+                    {activeDefense.id}
+                  </span>
                 )}
-              </section>
+              </div>
 
-              {/* Defense-Day UOx Zoom Prep Checklist */}
-              <section className="bg-white/75 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6">
-                <div className="flex items-center justify-between gap-4 mb-3 pb-3 border-b border-stone-200/80">
+              {activeDefense ? (
+                <div className="bg-white/75 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6 flex-1 flex flex-col justify-between gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                    <div className="space-y-2 flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-zinc-500">
+                        <StatusLabel status={activeDefense.status} />
+                        <span aria-hidden="true">·</span>
+                        <span>UOx Fully Online · Zoom</span>
+                      </div>
+                      <h3 className="text-lg font-semibold text-zinc-900">
+                        {activeDefense.thesisTitle}
+                      </h3>
+                      <p className="text-xs text-zinc-600">
+                        Adviser:{' '}
+                        <span className="text-zinc-900 font-medium">{activeDefense.advisorName}</span>
+                        <span className="mx-1.5 text-zinc-300" aria-hidden="true">
+                          ·
+                        </span>
+                        Panel: {activeDefense.committeeMembers.join(', ')}
+                      </p>
+                    </div>
+
+                    <div className="sm:text-right shrink-0">
+                      <p className="text-sm font-semibold text-zinc-900">
+                        {formatReadableDate(activeDefense.date)}
+                      </p>
+                      <p className="text-xs font-mono tabular-nums text-[#A6192E] font-medium mt-0.5">
+                        {formatTimeRange(activeDefense.startTime, activeDefense.endTime)}
+                      </p>
+                      <p className="text-[11px] text-zinc-500 mt-0.5">
+                        {activeDefense.zoomRoomName}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Zoom Link Bar */}
+                  <div className="pt-3 border-t border-stone-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Video className="w-4 h-4 text-[#A6192E] shrink-0" />
+                      <span className="truncate text-zinc-800">
+                        {activeDefense.zoomLink || 'Zoom link pending coordinator assignment'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setInspectedAppointmentId(activeDefense.id)}
+                        className="py-1.5 px-3 text-xs font-medium text-zinc-700 bg-stone-100 hover:bg-stone-200 border border-stone-300 rounded-md transition-colors"
+                      >
+                        Details
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!isClearedToSchedule) {
+                            setActiveTab('files');
+                            showToast(
+                              'Submit and get professor approval for all required files before rescheduling.',
+                              'warning'
+                            );
+                            return;
+                          }
+                          setRescheduleTarget(activeDefense);
+                          setActiveTab('book');
+                        }}
+                        className={`py-1.5 px-3 text-xs font-medium rounded-md transition-colors inline-flex items-center gap-1 ${
+                          isClearedToSchedule
+                            ? 'text-[#A6192E] bg-[#A6192E]/10 hover:bg-[#A6192E]/15'
+                            : 'text-zinc-500 bg-stone-100'
+                        }`}
+                      >
+                        {!isClearedToSchedule && <Lock className="w-3 h-3 shrink-0" />}
+                        <span>Reschedule</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-white/75 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6 flex-1 flex flex-col justify-between gap-3">
                   <div>
-                    <h2 className="text-sm font-semibold text-zinc-900">
-                      Defense-Day UOx Zoom Prep
-                    </h2>
-                    <p className="text-xs text-zinc-500 mt-0.5">
-                      Technical and presentation checks ahead of your oral examination.
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded-md bg-stone-100 text-zinc-700 border border-stone-200">
+                      <Lock className="w-3 h-3 text-[#A6192E]" />
+                      {isClearedToSchedule ? 'Cleared to Book Slot' : 'Defense Scheduling Locked'}
+                    </span>
+                    <h3 className="text-base font-semibold text-zinc-900 mt-2">
+                      {isClearedToSchedule
+                        ? 'Ready to Reserve a UOx Defense Slot'
+                        : 'Awaiting Faculty File Clearances'}
+                    </h3>
+                    <p className="text-xs text-zinc-600 mt-1 leading-relaxed">
+                      {isClearedToSchedule
+                        ? 'All required thesis documents are approved by faculty. Select an open committee window from the panel on the right.'
+                        : `${submittedRequiredCount}/${requiredDocs.length} files submitted (${approvedRequiredCount}/${requiredDocs.length} approved). Upload all required documents and await faculty approval to unlock booking.`}
                     </p>
                   </div>
-                  <span className="text-xs font-mono tabular-nums font-semibold text-[#9A6E00] shrink-0">
-                    {completedChecklistCount}/{checklist.length} done
-                  </span>
-                </div>
 
-                <div className="divide-y divide-zinc-100">
-                  {checklist.map((item) => (
+                  <div className="pt-2 flex items-center gap-3">
                     <button
-                      key={item.id}
                       type="button"
-                      onClick={() => onToggleChecklist(item.id)}
-                      className="w-full py-2.5 flex items-start gap-3 text-left hover:bg-stone-900/[0.03] rounded-md px-2 -mx-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6192E]"
+                      onClick={() => setActiveTab(isClearedToSchedule ? 'book' : 'files')}
+                      className="py-2 px-4 bg-[#A6192E] hover:bg-[#881325] text-white text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5"
                     >
-                      {item.completed ? (
-                        <CheckSquare className="w-4 h-4 text-[#A6192E] mt-0.5 shrink-0" />
+                      {isClearedToSchedule ? (
+                        <>
+                          <CalendarDays className="w-3.5 h-3.5 shrink-0" />
+                          <span>Select Defense Slot</span>
+                        </>
                       ) : (
-                        <Square className="w-4 h-4 text-zinc-400 mt-0.5 shrink-0" />
+                        <>
+                          <FileText className="w-3.5 h-3.5 shrink-0" />
+                          <span>Go to Files to Submit</span>
+                        </>
                       )}
-                      <div className="min-w-0 flex-1">
-                        <p
-                          className={`text-xs font-medium ${
-                            item.completed ? 'line-through text-zinc-400' : 'text-zinc-800'
-                          }`}
-                        >
-                          {item.label}
-                        </p>
-                        <p className="text-[11px] text-zinc-500">{item.dueNote}</p>
-                      </div>
                     </button>
-                  ))}
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('guidelines')}
+                      className="py-2 px-3 text-xs font-medium text-zinc-600 hover:text-zinc-900 transition-colors"
+                    >
+                      Read Guidelines →
+                    </button>
+                  </div>
                 </div>
-              </section>
-            </div>
+              )}
+            </section>
 
-            {/* Right Column (5 cols on desktop): Next Open Windows + Document Clearance */}
-            <div className="lg:col-span-5 space-y-6">
-              {/* Next Open Committee Windows */}
-              <section className="bg-white/75 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6">
+            {/* Next Open Committee Windows */}
+            <section className="lg:col-span-5 flex flex-col justify-between bg-white/75 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6">
+              <div>
                 <div className="flex items-center justify-between gap-4 pb-3 border-b border-stone-200/80 mb-2">
                   <div>
                     <h2 className="text-sm font-semibold text-zinc-900">
@@ -1071,10 +1021,70 @@ export function StudentPortal({
                       </div>
                     ))}
                 </div>
-              </section>
+              </div>
 
-              {/* Required Pre-Defense Documents Snapshot */}
-              <section className="bg-white/75 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6">
+              <div className="pt-2 border-t border-stone-200/70 text-[11px] text-zinc-500 flex items-center justify-between">
+                <span>Rooms open 10m prior</span>
+                <span className="font-mono text-zinc-400">AY 2026-2027</span>
+              </div>
+            </section>
+          </div>
+
+          {/* Main Dashboard Grid: Row 2 - Zoom Prep Checklist (Left 7) & Document Clearance (Right 5) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            {/* Defense-Day UOx Zoom Prep Checklist */}
+            <section className="lg:col-span-7 flex flex-col justify-between bg-white/75 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6">
+              <div>
+                <div className="flex items-center justify-between gap-4 mb-3 pb-3 border-b border-stone-200/80">
+                  <div>
+                    <h2 className="text-sm font-semibold text-zinc-900">
+                      Defense-Day UOx Zoom Prep
+                    </h2>
+                    <p className="text-xs text-zinc-500 mt-0.5">
+                      Technical and presentation checks ahead of your oral examination.
+                    </p>
+                  </div>
+                  <span className="text-xs font-mono tabular-nums font-semibold text-[#9A6E00] shrink-0">
+                    {completedChecklistCount}/{checklist.length} done
+                  </span>
+                </div>
+
+                <div className="divide-y divide-zinc-100">
+                  {checklist.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => onToggleChecklist(item.id)}
+                      className="w-full py-2.5 flex items-start gap-3 text-left hover:bg-stone-900/[0.03] rounded-md px-2 -mx-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6192E]"
+                    >
+                      {item.completed ? (
+                        <CheckSquare className="w-4 h-4 text-[#A6192E] mt-0.5 shrink-0" />
+                      ) : (
+                        <Square className="w-4 h-4 text-zinc-400 mt-0.5 shrink-0" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className={`text-xs font-medium ${
+                            item.completed ? 'line-through text-zinc-400' : 'text-zinc-800'
+                          }`}
+                        >
+                          {item.label}
+                        </p>
+                        <p className="text-[11px] text-zinc-500">{item.dueNote}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-stone-200/70 text-[11px] text-zinc-500">
+                Click any checklist item to track your oral presentation preparations.
+              </div>
+            </section>
+
+            {/* Required Pre-Defense Documents Snapshot */}
+            <section className="lg:col-span-5 flex flex-col justify-between bg-white/75 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6">
+              <div>
                 <div className="flex items-center justify-between gap-4 pb-3 border-b border-stone-200/80 mb-2">
                   <div>
                     <h2 className="text-sm font-semibold text-zinc-900">
@@ -1129,8 +1139,14 @@ export function StudentPortal({
                     );
                   })}
                 </div>
-              </section>
-            </div>
+              </div>
+
+              <div className="pt-2 border-t border-stone-200/70 text-[11px] text-zinc-500">
+                {isClearedToSchedule
+                  ? 'All files approved by faculty reviewer.'
+                  : 'Faculty sign-off unlocks defense scheduling.'}
+              </div>
+            </section>
           </div>
         </div>
       )}
