@@ -1101,6 +1101,75 @@ export function AdminPortal({
               )}
             </section>
           </div>
+
+          {/* Quick Schedule Inventory Preview on Overview */}
+          <section className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-stone-200/80">
+              <div>
+                <h2 className="text-base font-semibold text-zinc-900">
+                  Configured Defense Slots Snapshot
+                </h2>
+                <p className="text-xs text-zinc-500 mt-0.5">
+                  Live snapshot of online oral defense windows open for student reservation in {activeQuarter ? activeQuarter.code : 'this term'}.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab('slots')}
+                className="self-start sm:self-auto py-1.5 px-3 text-xs font-semibold text-[#881325] hover:text-[#6B0F1D] bg-stone-100 hover:bg-stone-200/70 border border-stone-300/80 rounded-lg whitespace-nowrap transition-colors cursor-pointer"
+              >
+                Manage Full Inventory →
+              </button>
+            </div>
+
+            {slots.length === 0 ? (
+              <div className="py-8 text-center">
+                <p className="text-sm font-medium text-zinc-800">No time slots created yet</p>
+                <p className="text-xs text-zinc-500 mt-1">
+                  Click "Add Defense Slot" in the top header or switch to Manage Slots to generate UOx Zoom blocks.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {slots.slice(0, 6).map((slot) => {
+                  const appt = appointmentsBySlotId[slot.id];
+                  const isAvailable = !appt && !slot.isBlocked;
+                  return (
+                    <div
+                      key={slot.id}
+                      className="p-3.5 rounded-lg bg-stone-50/80 border border-stone-200/90 flex flex-col justify-between gap-2.5"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-xs font-semibold text-[#A6192E] font-mono tabular-nums">
+                            {formatReadableDate(slot.date)}
+                          </p>
+                          <p className="text-sm font-semibold text-zinc-900 font-mono tabular-nums mt-0.5">
+                            {formatTimeRange(slot.startTime, slot.endTime)}
+                          </p>
+                        </div>
+                        <span
+                          className={`px-2 py-0.5 rounded text-[11px] font-semibold ${
+                            isAvailable
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : slot.isBlocked
+                              ? 'bg-stone-200 text-stone-600'
+                              : 'bg-rose-50 text-rose-700 border border-rose-200'
+                          }`}
+                        >
+                          {isAvailable ? 'Open' : slot.isBlocked ? 'Blocked' : 'Reserved'}
+                        </span>
+                      </div>
+                      <div className="text-xs text-zinc-600 pt-1 border-t border-stone-200/60 flex items-center justify-between gap-2">
+                        <span className="truncate">{slot.zoomRoomName}</span>
+                        <span className="font-mono text-[11px] text-zinc-400 shrink-0">{slot.id}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
         </div>
       )}
 

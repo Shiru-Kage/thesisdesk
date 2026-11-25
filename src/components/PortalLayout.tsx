@@ -292,40 +292,42 @@ export function PortalLayout({
 
       {/* Main Content Area */}
       <div className="flex-1 min-w-0 flex flex-col">
-        <header className="sticky top-0 z-10 h-16 bg-white/65 backdrop-blur-xl border-b border-stone-300/70 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
+        <header className="sticky top-0 z-10 h-16 bg-white/65 backdrop-blur-xl border-b border-stone-300/70">
+          <div className="w-full max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(true)}
+                aria-label="Open navigation menu"
+                className="lg:hidden p-2 -ml-2 text-zinc-600 hover:text-zinc-900 hover:bg-stone-900/5 rounded-md"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm min-w-0">
+                <span className="text-zinc-500 whitespace-nowrap hidden sm:inline">
+                  {portalLabel}
+                </span>
+                <span className="text-zinc-400 hidden sm:inline" aria-hidden="true">
+                  /
+                </span>
+                <span className="font-semibold text-zinc-900 truncate">
+                  {activeNav?.label ?? 'Overview'}
+                </span>
+              </nav>
+            </div>
+
+            {/* 10% Accent CTA: Mapua Cardinal Red */}
             <button
               type="button"
-              onClick={() => setMobileMenuOpen(true)}
-              aria-label="Open navigation menu"
-              className="lg:hidden p-2 -ml-2 text-zinc-600 hover:text-zinc-900 hover:bg-stone-900/5 rounded-md"
+              onClick={onPrimaryAction}
+              className="py-2 px-4 bg-[#A6192E] hover:bg-[#881325] text-white text-xs sm:text-sm font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6192E] focus-visible:ring-offset-2"
             >
-              <Menu className="w-5 h-5" />
+              {primaryActionLabel}
             </button>
-            <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm min-w-0">
-              <span className="text-zinc-500 whitespace-nowrap hidden sm:inline">
-                {portalLabel}
-              </span>
-              <span className="text-zinc-400 hidden sm:inline" aria-hidden="true">
-                /
-              </span>
-              <span className="font-semibold text-zinc-900 truncate">
-                {activeNav?.label ?? 'Overview'}
-              </span>
-            </nav>
           </div>
-
-          {/* 10% Accent CTA: Mapua Cardinal Red */}
-          <button
-            type="button"
-            onClick={onPrimaryAction}
-            className="py-2 px-4 bg-[#A6192E] hover:bg-[#881325] text-white text-xs sm:text-sm font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6192E] focus-visible:ring-offset-2"
-          >
-            {primaryActionLabel}
-          </button>
         </header>
 
-        <main className="flex-1 w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <main className="flex-1 w-full max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           <motion.div
             key={activeTab}
             initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
