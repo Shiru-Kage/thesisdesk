@@ -821,7 +821,7 @@ export function StudentPortal({
             {activeDefense ? (
               <div className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6 space-y-4">
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                  <div className="space-y-2 max-w-2xl">
+                  <div className="space-y-2 flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-zinc-500">
                       <span className="font-mono tabular-nums">{activeDefense.id}</span>
                       <span aria-hidden="true">·</span>
@@ -1284,7 +1284,7 @@ export function StudentPortal({
               return (
                 <div key={doc.id} className="p-5 sm:p-6 space-y-4">
                   <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                    <div className="space-y-1.5 max-w-2xl">
+                    <div className="space-y-1.5 flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-500">
                         <span className="font-mono tabular-nums">
                           0{index + 1}
@@ -1815,161 +1815,251 @@ export function StudentPortal({
 
       {/* TAB 4: DEFENSE GUIDELINES */}
       {activeTab === 'guidelines' && (
-        <div className="max-w-4xl space-y-6">
-          <div>
+        <div className="space-y-6">
+          <div className="pb-4 border-b border-stone-300/60">
             <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight">
               SOIT UOx Online Defense Guidelines
             </h1>
             <p className="text-sm text-zinc-600 mt-1">
-              Standard academic procedures and 90-minute session flow for Mapúa UOx Zoom thesis
-              defenses.
+              Standard academic procedures, technical standards, and 90-minute session flow for Mapúa UOx Zoom thesis defenses.
             </p>
           </div>
 
-          {/* 90-Minute Session Timeline Breakdown */}
-          <section
-            aria-label="90-minute defense session breakdown"
-            className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6 space-y-4"
-          >
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h2 className="text-sm font-semibold text-zinc-900">
-                90-Minute Zoom Session Breakdown
-              </h2>
-              <span className="text-xs font-mono tabular-nums text-zinc-600">
-                Total duration · 90 min
-              </span>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Primary Left Column (8 cols on desktop) */}
+            <div className="lg:col-span-8 space-y-6">
+              {/* 90-Minute Session Timeline Breakdown */}
+              <section
+                aria-label="90-minute defense session breakdown"
+                className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 sm:p-6 space-y-4"
+              >
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <h2 className="text-sm font-semibold text-zinc-900">
+                    90-Minute Zoom Session Breakdown
+                  </h2>
+                  <span className="text-xs font-mono tabular-nums text-zinc-600">
+                    Total duration · 90 min
+                  </span>
+                </div>
+
+                <div className="h-2.5 w-full rounded-md overflow-hidden flex gap-0.5 bg-stone-200/70">
+                  <div
+                    className="bg-[#A6192E] h-full"
+                    style={{ width: '38.9%' }}
+                    title="Candidate Presentation: 35 min"
+                  />
+                  <div
+                    className="bg-[#C99700] h-full"
+                    style={{ width: '33.3%' }}
+                    title="Panel Examination: 30 min"
+                  />
+                  <div
+                    className="bg-zinc-700 h-full"
+                    style={{ width: '11.1%' }}
+                    title="Open Floor Q&A: 10 min"
+                  />
+                  <div
+                    className="bg-stone-400 h-full"
+                    style={{ width: '16.7%' }}
+                    title="Closed Deliberation: 15 min"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-1">
+                  <div>
+                    <p className="text-xs font-mono tabular-nums font-semibold text-[#A6192E]">
+                      35 min
+                    </p>
+                    <p className="text-xs font-semibold text-zinc-900 mt-0.5">Presentation</p>
+                    <p className="text-[11px] text-zinc-500 mt-0.5">Slide deck & live demo</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-mono tabular-nums font-semibold text-[#9A6E00]">
+                      30 min
+                    </p>
+                    <p className="text-xs font-semibold text-zinc-900 mt-0.5">Panel Examination</p>
+                    <p className="text-[11px] text-zinc-500 mt-0.5">Committee questioning</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-mono tabular-nums font-semibold text-zinc-800">
+                      10 min
+                    </p>
+                    <p className="text-xs font-semibold text-zinc-900 mt-0.5">Open Floor</p>
+                    <p className="text-[11px] text-zinc-500 mt-0.5">Adviser & guest remarks</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-mono tabular-nums font-semibold text-zinc-600">
+                      15 min
+                    </p>
+                    <p className="text-xs font-semibold text-zinc-900 mt-0.5">Deliberation</p>
+                    <p className="text-[11px] text-zinc-500 mt-0.5">Zoom breakout room</p>
+                  </div>
+                </div>
+              </section>
+
+              {/* Numbered Procedures */}
+              <div className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl divide-y divide-stone-200/80">
+                <div className="p-5 sm:p-6">
+                  <h2 className="text-base font-semibold text-zinc-900">
+                    01. Manuscript Filing & Faculty Clearance
+                  </h2>
+                  <p className="text-sm text-zinc-600 mt-1.5 leading-relaxed">
+                    Final defense-ready drafts (Chapters 1–5), signed adviser endorsement, and Turnitin
+                    similarity report must be uploaded under Files to Submit and approved by faculty
+                    before Zoom slot scheduling unlocks.
+                  </p>
+                </div>
+                <div className="p-5 sm:p-6">
+                  <h2 className="text-base font-semibold text-zinc-900">
+                    02. Official Mapúa UOx Zoom Attendance
+                  </h2>
+                  <p className="text-sm text-zinc-600 mt-1.5 leading-relaxed">
+                    All UOx oral defenses are conducted fully online via coordinator-managed Mapúa Zoom
+                    channels. Sign in with your official <span className="font-mono text-xs">@mymail.mapua.edu.ph</span>{' '}
+                    account and enter the waiting room 10 minutes before your scheduled start time.
+                  </p>
+                </div>
+                <div className="p-5 sm:p-6">
+                  <h2 className="text-base font-semibold text-zinc-900">
+                    03. Camera, Audio & Screen-Share Standards
+                  </h2>
+                  <p className="text-sm text-zinc-600 mt-1.5 leading-relaxed">
+                    Keep your webcam enabled throughout presentation and panel Q&A. Close non-essential
+                    tabs before screen-sharing, and keep an offline PDF export of your slides ready in
+                    case of bandwidth drops.
+                  </p>
+                </div>
+                <div className="p-5 sm:p-6">
+                  <h2 className="text-base font-semibold text-zinc-900">
+                    04. Rescheduling & Withdrawals
+                  </h2>
+                  <p className="text-sm text-zinc-600 mt-1.5 leading-relaxed">
+                    Candidates may transfer an active reservation to another open Zoom slot up to 48
+                    hours before the scheduled start time without re-filing committee approvals.
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick UOx Technical Reference */}
+              <section
+                aria-label="UOx technical readiness standards"
+                className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl overflow-hidden"
+              >
+                <div className="px-5 py-3.5 border-b border-stone-200/80">
+                  <h2 className="text-sm font-semibold text-zinc-900">
+                    UOx Technical Readiness Standards
+                  </h2>
+                </div>
+                <dl className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-stone-200/80 text-xs">
+                  <div className="p-4 sm:p-5">
+                    <dt className="font-semibold text-zinc-900">Early Check-In</dt>
+                    <dd className="text-zinc-600 mt-1 leading-relaxed">
+                      Join <span className="font-mono tabular-nums text-zinc-900">10 min</span> prior
+                      for host admission and microphone verification.
+                    </dd>
+                  </div>
+                  <div className="p-4 sm:p-5">
+                    <dt className="font-semibold text-zinc-900">Backup Connectivity</dt>
+                    <dd className="text-zinc-600 mt-1 leading-relaxed">
+                      Keep mobile hotspot ready and share slide PDF with your adviser before the call.
+                    </dd>
+                  </div>
+                  <div className="p-4 sm:p-5">
+                    <dt className="font-semibold text-zinc-900">Recording & Quorum</dt>
+                    <dd className="text-zinc-600 mt-1 leading-relaxed">
+                      Sessions are cloud-recorded by the SOIT chair once panel quorum is present.
+                    </dd>
+                  </div>
+                </dl>
+              </section>
             </div>
 
-            <div className="h-2.5 w-full rounded-md overflow-hidden flex gap-0.5 bg-stone-200/70">
-              <div
-                className="bg-[#A6192E] h-full"
-                style={{ width: '38.9%' }}
-                title="Candidate Presentation: 35 min"
-              />
-              <div
-                className="bg-[#C99700] h-full"
-                style={{ width: '33.3%' }}
-                title="Panel Examination: 30 min"
-              />
-              <div
-                className="bg-zinc-700 h-full"
-                style={{ width: '11.1%' }}
-                title="Open Floor Q&A: 10 min"
-              />
-              <div
-                className="bg-stone-400 h-full"
-                style={{ width: '16.7%' }}
-                title="Closed Deliberation: 15 min"
-              />
-            </div>
+            {/* Right / Context Rail (4 cols on desktop, stacks below on mobile) */}
+            <aside className="lg:col-span-4 space-y-5">
+              {/* 1. Candidate Defense Readiness Checklist */}
+              <div className="bg-white/80 backdrop-blur-md border border-stone-300/70 rounded-xl p-5 shadow-2xs space-y-4">
+                <div className="flex items-center gap-2 pb-3 border-b border-stone-200/80">
+                  <span className="p-1.5 rounded-lg bg-[#A6192E]/10 text-[#A6192E]">
+                    <CheckCircle2 className="w-4 h-4" />
+                  </span>
+                  <div>
+                    <h3 className="text-xs font-semibold text-zinc-900 uppercase tracking-wider">
+                      Candidate Defense Checklist
+                    </h3>
+                    <p className="text-[11px] text-zinc-500">Pre-Session Checklist</p>
+                  </div>
+                </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-1">
-              <div>
-                <p className="text-xs font-mono tabular-nums font-semibold text-[#A6192E]">
-                  35 min
-                </p>
-                <p className="text-xs font-semibold text-zinc-900 mt-0.5">Presentation</p>
-                <p className="text-[11px] text-zinc-500 mt-0.5">Slide deck & live demo</p>
+                <ul className="space-y-3 text-xs text-zinc-700">
+                  <li className="flex items-start gap-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0 mt-1.5" />
+                    <span>All required manuscript PDFs approved by professor</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0 mt-1.5" />
+                    <span>Presentation deck formatted in 16:9 widescreen layout</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0 mt-1.5" />
+                    <span>Webcam and microphone verified on Zoom desktop app</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0 mt-1.5" />
+                    <span>Quiet indoor testing space free of background noise</span>
+                  </li>
+                </ul>
               </div>
-              <div>
-                <p className="text-xs font-mono tabular-nums font-semibold text-[#9A6E00]">
-                  30 min
-                </p>
-                <p className="text-xs font-semibold text-zinc-900 mt-0.5">Panel Examination</p>
-                <p className="text-[11px] text-zinc-500 mt-0.5">Committee questioning</p>
-              </div>
-              <div>
-                <p className="text-xs font-mono tabular-nums font-semibold text-zinc-800">
-                  10 min
-                </p>
-                <p className="text-xs font-semibold text-zinc-900 mt-0.5">Open Floor</p>
-                <p className="text-[11px] text-zinc-500 mt-0.5">Adviser & guest remarks</p>
-              </div>
-              <div>
-                <p className="text-xs font-mono tabular-nums font-semibold text-zinc-600">
-                  15 min
-                </p>
-                <p className="text-xs font-semibold text-zinc-900 mt-0.5">Deliberation</p>
-                <p className="text-[11px] text-zinc-500 mt-0.5">Zoom breakout room</p>
-              </div>
-            </div>
-          </section>
 
-          {/* Numbered Procedures */}
-          <div className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl divide-y divide-stone-200/80">
-            <div className="p-5 sm:p-6">
-              <h2 className="text-base font-semibold text-zinc-900">
-                01. Manuscript Filing & Faculty Clearance
-              </h2>
-              <p className="text-sm text-zinc-600 mt-1.5 leading-relaxed">
-                Final defense-ready drafts (Chapters 1–5), signed adviser endorsement, and Turnitin
-                similarity report must be uploaded under Files to Submit and approved by faculty
-                before Zoom slot scheduling unlocks.
-              </p>
-            </div>
-            <div className="p-5 sm:p-6">
-              <h2 className="text-base font-semibold text-zinc-900">
-                02. Official Mapúa UOx Zoom Attendance
-              </h2>
-              <p className="text-sm text-zinc-600 mt-1.5 leading-relaxed">
-                All UOx oral defenses are conducted fully online via coordinator-managed Mapúa Zoom
-                channels. Sign in with your official <span className="font-mono text-xs">@mymail.mapua.edu.ph</span>{' '}
-                account and enter the waiting room 10 minutes before your scheduled start time.
-              </p>
-            </div>
-            <div className="p-5 sm:p-6">
-              <h2 className="text-base font-semibold text-zinc-900">
-                03. Camera, Audio & Screen-Share Standards
-              </h2>
-              <p className="text-sm text-zinc-600 mt-1.5 leading-relaxed">
-                Keep your webcam enabled throughout presentation and panel Q&A. Close non-essential
-                tabs before screen-sharing, and keep an offline PDF export of your slides ready in
-                case of bandwidth drops.
-              </p>
-            </div>
-            <div className="p-5 sm:p-6">
-              <h2 className="text-base font-semibold text-zinc-900">
-                04. Rescheduling & Withdrawals
-              </h2>
-              <p className="text-sm text-zinc-600 mt-1.5 leading-relaxed">
-                Candidates may transfer an active reservation to another open Zoom slot up to 48
-                hours before the scheduled start time without re-filing committee approvals.
-              </p>
-            </div>
+              {/* 2. Evaluation Criteria Snapshot */}
+              <div className="bg-white/80 backdrop-blur-md border border-stone-300/70 rounded-xl p-5 shadow-2xs space-y-3.5">
+                <div className="flex items-center gap-2 pb-3 border-b border-stone-200/80">
+                  <span className="p-1.5 rounded-lg bg-[#9A6E00]/10 text-[#9A6E00]">
+                    <Clock className="w-4 h-4" />
+                  </span>
+                  <div>
+                    <h3 className="text-xs font-semibold text-zinc-900 uppercase tracking-wider">
+                      Scoring Rubric Weight
+                    </h3>
+                    <p className="text-[11px] text-zinc-500">SOIT Defense Evaluation</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-zinc-700">Research & Methodology</span>
+                    <span className="font-mono font-semibold text-zinc-900">35%</span>
+                  </div>
+                  <div className="w-full bg-stone-200 rounded-full h-1.5 overflow-hidden">
+                    <div className="bg-[#A6192E] h-1.5 rounded-full" style={{ width: '35%' }} />
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-zinc-700">Implementation & Prototype</span>
+                    <span className="font-mono font-semibold text-zinc-900">35%</span>
+                  </div>
+                  <div className="w-full bg-stone-200 rounded-full h-1.5 overflow-hidden">
+                    <div className="bg-[#C99700] h-1.5 rounded-full" style={{ width: '35%' }} />
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-zinc-700">Oral Defense & Q&A Response</span>
+                    <span className="font-mono font-semibold text-zinc-900">20%</span>
+                  </div>
+                  <div className="w-full bg-stone-200 rounded-full h-1.5 overflow-hidden">
+                    <div className="bg-zinc-700 h-1.5 rounded-full" style={{ width: '20%' }} />
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-zinc-700">Manuscript Quality</span>
+                    <span className="font-mono font-semibold text-zinc-900">10%</span>
+                  </div>
+                  <div className="w-full bg-stone-200 rounded-full h-1.5 overflow-hidden">
+                    <div className="bg-stone-500 h-1.5 rounded-full" style={{ width: '10%' }} />
+                  </div>
+                </div>
+              </div>
+            </aside>
           </div>
-
-          {/* Quick UOx Technical Reference */}
-          <section
-            aria-label="UOx technical readiness standards"
-            className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl overflow-hidden"
-          >
-            <div className="px-5 py-3.5 border-b border-stone-200/80">
-              <h2 className="text-sm font-semibold text-zinc-900">
-                UOx Technical Readiness Standards
-              </h2>
-            </div>
-            <dl className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-stone-200/80 text-xs">
-              <div className="p-4 sm:p-5">
-                <dt className="font-semibold text-zinc-900">Early Check-In</dt>
-                <dd className="text-zinc-600 mt-1 leading-relaxed">
-                  Join <span className="font-mono tabular-nums text-zinc-900">10 min</span> prior
-                  for host admission and microphone verification.
-                </dd>
-              </div>
-              <div className="p-4 sm:p-5">
-                <dt className="font-semibold text-zinc-900">Backup Connectivity</dt>
-                <dd className="text-zinc-600 mt-1 leading-relaxed">
-                  Keep mobile hotspot ready and share slide PDF with your adviser before the call.
-                </dd>
-              </div>
-              <div className="p-4 sm:p-5">
-                <dt className="font-semibold text-zinc-900">Recording & Quorum</dt>
-                <dd className="text-zinc-600 mt-1 leading-relaxed">
-                  Sessions are cloud-recorded by the SOIT chair once panel quorum is present.
-                </dd>
-              </div>
-            </dl>
-          </section>
         </div>
       )}
 
