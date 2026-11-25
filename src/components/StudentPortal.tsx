@@ -916,11 +916,11 @@ export function StudentPortal({
                     <div className="p-3 bg-amber-50 border border-amber-200/80 rounded-lg flex items-start gap-2.5 text-xs text-amber-900 mb-4">
                       <AlertCircle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
                       <div>
-                        <p className="font-semibold">Resubmitted Document Under Faculty Review</p>
+                        <p className="font-semibold">Resubmission Under Faculty Review</p>
                         <p className="text-amber-800 mt-0.5 leading-relaxed">
                           {activeDefense.status === 'Confirmed'
-                            ? 'You submitted an updated document after defense confirmation. Your scheduled window remains reserved, but faculty must re-verify your file before oral examination.'
-                            : 'Your defense slot reservation is held exclusively for you. Faculty will confirm this defense slot once your resubmitted document is approved.'}
+                            ? 'Defense window reserved. Faculty re-verification required prior to oral examination.'
+                            : 'Slot held exclusively on FCFS priority. Confirmation unlocks upon document clearance.'}
                         </p>
                       </div>
                     </div>
@@ -1299,12 +1299,20 @@ export function StudentPortal({
         <div className="space-y-4 sm:space-y-5">
           {/* 2-Step Gate Readiness Summary */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5">
-              <p className="text-xs font-medium text-zinc-500">1. Required Files Submitted</p>
-              <p className="text-2xl font-semibold font-mono tabular-nums text-zinc-900 mt-1.5">
-                {submittedRequiredCount}/{requiredDocs.length}
-              </p>
-              <p className="text-xs text-zinc-600 mt-1">
+            <div className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 flex flex-col justify-between">
+              <div>
+                <p className="text-xs font-medium text-zinc-500">1. Required Files Submitted</p>
+                <p className="text-2xl font-semibold font-mono tabular-nums text-zinc-900 mt-1.5">
+                  {submittedRequiredCount}/{requiredDocs.length}
+                </p>
+                <div className="w-full bg-stone-200 rounded-full h-1.5 mt-2.5 overflow-hidden">
+                  <div
+                    className="bg-[#A6192E] h-1.5 rounded-full transition-all duration-300"
+                    style={{ width: `${(submittedRequiredCount / requiredDocs.length) * 100}%` }}
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-zinc-600 mt-2">
                 {submittedRequiredCount === requiredDocs.length
                   ? 'All required files uploaded'
                   : `${requiredDocs.length - submittedRequiredCount} document${
@@ -1313,18 +1321,26 @@ export function StudentPortal({
               </p>
             </div>
 
-            <div className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5">
-              <p className="text-xs font-medium text-zinc-500">2. Professor Approval</p>
-              <p
-                className={`text-2xl font-semibold font-mono tabular-nums mt-1.5 ${
-                  approvedRequiredCount === requiredDocs.length
-                    ? 'text-emerald-700'
-                    : 'text-[#9A6E00]'
-                }`}
-              >
-                {approvedRequiredCount}/{requiredDocs.length}
-              </p>
-              <p className="text-xs text-zinc-600 mt-1">
+            <div className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-5 flex flex-col justify-between">
+              <div>
+                <p className="text-xs font-medium text-zinc-500">2. Professor Approval</p>
+                <p
+                  className={`text-2xl font-semibold font-mono tabular-nums mt-1.5 ${
+                    approvedRequiredCount === requiredDocs.length
+                      ? 'text-emerald-700'
+                      : 'text-[#9A6E00]'
+                  }`}
+                >
+                  {approvedRequiredCount}/{requiredDocs.length}
+                </p>
+                <div className="w-full bg-stone-200 rounded-full h-1.5 mt-2.5 overflow-hidden">
+                  <div
+                    className="bg-emerald-600 h-1.5 rounded-full transition-all duration-300"
+                    style={{ width: `${(approvedRequiredCount / requiredDocs.length) * 100}%` }}
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-zinc-600 mt-2">
                 {approvedRequiredCount === requiredDocs.length
                   ? 'Approved by faculty reviewer'
                   : revisionRequestedCount > 0
@@ -1384,6 +1400,9 @@ export function StudentPortal({
                         </span>
                         <span className="px-1.5 py-0.5 rounded text-[10px] font-mono text-zinc-600 bg-stone-100 border border-stone-200">
                           PDF only
+                        </span>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-mono text-zinc-600 bg-stone-100 border border-stone-200">
+                          Max 25 MB
                         </span>
                         <FileStatusLabel status={submission?.status ?? 'Not Submitted'} />
                       </div>

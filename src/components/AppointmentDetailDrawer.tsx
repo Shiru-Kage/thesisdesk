@@ -405,7 +405,7 @@ export function AppointmentDetailDrawer({
                 rows={3}
                 value={feedbackNote}
                 onChange={(e) => setFeedbackNote(e.target.value)}
-                placeholder="Add Zoom instructions, quorum confirmation, or reschedule guidance..."
+                placeholder="Panel feedback or revision instructions for candidate..."
                 className="w-full px-3.5 py-2.5 text-sm bg-white border border-zinc-300 rounded-lg text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
               />
             </div>

@@ -2279,16 +2279,22 @@ export function AdminPortal({
                                 {pendingFcfsMap.has(appt.id) && (
                                   <>
                                     <span aria-hidden="true">·</span>
-                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-mono font-semibold bg-amber-100 text-amber-900 border border-amber-300">
-                                      FCFS #{pendingFcfsMap.get(appt.id)}
-                                    </span>
+                                    {candidateHasPendingFileReview(appt.studentEmail, appt.studentId) ? (
+                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-900 border border-amber-300">
+                                        Queue #{pendingFcfsMap.get(appt.id)} · Re-evaluation
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-amber-100 text-amber-900 border border-amber-300">
+                                        Queue #{pendingFcfsMap.get(appt.id)}
+                                      </span>
+                                    )}
                                   </>
                                 )}
-                                {candidateHasPendingFileReview(appt.studentEmail, appt.studentId) && (
+                                {!pendingFcfsMap.has(appt.id) && candidateHasPendingFileReview(appt.studentEmail, appt.studentId) && (
                                   <>
                                     <span aria-hidden="true">·</span>
-                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[10px] font-semibold bg-rose-100 text-rose-900 border border-rose-300">
-                                      Resubmission Pending
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-100 text-rose-900 border border-rose-300">
+                                      Re-evaluation Pending
                                     </span>
                                   </>
                                 )}
