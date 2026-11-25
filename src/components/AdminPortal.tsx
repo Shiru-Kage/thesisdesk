@@ -378,7 +378,6 @@ export function AdminPortal({
       Confirmed: appointments.filter((a) => a.status === 'Confirmed').length,
       'Reschedule Requested': appointments.filter((a) => a.status === 'Reschedule Requested').length,
       Completed: appointments.filter((a) => a.status === 'Completed').length,
-      Cancelled: appointments.filter((a) => a.status === 'Cancelled').length,
     };
   }, [appointments, missingZoomLinkCount]);
 
@@ -2011,7 +2010,6 @@ export function AdminPortal({
                     'Confirmed',
                     'Reschedule Requested',
                     'Completed',
-                    'Cancelled',
                   ] as const
                 ).map((st) => {
                   const count = requestStatusCounts[st] ?? 0;
@@ -2770,7 +2768,9 @@ export function AdminPortal({
         onAdminUpdateStatus={(id, status, feedback, zoomDetails) => {
           onUpdateAppointmentStatus(id, status, feedback, zoomDetails);
           showToast(
-            `Updated appointment ${id} to "${status}".`,
+            status === 'Cancelled'
+              ? `Cancelled and removed defense reservation ${id}.`
+              : `Updated appointment ${id} to "${status}".`,
             status === 'Cancelled'
               ? 'info'
               : status === 'Reschedule Requested'

@@ -221,10 +221,16 @@ export default function App() {
       }
     });
 
-    // 2. Subscribe to Appointments
+    // 2. Subscribe to Appointments (Option 1: Clean purge of cancelled/superseded records)
     const unsubAppointments = subscribeToCollection<DefenseAppointment>('appointments', (records) => {
       if (records) {
-        setAppointments(records);
+        const activeOnly = records.filter((a) => a.status !== 'Cancelled');
+        records.forEach((a) => {
+          if (a.status === 'Cancelled') {
+            removeDocument('appointments', a.id).catch(() => {});
+          }
+        });
+        setAppointments(activeOnly);
       }
     });
 
@@ -529,20 +535,14 @@ export default function App() {
 
     saveDocument('appointments', newAppointment);
 
+    // Clean purge: permanently remove superseded appointment if rescheduling
+    if (rescheduleFromId) {
+      removeDocument('appointments', rescheduleFromId).catch(() => {});
+    }
+
     setAppointments((prev) => {
       const updated = rescheduleFromId
-        ? prev.map((a) => {
-          if (a.id === rescheduleFromId) {
-            const reschedUpdated: DefenseAppointment = {
-              ...a,
-              status: 'Cancelled' as AppointmentStatus,
-              adminFeedback: 'Superseded by student reschedule request.',
-            };
-            saveDocument('appointments', reschedUpdated);
-            return reschedUpdated;
-          }
-          return a;
-        })
+        ? prev.filter((a) => a.id !== rescheduleFromId)
         : prev;
       return [newAppointment, ...updated];
     });
@@ -550,20 +550,9 @@ export default function App() {
   };
 
   const handleCancelAppointment = (id: string) => {
-    setAppointments((prev) =>
-      prev.map((a) => {
-        if (a.id === id) {
-          const cancelled: DefenseAppointment = {
-            ...a,
-            status: 'Cancelled',
-            adminFeedback: 'Withdrawn by candidate.',
-          };
-          saveDocument('appointments', cancelled);
-          return cancelled;
-        }
-        return a;
-      })
-    );
+    // Option 1: Clean purge - permanently delete withdrawn appointment from Firestore & state
+    setAppointments((prev) => prev.filter((a) => a.id !== id));
+    removeDocument('appointments', id).catch(() => {});
   };
 
   const handleUpdateAppointmentStatus = (
@@ -572,6 +561,13 @@ export default function App() {
     feedback?: string,
     zoomDetails?: { zoomLink: string; zoomPasscode?: string }
   ) => {
+    // Option 1: Clean purge - permanently delete cancelled appointments
+    if (status === 'Cancelled') {
+      setAppointments((prev) => prev.filter((a) => a.id !== id));
+      removeDocument('appointments', id).catch(() => {});
+      return;
+    }
+
     setAppointments((prev) =>
       prev.map((a) => {
         if (a.id === id) {
