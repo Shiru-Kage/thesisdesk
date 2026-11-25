@@ -80,10 +80,7 @@ export const INITIAL_ZOOM_ROOMS: ZoomRoom[] = [
   },
 ];
 
-// All demo slots removed
-export const INITIAL_SLOTS: DefenseSlot[] = [];
-
-// All demo appointments removed
+// Demo appointments removed; generated upon student request
 export const INITIAL_APPOINTMENTS: DefenseAppointment[] = [];
 
 export const INITIAL_FACULTY: FacultyChair[] = [
@@ -255,9 +252,9 @@ export function createStarterSlotsForQuarterm(
   return [
     {
       id: `SLOT-${quarterCode}-01`,
-      date: offsetDate(4),
-      startTime: '09:00',
-      endTime: '10:30',
+      date: offsetDate(0),
+      startTime: '10:00',
+      endTime: '11:30',
       zoomRoomName: rm(0).name,
       zoomLink: rm(0).zoomLink,
       zoomMeetingId: rm(0).meetingId,
@@ -268,33 +265,59 @@ export function createStarterSlotsForQuarterm(
     },
     {
       id: `SLOT-${quarterCode}-02`,
-      date: offsetDate(4),
-      startTime: '13:30',
-      endTime: '15:00',
+      date: offsetDate(0),
+      startTime: '14:00',
+      endTime: '15:30',
       zoomRoomName: rm(1).name,
       zoomLink: rm(1).zoomLink,
       zoomMeetingId: rm(1).meetingId,
       zoomPasscode: rm(1).passcode,
-      department: 'Computer Science',
+      department: 'Information Technology',
       chairName: 'Dr. Miriam Okafor',
       isBlocked: false,
     },
     {
       id: `SLOT-${quarterCode}-03`,
-      date: offsetDate(6),
-      startTime: '10:00',
-      endTime: '11:30',
-      zoomRoomName: rm(2).name,
-      zoomLink: rm(2).zoomLink,
-      zoomMeetingId: rm(2).meetingId,
-      zoomPasscode: rm(2).passcode,
-      department: 'Data Science',
+      date: offsetDate(1),
+      startTime: '09:00',
+      endTime: '10:30',
+      zoomRoomName: rm(0).name,
+      zoomLink: rm(0).zoomLink,
+      zoomMeetingId: rm(0).meetingId,
+      zoomPasscode: rm(0).passcode,
+      department: 'Computer Science',
       chairName: 'Prof. Arthur Chen',
       isBlocked: false,
     },
     {
       id: `SLOT-${quarterCode}-04`,
-      date: offsetDate(7),
+      date: offsetDate(1),
+      startTime: '13:30',
+      endTime: '15:00',
+      zoomRoomName: rm(2).name,
+      zoomLink: rm(2).zoomLink,
+      zoomMeetingId: rm(2).meetingId,
+      zoomPasscode: rm(2).passcode,
+      department: 'Information Technology',
+      chairName: 'Dr. Samuel Vance',
+      isBlocked: false,
+    },
+    {
+      id: `SLOT-${quarterCode}-05`,
+      date: offsetDate(2),
+      startTime: '10:30',
+      endTime: '12:00',
+      zoomRoomName: rm(1).name,
+      zoomLink: rm(1).zoomLink,
+      zoomMeetingId: rm(1).meetingId,
+      zoomPasscode: rm(1).passcode,
+      department: 'Data Science',
+      chairName: 'Prof. Henrik Lindqvist',
+      isBlocked: false,
+    },
+    {
+      id: `SLOT-${quarterCode}-06`,
+      date: offsetDate(5),
       startTime: '14:00',
       endTime: '15:30',
       zoomRoomName: rm(3).name,
@@ -302,7 +325,7 @@ export function createStarterSlotsForQuarterm(
       zoomMeetingId: rm(3).meetingId,
       zoomPasscode: rm(3).passcode,
       department: 'Information Systems',
-      chairName: 'Dr. Samuel Vance',
+      chairName: 'Dr. Miriam Okafor',
       isBlocked: false,
     },
   ];
@@ -317,6 +340,13 @@ export const INITIAL_ACTIVE_QUARTER: QuartermPeriod = {
   status: 'Open',
   openedAt: '2026-08-17',
 };
+
+// Starter slots for the open quarter
+export const INITIAL_SLOTS: DefenseSlot[] = createStarterSlotsForQuarterm(
+  INITIAL_ACTIVE_QUARTER.code,
+  '2026-11-25',
+  INITIAL_ZOOM_ROOMS
+);
 
 // All demo archived quarters removed
 export const INITIAL_ARCHIVED_QUARTERS: ArchivedQuarterm[] = [];

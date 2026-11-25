@@ -13,6 +13,7 @@ import {
   INITIAL_ANNOUNCEMENTS,
   INITIAL_CHECKLIST,
   INITIAL_FACULTY,
+  INITIAL_SLOTS,
   INITIAL_ZOOM_ROOMS,
   REQUIRED_DOCUMENTS,
 } from './data/mockTemplateData';
@@ -89,9 +90,12 @@ export default function App() {
   const lastStudentUserRef = useRef<UserAccount | null>(null);
   const lastAdminUserRef = useRef<UserAccount | null>(null);
 
-  const [slots, setSlots] = useState<DefenseSlot[]>(
-    () => persisted?.slots ?? []
-  );
+  const [slots, setSlots] = useState<DefenseSlot[]>(() => {
+    if (persisted?.slots && persisted.slots.length > 0) {
+      return persisted.slots;
+    }
+    return INITIAL_SLOTS;
+  });
   const [appointments, setAppointments] = useState<DefenseAppointment[]>(
     () => persisted?.appointments ?? []
   );
@@ -151,6 +155,15 @@ export default function App() {
       active = false;
     };
   }, []);
+
+  // Auto-seed starter defense windows if slots list is empty for the active quarterm
+  useEffect(() => {
+    if (slots.length === 0 && activeQuarter && activeQuarter.status === 'Open') {
+      const seeded = createStarterSlotsForQuarterm(activeQuarter.code, TODAY_ISO, zoomRooms);
+      setSlots(seeded);
+      seeded.forEach((s) => saveDocument('slots', s).catch(() => {}));
+    }
+  }, [slots.length, activeQuarter, zoomRooms]);
 
   // --------------------------------------------------------------------------
   // Firebase Real-time Subscriptions & Cloud Persistence

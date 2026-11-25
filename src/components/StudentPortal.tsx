@@ -138,7 +138,7 @@ export function StudentPortal({
   >(initialSlot ? 'book' : 'overview');
   const [calYear, setCalYear] = useState(2026);
   const [calMonth, setCalMonth] = useState(10); // November (0-indexed)
-  const [selectedDate, setSelectedDate] = useState(initialSlot?.date ?? '2026-11-18');
+  const [selectedDate, setSelectedDate] = useState(initialSlot?.date ?? todayIso);
   const [deptFilter, setDeptFilter] = useState<string>('All');
   const [statusFilter, setStatusFilter] = useState<'All' | AppointmentStatus>('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -398,8 +398,11 @@ export function StudentPortal({
   };
 
   const handleJumpToday = () => {
-    setCalYear(2026);
-    setCalMonth(10);
+    const [y, m] = todayIso.split('-').map(Number);
+    if (y && m) {
+      setCalYear(y);
+      setCalMonth(m - 1);
+    }
     setSelectedDate(todayIso);
   };
 
@@ -410,6 +413,18 @@ export function StudentPortal({
     setCalMonth(m - 1);
     setSelectedDate(nextOpenDateIso);
   };
+
+  // If selected date has no open slots, but open slots exist on upcoming dates, auto-focus next open date
+  useEffect(() => {
+    if (availableSlotsForSelectedDate.length === 0 && nextOpenDateIso && selectedDate < nextOpenDateIso) {
+      setSelectedDate(nextOpenDateIso);
+      const [y, m] = nextOpenDateIso.split('-').map(Number);
+      if (y && m) {
+        setCalYear(y);
+        setCalMonth(m - 1);
+      }
+    }
+  }, [nextOpenDateIso]);
 
   const openBookingModal = (slot: DefenseSlot) => {
     if (!isQuarterOpen) {
@@ -576,8 +591,36 @@ export function StudentPortal({
       backgroundUrl={tabBackgroundMap[activeTab]}
       quartermInfo={quartermBannerInfo}
       onSelectTab={(id) => setActiveTab(id as typeof activeTab)}
-      primaryActionLabel={isClearedToSchedule ? 'Request Defense Slot' : 'Files to Submit'}
-      onPrimaryAction={() => setActiveTab(isClearedToSchedule ? 'book' : 'files')}
+      primaryActionLabel={
+        !isClearedToSchedule
+          ? 'Files to Submit'
+          : hasPendingActiveRequest && !rescheduleTarget
+          ? 'View Defense Request'
+          : 'Request Defense Slot'
+      }
+      onPrimaryAction={() => {
+        if (!isClearedToSchedule) {
+          setActiveTab('files');
+          return;
+        }
+        if (hasPendingActiveRequest && !rescheduleTarget) {
+          if (activeDefense) setInspectedAppointmentId(activeDefense.id);
+          return;
+        }
+        if (activeTab !== 'book') {
+          setActiveTab('book');
+          return;
+        }
+        // If already on booking calendar, trigger direct slot booking
+        if (availableSlotsForSelectedDate.length > 0) {
+          openBookingModal(availableSlotsForSelectedDate[0]);
+        } else if (nextOpenDateIso) {
+          handleJumpNextOpen();
+          showToast(`Jumped to next open date on ${formatShortDate(nextOpenDateIso)}.`, 'info');
+        } else {
+          showToast('No open defense windows available at this time.', 'info');
+        }
+      }}
       onSwitchRole={onSwitchRole}
       onSignOut={onSignOut}
       onOpenProfileModal={onOpenProfileModal}
@@ -1605,9 +1648,9 @@ export function StudentPortal({
                         <button
                           type="button"
                           onClick={handleJumpNextOpen}
-                          className="py-1.5 px-3 text-xs font-medium text-[#A6192E] bg-[#A6192E]/10 hover:bg-[#A6192E]/15 rounded-lg transition-colors whitespace-nowrap"
+                          className="py-1.5 px-3.5 text-xs font-semibold text-white bg-[#A6192E] hover:bg-[#881325] rounded-lg transition-colors whitespace-nowrap shadow-xs"
                         >
-                          Jump to Next Open
+                          Jump to Next Open ({formatShortDate(nextOpenDateIso)})
                         </button>
                       )}
                     </div>
