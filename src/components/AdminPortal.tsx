@@ -228,7 +228,7 @@ export function AdminPortal({
   const [newZoomLink, setNewZoomLink] = useState(defaultZoomRoom?.zoomLink ?? '');
   const [newZoomPasscode, setNewZoomPasscode] = useState(defaultZoomRoom?.passcode ?? '');
   const [newDepartment, setNewDepartment] = useState('Information Technology');
-  const [newChair, setNewChair] = useState('Prof. Henrik Lindqvist');
+  const [newChair, setNewChair] = useState(faculty[0]?.name ?? '');
 
   const inspectedAppointment = useMemo(
     () =>

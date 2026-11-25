@@ -29,23 +29,24 @@ export function getDefaultPasswordForRole(role: UserRole): string {
 }
 
 export function createDefaultAccount(role: UserRole, emailOverride?: string): UserAccount {
+  const email = (emailOverride || (role === 'student' ? ENV_STUDENT_EMAIL : ENV_ADMIN_EMAIL)).trim();
   if (role === 'student') {
     return {
-      id: 'usr-stu-cabalag',
-      name: 'Ian Cabalag',
-      email: (emailOverride || ENV_STUDENT_EMAIL).trim(),
+      id: 'usr-stu-default',
+      name: 'Student Candidate',
+      email,
       role: 'student',
       department: 'Information Technology',
-      studentId: '2026104819',
+      studentId: '',
       program: 'B.S. Information Technology · Mapúa UOx',
       avatarUrl: '', // Default profile picture removed
     };
   }
 
   return {
-    id: 'usr-adm-cabalag',
-    name: 'Prof. P. Cabalag',
-    email: (emailOverride || ENV_ADMIN_EMAIL).trim(),
+    id: 'usr-adm-default',
+    name: 'SOIT Thesis Coordinator',
+    email,
     role: 'admin',
     department: 'School of Information Technology · UOx',
     avatarUrl: '', // Default profile picture removed

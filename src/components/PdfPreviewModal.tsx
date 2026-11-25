@@ -105,14 +105,13 @@ export function PdfPreviewModal({
 
   const thesisTitle =
     matchedAppointment?.thesisTitle ??
-    'Adaptive Computing Systems & Applied Information Technology Capstone';
-  const advisorName = matchedAppointment?.advisorName ?? 'Prof. Henrik Lindqvist';
+    'Manuscript Under Review';
+  const advisorName = matchedAppointment?.advisorName ?? 'Assigned Adviser';
   const thesisAbstract =
     matchedAppointment?.abstract ??
-    'This thesis investigates architecture-level optimizations and empirical verification methods developed under the Mapúa University School of Information Technology research program.';
+    'Candidate submission document filed for School of Information Technology defense review.';
   const committeeList = matchedAppointment?.committeeMembers ?? [
-    'Dr. Miriam Okafor',
-    'Dr. Samuel Vance',
+    'SOIT Defense Committee',
   ];
 
   const similarityPct =

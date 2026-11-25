@@ -255,7 +255,7 @@ export function ProfileModal({
                       type="text"
                       value={studentId}
                       onChange={(e) => setStudentId(e.target.value)}
-                      placeholder="e.g. 2026104819"
+                      placeholder="e.g. 2026100001"
                       className="w-full px-3.5 py-2 text-sm font-mono tabular-nums bg-white border border-stone-300 rounded-lg text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
                     />
                   </div>

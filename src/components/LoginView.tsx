@@ -83,7 +83,7 @@ export function LoginView({
         title: `${quarterCodeLabel} SOIT UOx Online Defense Scheduling`,
         category: 'Defense Schedule',
         priority: 'urgent' as const,
-        authorName: 'Prof. P. Cabalag',
+        authorName: 'SOIT Thesis Coordinator',
         authorRole: 'SOIT Thesis Coordinator',
         createdAt: '2026-11-15T08:00:00.000Z',
         pinned: true,
@@ -95,7 +95,7 @@ export function LoginView({
         title: 'Final Manuscript & Turnitin Clearance Deadline',
         category: 'Submission Deadline',
         priority: 'important' as const,
-        authorName: 'Prof. P. Cabalag',
+        authorName: 'SOIT Thesis Coordinator',
         authorRole: 'SOIT Thesis Coordinator',
         createdAt: '2026-11-18T10:30:00.000Z',
         pinned: true,
@@ -406,7 +406,7 @@ export function LoginView({
                         type="text"
                         value={regStudentId}
                         onChange={(e) => setRegStudentId(e.target.value)}
-                        placeholder="e.g. 2026104819"
+                        placeholder="e.g. 2026100001"
                         autoComplete="off"
                         className="w-full px-3.5 py-2 text-sm font-mono tabular-nums bg-white/70 backdrop-blur-xs border border-stone-400/55 rounded-lg text-zinc-950 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#A6192E] focus:border-[#A6192E]"
                       />

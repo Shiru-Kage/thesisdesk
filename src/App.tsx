@@ -48,7 +48,7 @@ import {
 } from './services/firebase';
 
 const TODAY_ISO = new Date().toISOString().split('T')[0];
-const STORAGE_KEY = 'thesisdesk_portal_state_v2';
+const STORAGE_KEY = 'thesisdesk_portal_state_v3';
 
 interface PersistedPortalState {
   slots: DefenseSlot[];
@@ -67,6 +67,7 @@ function loadPersistedState(): Partial<PersistedPortalState> | null {
   try {
     // Clear out legacy demo state if present
     window.localStorage.removeItem('thesisdesk_soit_state_v1');
+    window.localStorage.removeItem('thesisdesk_portal_state_v2');
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<PersistedPortalState>;
@@ -84,6 +85,9 @@ export default function App() {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [preSelectedSlot, setPreSelectedSlot] = useState<DefenseSlot | null>(null);
   const [isFirebaseConnected, setIsFirebaseConnected] = useState(false);
+
+  const lastStudentUserRef = useRef<UserAccount | null>(null);
+  const lastAdminUserRef = useRef<UserAccount | null>(null);
 
   const [slots, setSlots] = useState<DefenseSlot[]>(
     () => persisted?.slots ?? []
@@ -556,24 +560,26 @@ export default function App() {
 
   const handleGenerateDaySlots = (date: string) => {
     const rm = (idx: number) => zoomRooms[idx % zoomRooms.length] ?? INITIAL_ZOOM_ROOMS[0];
+    const facultyMember = (idx: number) =>
+      faculty[idx % faculty.length]?.name || 'SOIT Faculty Panel';
     const standardBlocks = [
       {
         startTime: '09:00',
         endTime: '10:30',
         room: rm(0),
-        chairName: 'Prof. Henrik Lindqvist',
+        chairName: facultyMember(0),
       },
       {
         startTime: '11:00',
         endTime: '12:30',
         room: rm(1),
-        chairName: 'Dr. Miriam Okafor',
+        chairName: facultyMember(1),
       },
       {
         startTime: '14:00',
         endTime: '15:30',
         room: rm(2),
-        chairName: 'Dr. Samuel Vance',
+        chairName: facultyMember(2),
       },
     ];
 
@@ -822,10 +828,20 @@ export default function App() {
     if (!currentUser) return;
     setPreSelectedSlot(null);
     if (currentUser.role === 'student') {
-      const adminAcc = registeredUsers.find((u) => u.role === 'admin') || DEFAULT_ADMIN_USER;
+      lastStudentUserRef.current = currentUser;
+      const adminAcc =
+        lastAdminUserRef.current ||
+        registeredUsers.find((u) => u.role === 'admin' && u.id !== 'usr-adm-default') ||
+        registeredUsers.find((u) => u.role === 'admin') ||
+        DEFAULT_ADMIN_USER;
       setCurrentUser(adminAcc);
     } else {
-      const studentAcc = registeredUsers.find((u) => u.role === 'student') || DEFAULT_STUDENT_USER;
+      lastAdminUserRef.current = currentUser;
+      const studentAcc =
+        lastStudentUserRef.current ||
+        registeredUsers.find((u) => u.role === 'student' && u.id !== 'usr-stu-default') ||
+        registeredUsers.find((u) => u.role === 'student') ||
+        DEFAULT_STUDENT_USER;
       setCurrentUser(studentAcc);
     }
   };
@@ -833,6 +849,11 @@ export default function App() {
   const handleLogin = (user: UserAccount, pendingSlot?: DefenseSlot | null) => {
     setPreSelectedSlot(pendingSlot ?? null);
     setCurrentUser(user);
+    if (user.role === 'student') {
+      lastStudentUserRef.current = user;
+    } else {
+      lastAdminUserRef.current = user;
+    }
     registerOrUpdateUser(user);
   };
 
@@ -854,6 +875,11 @@ export default function App() {
       ...updatedData,
     };
     setCurrentUser(updatedUser);
+    if (updatedUser.role === 'student') {
+      lastStudentUserRef.current = updatedUser;
+    } else {
+      lastAdminUserRef.current = updatedUser;
+    }
     setRegisteredUsers((prev) => {
       const exists = prev.some(
         (u) => u.email.toLowerCase() === updatedUser.email.toLowerCase()
@@ -927,10 +953,13 @@ export default function App() {
   const handleResetDemoData = () => {
     try {
       window.localStorage.removeItem(STORAGE_KEY);
+      window.localStorage.removeItem('thesisdesk_portal_state_v2');
       window.localStorage.removeItem('thesisdesk_soit_state_v1');
     } catch {
       // Ignore storage access errors
     }
+    lastStudentUserRef.current = null;
+    lastAdminUserRef.current = null;
     setSlots([]);
     setAppointments([]);
     setZoomRooms(INITIAL_ZOOM_ROOMS);

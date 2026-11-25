@@ -13,19 +13,19 @@ import {
 } from '../types/defense';
 
 export const DEFAULT_STUDENT_USER: UserAccount = {
-  id: 'usr-stu-cabalag',
-  name: 'Ian Cabalag',
+  id: 'usr-stu-default',
+  name: 'Student Candidate',
   email: import.meta.env.VITE_STUDENT_EMAIL || 'imppcabalag@gmail.com',
   role: 'student',
   department: 'Information Technology',
-  studentId: '2026104819',
+  studentId: '',
   program: 'B.S. Information Technology · Mapúa UOx',
   avatarUrl: '', // Default profile picture removed
 };
 
 export const DEFAULT_ADMIN_USER: UserAccount = {
-  id: 'usr-adm-cabalag',
-  name: 'Prof. P. Cabalag',
+  id: 'usr-adm-default',
+  name: 'SOIT Thesis Coordinator',
   email: import.meta.env.VITE_ADMIN_EMAIL || 'pvcabalag@mapua.edu.ph',
   role: 'admin',
   department: 'School of Information Technology · UOx',
@@ -329,7 +329,7 @@ export const INITIAL_ANNOUNCEMENTS: Announcement[] = [
       'Mapúa UOx online students may reserve 90-minute Zoom oral defense slots once required thesis files are approved by faculty. All defenses are conducted fully online via Zoom. Official Zoom meeting links and passcodes are assigned by the SOIT Coordinator inside your appointment details.',
     category: 'Defense Schedule',
     priority: 'urgent',
-    authorName: 'Prof. P. Cabalag',
+    authorName: 'SOIT Thesis Coordinator',
     authorRole: 'SOIT Thesis Coordinator',
     authorEmail: 'pvcabalag@mapua.edu.ph',
     createdAt: '2026-11-15T08:00:00.000Z',
@@ -342,7 +342,7 @@ export const INITIAL_ANNOUNCEMENTS: Announcement[] = [
       'Submit your PDF manuscript draft and originality clearance reference inside the portal at least 72 hours prior to committee review. Coordinator approval requires a verified adviser sign-off and complete three-member defense panel roster.',
     category: 'Submission Deadline',
     priority: 'important',
-    authorName: 'Prof. P. Cabalag',
+    authorName: 'SOIT Thesis Coordinator',
     authorRole: 'SOIT Thesis Coordinator',
     authorEmail: 'pvcabalag@mapua.edu.ph',
     createdAt: '2026-11-18T10:30:00.000Z',

@@ -152,14 +152,10 @@ export function StudentPortal({
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   // Booking form fields
-  const [thesisTitle, setThesisTitle] = useState(
-    'Adaptive Memory Partitioning for Real-Time Graph Analytics'
-  );
-  const [abstractText, setAbstractText] = useState(
-    'Investigates dynamic NUMA-aware subgraph partitioning to minimize cross-socket latency during concurrent streaming traversals.'
-  );
-  const [advisorName, setAdvisorName] = useState('Prof. Henrik Lindqvist');
-  const [committeeInput, setCommitteeInput] = useState('Dr. Miriam Okafor, Dr. Samuel Vance');
+  const [thesisTitle, setThesisTitle] = useState('');
+  const [abstractText, setAbstractText] = useState('');
+  const [advisorName, setAdvisorName] = useState('');
+  const [committeeInput, setCommitteeInput] = useState('');
   const [notesInput, setNotesInput] = useState('');
   const [toast, setToast] = useState<ToastState | null>(null);
 
@@ -587,7 +583,7 @@ export function StudentPortal({
                 </span>
                 Student No.{' '}
                 <span className="font-mono tabular-nums text-zinc-800">
-                  {user.studentId ?? '2026104819'}
+                  {user.studentId || 'Pending ID'}
                 </span>
                 {activeQuarter && (
                   <>
@@ -2046,6 +2042,7 @@ export function StudentPortal({
                   required
                   value={thesisTitle}
                   onChange={(e) => setThesisTitle(e.target.value)}
+                  placeholder="e.g., Adaptive Memory Partitioning for Real-Time Graph Analytics"
                   className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
                 />
               </div>
@@ -2063,6 +2060,7 @@ export function StudentPortal({
                   required
                   value={abstractText}
                   onChange={(e) => setAbstractText(e.target.value)}
+                  placeholder="Brief summary of research objectives, methodologies, and candidate findings..."
                   className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
                 />
               </div>
@@ -2081,6 +2079,7 @@ export function StudentPortal({
                     required
                     value={advisorName}
                     onChange={(e) => setAdvisorName(e.target.value)}
+                    placeholder="e.g., Prof. Juan Dela Cruz"
                     className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
                   />
                 </div>
@@ -2096,6 +2095,7 @@ export function StudentPortal({
                     type="text"
                     value={committeeInput}
                     onChange={(e) => setCommitteeInput(e.target.value)}
+                    placeholder="e.g., Dr. Maria Santos, Engr. Alex Reyes"
                     className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A6192E]"
                   />
                 </div>
