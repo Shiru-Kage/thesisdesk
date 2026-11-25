@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
   AlertCircle,
@@ -8,6 +8,7 @@ import {
   Eye,
   FileText,
   Loader2,
+  RefreshCw,
   ZoomIn,
   ZoomOut,
   X,
@@ -38,6 +39,7 @@ interface PdfPreviewModalProps {
   readOnly?: boolean;
   archiveLabel?: string;
   readOnlyHint?: string;
+  onResubmit?: (requirementId: string, file: File) => void;
 }
 
 const ZOOM_STEPS = [85, 100, 115];
@@ -53,8 +55,10 @@ export function PdfPreviewModal({
   readOnly = false,
   archiveLabel,
   readOnlyHint,
+  onResubmit,
 }: PdfPreviewModalProps) {
   const prefersReducedMotion = useReducedMotion();
+  const resubmitInputRef = useRef<HTMLInputElement>(null);
   const [note, setNote] = useState('');
   const [page, setPage] = useState(1);
   const [zoomIndex, setZoomIndex] = useState(1);
@@ -814,6 +818,32 @@ export function PdfPreviewModal({
                     {readOnlyHint ??
                       `Archived read-only record${archiveLabel ? ` (${archiveLabel})` : ''}.`}
                   </p>
+                  {onResubmit && (
+                    <>
+                      <input
+                        ref={resubmitInputRef}
+                        type="file"
+                        accept=".pdf,.doc,.docx"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file && submission) {
+                            onResubmit(submission.requirementId, file);
+                          }
+                          e.target.value = '';
+                        }}
+                        className="hidden"
+                        aria-label="Upload document revision"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => resubmitInputRef.current?.click()}
+                        className="w-full py-2.5 px-4 text-xs sm:text-sm font-medium text-white bg-[#A6192E] hover:bg-[#881325] rounded-lg transition-colors whitespace-nowrap inline-flex items-center justify-center gap-1.5 shadow-xs"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5 shrink-0" />
+                        <span>Resubmit Document</span>
+                      </button>
+                    </>
+                  )}
                   <button
                     type="button"
                     onClick={onClose}

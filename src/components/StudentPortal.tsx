@@ -27,6 +27,7 @@ import {
   Lock,
   Megaphone,
   Pin,
+  RefreshCw,
   Search,
   Square,
   Trash2,
@@ -459,6 +460,7 @@ export function StudentPortal({
       showToast('File uploads are paused while the current Quarterm is closed.', 'warning');
       return;
     }
+    const isResubmission = Boolean(submissionByReqId[requirementId]);
     const objectUrl = URL.createObjectURL(file);
     onUploadFile(requirementId, {
       fileName: file.name,
@@ -466,7 +468,12 @@ export function StudentPortal({
       objectUrl,
       rawFile: file,
     });
-    showToast(`Uploaded "${file.name}" for faculty review.`, 'success');
+    showToast(
+      isResubmission
+        ? `Resubmitted "${file.name}" for faculty review.`
+        : `Uploaded "${file.name}" for faculty review.`,
+      'success'
+    );
   };
 
   const handleFileInputChange = (
@@ -1180,14 +1187,30 @@ export function StudentPortal({
                           </div>
                         </div>
                         {sub ? (
-                          <button
-                            type="button"
-                            onClick={() => setPreviewSubmissionId(sub.id)}
-                            className="py-1 px-2 text-[11px] font-medium text-zinc-700 bg-stone-100 hover:bg-stone-200 rounded border border-stone-300 inline-flex items-center gap-1 shrink-0"
-                          >
-                            <Eye className="w-3 h-3" />
-                            <span>Preview</span>
-                          </button>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => setPreviewSubmissionId(sub.id)}
+                              className="py-1 px-2 text-[11px] font-medium text-zinc-700 bg-stone-100 hover:bg-stone-200 rounded border border-stone-300 inline-flex items-center gap-1"
+                            >
+                              <Eye className="w-3 h-3" />
+                              <span>Preview</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveTab('files');
+                                setTimeout(() => {
+                                  const inputEl = document.getElementById(`file-input-${doc.id}`) as HTMLInputElement;
+                                  inputEl?.click();
+                                }, 50);
+                              }}
+                              className="py-1 px-2 text-[11px] font-medium text-[#A6192E] bg-[#A6192E]/10 hover:bg-[#A6192E]/15 rounded inline-flex items-center gap-1"
+                            >
+                              <RefreshCw className="w-3 h-3" />
+                              <span>Resubmit</span>
+                            </button>
+                          </div>
                         ) : (
                           <button
                             type="button"
@@ -1334,27 +1357,31 @@ export function StudentPortal({
                         aria-label={`Upload ${doc.title}`}
                       />
 
-                      {!isApproved && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const inputEl = fileInputRefs.current[doc.id] || document.getElementById(`file-input-${doc.id}`) as HTMLInputElement;
-                            inputEl?.click();
-                          }}
-                          className="py-2 px-3.5 bg-[#A6192E] hover:bg-[#881325] text-white text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer shadow-xs"
-                        >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const inputEl = fileInputRefs.current[doc.id] || document.getElementById(`file-input-${doc.id}`) as HTMLInputElement;
+                          inputEl?.click();
+                        }}
+                        className="py-2 px-3.5 bg-[#A6192E] hover:bg-[#881325] text-white text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer shadow-xs"
+                      >
+                        {isApproved || submission ? (
+                          <RefreshCw className="w-3.5 h-3.5 shrink-0" />
+                        ) : (
                           <Upload className="w-3.5 h-3.5 shrink-0" />
-                          <span>
-                            {isRevision
-                              ? 'Upload Revision'
-                              : submission
-                              ? 'Replace File'
-                              : 'Upload File'}
-                          </span>
-                        </button>
-                      )}
+                        )}
+                        <span>
+                          {isRevision
+                            ? 'Upload Revision'
+                            : isApproved
+                            ? 'Resubmit Document'
+                            : submission
+                            ? 'Replace File'
+                            : 'Upload File'}
+                        </span>
+                      </button>
 
-                      {submission && !isApproved && (
+                      {submission && (
                         <button
                           type="button"
                           onClick={() => {
@@ -1397,6 +1424,17 @@ export function StudentPortal({
                         >
                           <Eye className="w-3.5 h-3.5 text-[#A6192E] shrink-0" />
                           <span>Preview PDF</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const inputEl = fileInputRefs.current[doc.id] || document.getElementById(`file-input-${doc.id}`) as HTMLInputElement;
+                            inputEl?.click();
+                          }}
+                          className="py-1.5 px-3 text-xs font-medium text-[#A6192E] bg-[#A6192E]/10 hover:bg-[#A6192E]/15 border border-[#A6192E]/20 rounded-md inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5 shrink-0" />
+                          <span>Resubmit</span>
                         </button>
                         {submission.objectUrl && (
                           <a
@@ -2339,7 +2377,8 @@ export function StudentPortal({
         onSelectSubmission={(sub) => setPreviewSubmissionId(sub.id)}
         onClose={() => setPreviewSubmissionId(null)}
         readOnly
-        readOnlyHint="Student document preview · Faculty verification and approval are handled on the Admin/Faculty side."
+        readOnlyHint="Student document preview · You can resubmit an updated file or review faculty notes."
+        onResubmit={(reqId, file) => handleUploadedFile(reqId, file)}
       />
 
       <ToastNotification toast={toast} onDismiss={dismissToast} />
