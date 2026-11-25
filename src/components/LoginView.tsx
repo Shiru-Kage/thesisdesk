@@ -289,7 +289,7 @@ export function LoginView({
       </header>
 
       {/* Centered Two-Column Translucent Hero Card (Card-Only Soft Blur so Building Shows Through) */}
-      <main className="relative z-20 flex items-center justify-center px-4 pt-24 pb-10 sm:pt-28 md:px-8 md:pt-24 md:pb-12">
+      <main className="relative z-20 flex items-center justify-center px-4 pt-16 pb-10 sm:pt-20 md:px-8 md:pt-16 md:pb-12">
         <motion.div
           initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

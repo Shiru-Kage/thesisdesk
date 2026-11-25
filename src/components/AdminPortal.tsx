@@ -1326,81 +1326,84 @@ export function AdminPortal({
           </div>
 
           {/* Compact 4-Column Interactive Clearance KPI Strip */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <button
-              type="button"
-              onClick={() => {
-                setOpenFolderKey(null);
-                setFileStatusFilter('All');
-                setFileSearchQuery('');
-              }}
-              className="group bg-white/65 hover:bg-white/92 backdrop-blur-md border border-stone-300/70 hover:border-[#A6192E]/40 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-4 sm:p-5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6192E]"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-medium text-zinc-500">Student Folders</p>
-                <ChevronRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-[#A6192E] transition-colors shrink-0" />
-              </div>
-              <p className="text-2xl sm:text-3xl font-semibold font-mono tabular-nums text-zinc-900 mt-1.5">
-                {studentFileGroups.length}
-              </p>
-              <p className="text-xs text-zinc-500 mt-1">Active candidates</p>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setOpenFolderKey(null);
-                setFileStatusFilter('Pending Review');
-              }}
-              className="group bg-white/65 hover:bg-white/92 backdrop-blur-md border border-stone-300/70 hover:border-[#A6192E]/40 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-4 sm:p-5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6192E]"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-medium text-zinc-500">Pending File Reviews</p>
-                <ChevronRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-[#A6192E] transition-colors shrink-0" />
-              </div>
-              <p className="text-2xl sm:text-3xl font-semibold font-mono tabular-nums text-[#9A6E00] mt-1.5">
-                {pendingFilesCount}
-              </p>
-              <p className="text-xs text-zinc-500 mt-1">Awaiting sign-off</p>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setOpenFolderKey(null);
-                setFileStatusFilter('Approved Students');
-              }}
-              className="group bg-white/65 hover:bg-white/92 backdrop-blur-md border border-stone-300/70 hover:border-[#A6192E]/40 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-4 sm:p-5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6192E]"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-medium text-zinc-500">Approved Students</p>
-                <ChevronRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-[#A6192E] transition-colors shrink-0" />
-              </div>
-              <p className="text-2xl sm:text-3xl font-semibold font-mono tabular-nums text-emerald-700 mt-1.5">
-                {clearedStudentsCount}
-              </p>
-              <p className="text-xs text-zinc-500 mt-1">Complete approval</p>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setOpenFolderKey(null);
-                setFileStatusFilter(revisionFilesCount > 0 ? 'Revision Requested' : 'Approved Students');
-              }}
-              className="group bg-white/65 hover:bg-white/92 backdrop-blur-md border border-stone-300/70 hover:border-[#A6192E]/40 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-4 sm:p-5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6192E]"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-medium text-zinc-500">Students Cleared</p>
-                <ChevronRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-[#A6192E] transition-colors shrink-0" />
-              </div>
-              <p className="text-2xl sm:text-3xl font-semibold font-mono tabular-nums text-zinc-900 mt-1.5">
-                {clearedStudentsCount}/{studentFileGroups.length}
-              </p>
-              <p className="text-xs text-zinc-500 mt-1">
-                {revisionFilesCount > 0
-                  ? `${revisionFilesCount} revision requested`
-                  : 'Eligible to schedule'}
-              </p>
-            </button>
-          </div>
+          {!activeFolder && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setOpenFolderKey(null);
+                  setStatusFilter('All');
+                  setFileStatusFilter('All');
+                  setFileSearchQuery('');
+                }}
+                className="group bg-white/65 hover:bg-white/92 backdrop-blur-md border border-stone-300/70 hover:border-[#A6192E]/40 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-4 sm:p-5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6192E]"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium text-zinc-500">Student Folders</p>
+                  <ChevronRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-[#A6192E] transition-colors shrink-0" />
+                </div>
+                <p className="text-2xl sm:text-3xl font-semibold font-mono tabular-nums text-zinc-900 mt-1.5">
+                  {studentFileGroups.length}
+                </p>
+                <p className="text-xs text-zinc-500 mt-1">Active candidates</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpenFolderKey(null);
+                  setFileStatusFilter('Pending Review');
+                }}
+                className="group bg-white/65 hover:bg-white/92 backdrop-blur-md border border-stone-300/70 hover:border-[#A6192E]/40 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-4 sm:p-5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6192E]"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium text-zinc-500">Pending File Reviews</p>
+                  <ChevronRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-[#A6192E] transition-colors shrink-0" />
+                </div>
+                <p className="text-2xl sm:text-3xl font-semibold font-mono tabular-nums text-[#9A6E00] mt-1.5">
+                  {pendingFilesCount}
+                </p>
+                <p className="text-xs text-zinc-500 mt-1">Awaiting sign-off</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpenFolderKey(null);
+                  setFileStatusFilter('Approved Students');
+                }}
+                className="group bg-white/65 hover:bg-white/92 backdrop-blur-md border border-stone-300/70 hover:border-[#A6192E]/40 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-4 sm:p-5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6192E]"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium text-zinc-500">Approved Students</p>
+                  <ChevronRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-[#A6192E] transition-colors shrink-0" />
+                </div>
+                <p className="text-2xl sm:text-3xl font-semibold font-mono tabular-nums text-emerald-700 mt-1.5">
+                  {clearedStudentsCount}
+                </p>
+                <p className="text-xs text-zinc-500 mt-1">Complete approval</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpenFolderKey(null);
+                  setFileStatusFilter(revisionFilesCount > 0 ? 'Revision Requested' : 'Approved Students');
+                }}
+                className="group bg-white/65 hover:bg-white/92 backdrop-blur-md border border-stone-300/70 hover:border-[#A6192E]/40 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-4 sm:p-5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6192E]"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium text-zinc-500">Students Cleared</p>
+                  <ChevronRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-[#A6192E] transition-colors shrink-0" />
+                </div>
+                <p className="text-2xl sm:text-3xl font-semibold font-mono tabular-nums text-zinc-900 mt-1.5">
+                  {clearedStudentsCount}/{studentFileGroups.length}
+                </p>
+                <p className="text-xs text-zinc-500 mt-1">
+                  {revisionFilesCount > 0
+                    ? `${revisionFilesCount} revision requested`
+                    : 'Eligible to schedule'}
+                </p>
+              </button>
+            </div>
+          )}
 
           {!activeFolder ? (
             /* FOLDER DIRECTORY VIEW (UNCLUTTERED BY STUDENT NAME) */

@@ -370,10 +370,10 @@ export function QuartermArchivesView({
   ).length;
 
   return (
-    <div className="space-y-6">
-      <div className="pb-5 border-b border-stone-300/60 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+    <div className="space-y-4 sm:space-y-5">
+      <div className="pb-2 border-b border-stone-300/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-600">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-zinc-600">
             <span className="font-semibold text-[#9A6E00]">Archived Quarterm</span>
             <span aria-hidden="true">·</span>
             <span>{selectedArchive.quarterm.label}</span>
@@ -382,11 +382,11 @@ export function QuartermArchivesView({
               Stored {formatShortDate(selectedArchive.archivedAt)} by {selectedArchive.archivedBy}
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-mono tabular-nums text-zinc-900 tracking-tight mt-1">
+          <h1 className="text-lg sm:text-xl font-bold font-mono tabular-nums text-zinc-900 tracking-tight mt-0.5">
             {selectedArchive.quarterm.code}
           </h1>
           {selectedArchive.archiveNote && (
-            <p className="text-sm text-zinc-600 mt-1 max-w-3xl">
+            <p className="text-xs text-zinc-600 mt-0.5 max-w-3xl">
               {selectedArchive.archiveNote}
             </p>
           )}
@@ -408,7 +408,7 @@ export function QuartermArchivesView({
                 'success'
               );
             }}
-            className="py-2 px-3.5 bg-white/85 hover:bg-white disabled:opacity-45 disabled:cursor-not-allowed border border-stone-300/80 text-zinc-800 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
+            className="py-1.5 px-3 bg-white/85 hover:bg-white disabled:opacity-45 disabled:cursor-not-allowed border border-stone-300/80 text-zinc-800 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
           >
             <Download className="w-3.5 h-3.5 text-[#A6192E] shrink-0" />
             <span>Export CSV</span>
@@ -416,7 +416,7 @@ export function QuartermArchivesView({
           <button
             type="button"
             onClick={() => setSelectedArchiveId(null)}
-            className="py-2 px-3.5 bg-white/75 hover:bg-white border border-stone-300/80 text-zinc-800 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
+            className="py-1.5 px-3 bg-white/75 hover:bg-white border border-stone-300/80 text-zinc-800 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
           >
             <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
             <span>All Archived Quarterms</span>
@@ -425,41 +425,43 @@ export function QuartermArchivesView({
       </div>
 
       {/* 4-Column Archive Snapshot KPI Strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-4 sm:p-5">
-          <p className="text-xs font-medium text-zinc-500">Total Defenses</p>
-          <p className="text-2xl sm:text-3xl font-semibold font-mono tabular-nums text-zinc-900 mt-1.5">
-            {selectedArchive.appointments.length}
-          </p>
-          <p className="text-xs text-zinc-500 mt-1">{completedCount} completed</p>
+      {!activeArchiveFolder && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-4 sm:p-5">
+            <p className="text-xs font-medium text-zinc-500">Total Defenses</p>
+            <p className="text-2xl sm:text-3xl font-semibold font-mono tabular-nums text-zinc-900 mt-1.5">
+              {selectedArchive.appointments.length}
+            </p>
+            <p className="text-xs text-zinc-500 mt-1">{completedCount} completed</p>
+          </div>
+          <div className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-4 sm:p-5">
+            <p className="text-xs font-medium text-zinc-500">Student Folders</p>
+            <p className="text-2xl sm:text-3xl font-semibold font-mono tabular-nums text-zinc-900 mt-1.5">
+              {archiveFileFolders.length}
+            </p>
+            <p className="text-xs text-zinc-500 mt-1">
+              {selectedArchive.fileSubmissions.length} archived PDFs
+            </p>
+          </div>
+          <div className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-4 sm:p-5">
+            <p className="text-xs font-medium text-zinc-500">Defense Slots</p>
+            <p className="text-2xl sm:text-3xl font-semibold font-mono tabular-nums text-[#A6192E] mt-1.5">
+              {selectedArchive.slots.length}
+            </p>
+            <p className="text-xs text-zinc-500 mt-1">Configured in term</p>
+          </div>
+          <div className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-4 sm:p-5">
+            <p className="text-xs font-medium text-zinc-500">Quarterm Window</p>
+            <p className="text-sm font-semibold font-mono tabular-nums text-zinc-900 mt-2">
+              {formatShortDate(selectedArchive.quarterm.openedAt)} –{' '}
+              {formatShortDate(
+                selectedArchive.quarterm.closedAt ?? selectedArchive.archivedAt
+              )}
+            </p>
+            <p className="text-xs text-zinc-500 mt-1">Read-only archive</p>
+          </div>
         </div>
-        <div className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-4 sm:p-5">
-          <p className="text-xs font-medium text-zinc-500">Student Folders</p>
-          <p className="text-2xl sm:text-3xl font-semibold font-mono tabular-nums text-zinc-900 mt-1.5">
-            {archiveFileFolders.length}
-          </p>
-          <p className="text-xs text-zinc-500 mt-1">
-            {selectedArchive.fileSubmissions.length} archived PDFs
-          </p>
-        </div>
-        <div className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-4 sm:p-5">
-          <p className="text-xs font-medium text-zinc-500">Defense Slots</p>
-          <p className="text-2xl sm:text-3xl font-semibold font-mono tabular-nums text-[#A6192E] mt-1.5">
-            {selectedArchive.slots.length}
-          </p>
-          <p className="text-xs text-zinc-500 mt-1">Configured in term</p>
-        </div>
-        <div className="bg-white/65 backdrop-blur-md border border-stone-300/70 shadow-[0_4px_24px_rgba(24,24,27,0.04)] rounded-xl p-4 sm:p-5">
-          <p className="text-xs font-medium text-zinc-500">Quarterm Window</p>
-          <p className="text-sm font-semibold font-mono tabular-nums text-zinc-900 mt-2">
-            {formatShortDate(selectedArchive.quarterm.openedAt)} –{' '}
-            {formatShortDate(
-              selectedArchive.quarterm.closedAt ?? selectedArchive.archivedAt
-            )}
-          </p>
-          <p className="text-xs text-zinc-500 mt-1">Read-only archive</p>
-        </div>
-      </div>
+      )}
 
       {/* Sub-tab Switcher + Search */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
