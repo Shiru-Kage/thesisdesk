@@ -210,29 +210,26 @@ export function AdminAnnouncementsView({
   return (
     <div className="space-y-4 sm:space-y-5">
       {/* Top Banner & Action */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2.5 border-b border-stone-300/60">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-[#A6192E]/10 text-[#A6192E]">
-              <Megaphone className="w-5 h-5" />
-            </span>
-            <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight">
-              Announcements & Bulletins
-            </h1>
-          </div>
-          <p className="text-xs text-zinc-600 mt-1">
-            Post and manage official thesis scheduling notices, defense guidelines, and deadlines.
-            Posted bulletins are instantly published to student portals and the login screen.
-          </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2 border-b border-stone-300/60">
+        <div className="flex items-center gap-2">
+          <span className="p-1 rounded-md bg-[#A6192E]/10 text-[#A6192E]">
+            <Megaphone className="w-4 h-4" />
+          </span>
+          <h1 className="text-lg sm:text-xl font-semibold text-zinc-900 tracking-tight">
+            Announcements & Bulletins
+          </h1>
+          <span className="text-xs text-zinc-500 font-mono hidden sm:inline">
+            · {announcements.length} bulletin{announcements.length === 1 ? '' : 's'}
+          </span>
         </div>
 
         <button
           type="button"
           onClick={openCreateModal}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#A6192E] hover:bg-[#881325] text-white text-xs sm:text-sm font-medium rounded-lg shadow-xs transition-colors shrink-0 cursor-pointer"
+          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-[#A6192E] hover:bg-[#881325] text-white text-xs font-medium rounded-lg shadow-2xs transition-colors shrink-0 cursor-pointer"
         >
-          <Plus className="w-4 h-4" />
-          <span>Post New Announcement</span>
+          <Plus className="w-3.5 h-3.5" />
+          <span>Post Announcement</span>
         </button>
       </div>
 

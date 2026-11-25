@@ -553,7 +553,7 @@ export function StudentPortal({
       {!isQuarterOpen && (
         <div
           role="status"
-          className="mb-6 px-4 py-3.5 bg-white/80 backdrop-blur-md border border-[#A6192E]/30 rounded-xl flex items-start gap-3 text-sm text-zinc-800"
+          className="mb-3 px-3.5 py-2.5 bg-white/80 backdrop-blur-md border border-[#A6192E]/30 rounded-xl flex items-start gap-3 text-sm text-zinc-800"
         >
           <Lock className="w-4 h-4 text-[#A6192E] shrink-0 mt-0.5" />
           <div>
@@ -574,44 +574,6 @@ export function StudentPortal({
       {/* TAB 1: OVERVIEW */}
       {activeTab === 'overview' && (
         <div className="space-y-4 sm:space-y-5">
-          <div className="pb-3 border-b border-stone-300/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-            <div>
-              <p className="text-xs font-semibold text-[#9A6E00]">
-                {user.program ?? 'SOIT Candidate'}
-                <span className="mx-1.5 text-zinc-400" aria-hidden="true">
-                  ·
-                </span>
-                Student No.{' '}
-                <span className="font-mono tabular-nums text-zinc-800 font-medium">
-                  {user.studentId || 'Pending ID'}
-                </span>
-                {activeQuarter && (
-                  <>
-                    <span className="mx-1.5 text-zinc-400" aria-hidden="true">
-                      ·
-                    </span>
-                    <span className="font-mono tabular-nums font-bold">
-                      {activeQuarter.code}
-                    </span>
-                  </>
-                )}
-              </p>
-              <h1 className="text-xl sm:text-2xl font-semibold text-zinc-900 tracking-tight mt-0.5">
-                Welcome back, {user.name.split(' ')[0]}
-              </h1>
-            </div>
-            {onOpenProfileModal && (
-              <button
-                type="button"
-                onClick={onOpenProfileModal}
-                className="self-start sm:self-auto inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-700 bg-white/80 hover:bg-white border border-stone-300 rounded-lg shadow-2xs hover:border-stone-400 transition-colors shrink-0 cursor-pointer"
-              >
-                <UserCog className="w-3.5 h-3.5 text-zinc-600" />
-                <span>Edit Profile</span>
-              </button>
-            )}
-          </div>
-
           {/* Latest Announcement Banner */}
           {latestAnnouncement && (
             <div className="rounded-xl border border-stone-300/80 bg-white/80 backdrop-blur-md p-4 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -1158,22 +1120,21 @@ export function StudentPortal({
 
       {/* TAB 2: FILES TO SUBMIT */}
       {activeTab === 'files' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-stone-300/60">
+        <div className="space-y-4 sm:space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-stone-300/60">
             <div>
-              <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight">
+              <h1 className="text-lg sm:text-xl font-semibold text-zinc-900 tracking-tight">
                 Files to Submit
               </h1>
-              <p className="text-sm text-zinc-600 mt-1">
-                Upload all required thesis defense documents. Slot scheduling unlocks once every
-                required file is submitted and approved by your professor.
+              <p className="text-xs text-zinc-600 mt-0.5">
+                Upload all required thesis defense documents. Slot scheduling unlocks once verified by your professor.
               </p>
             </div>
             <button
               type="button"
               onClick={() => setActiveTab('book')}
               disabled={!isClearedToSchedule}
-              className={`self-start sm:self-auto py-2 px-4 text-xs font-medium rounded-lg transition-colors whitespace-nowrap inline-flex items-center gap-1.5 ${
+              className={`self-start sm:self-auto py-1.5 px-3.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap inline-flex items-center gap-1.5 ${
                 isClearedToSchedule
                   ? 'bg-[#A6192E] hover:bg-[#881325] text-white'
                   : 'bg-stone-900/[0.08] text-zinc-500 cursor-not-allowed'
@@ -1439,13 +1400,13 @@ export function StudentPortal({
 
       {/* TAB 3: BOOK DEFENSE SLOT */}
       {activeTab === 'book' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="space-y-4 sm:space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-stone-300/60">
             <div>
-              <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight">
+              <h1 className="text-lg sm:text-xl font-semibold text-zinc-900 tracking-tight">
                 Select an Online Defense Date & Time
               </h1>
-              <p className="text-sm text-zinc-600 mt-1">
+              <p className="text-xs text-zinc-600 mt-0.5">
                 Pick a highlighted date to inspect open Mapúa UOx Zoom channels and panel chairs.
               </p>
             </div>
@@ -1645,20 +1606,20 @@ export function StudentPortal({
 
       {/* TAB 3: MY APPOINTMENTS */}
       {activeTab === 'appointments' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="space-y-4 sm:space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-stone-300/60">
             <div>
-              <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight">
+              <h1 className="text-lg sm:text-xl font-semibold text-zinc-900 tracking-tight">
                 My Defense Appointments
               </h1>
-              <p className="text-sm text-zinc-600 mt-1">
+              <p className="text-xs text-zinc-600 mt-0.5">
                 Review confirmation status, coordinator feedback, and past milestones.
               </p>
             </div>
             <button
               type="button"
               onClick={() => setActiveTab(isClearedToSchedule ? 'book' : 'files')}
-              className="self-start sm:self-auto py-2 px-4 bg-[#A6192E] hover:bg-[#881325] text-white text-xs font-medium rounded-lg transition-colors whitespace-nowrap inline-flex items-center gap-1.5"
+              className="self-start sm:self-auto py-1.5 px-3.5 bg-[#A6192E] hover:bg-[#881325] text-white text-xs font-medium rounded-lg transition-colors whitespace-nowrap inline-flex items-center gap-1.5"
             >
               {!isClearedToSchedule && <Lock className="w-3.5 h-3.5 shrink-0" />}
               <span>{isClearedToSchedule ? 'Book New Slot' : 'Submit Required Files'}</span>
@@ -1798,12 +1759,12 @@ export function StudentPortal({
 
       {/* TAB 4: DEFENSE GUIDELINES */}
       {activeTab === 'guidelines' && (
-        <div className="space-y-6">
-          <div className="pb-4 border-b border-stone-300/60">
-            <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight">
+        <div className="space-y-4 sm:space-y-5">
+          <div className="pb-2 border-b border-stone-300/60">
+            <h1 className="text-lg sm:text-xl font-semibold text-zinc-900 tracking-tight">
               SOIT UOx Online Defense Guidelines
             </h1>
-            <p className="text-sm text-zinc-600 mt-1">
+            <p className="text-xs text-zinc-600 mt-0.5">
               Standard academic procedures, technical standards, and 90-minute session flow for Mapúa UOx Zoom thesis defenses.
             </p>
           </div>

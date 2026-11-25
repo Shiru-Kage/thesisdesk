@@ -207,27 +207,23 @@ export function QuartermArchivesView({
 
   if (!selectedArchive) {
     return (
-      <div className="space-y-6">
-        <div className="pb-5 border-b border-stone-300/60 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div className="space-y-4 sm:space-y-5">
+        <div className="pb-2 border-b border-stone-300/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-medium text-zinc-600">
-              Mapúa University · School of Information Technology
-            </p>
-            <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight mt-1">
+            <h1 className="text-lg sm:text-xl font-semibold text-zinc-900 tracking-tight">
               Quarterm Archives
             </h1>
-            <p className="text-sm text-zinc-600 mt-1">
-              Inspect stored online defenses, student PDF folders, and Zoom slots from closed Mapúa
-              UOx Quarterms.
+            <p className="text-xs text-zinc-600 mt-0.5">
+              Inspect stored online defenses, student PDF folders, and Zoom slots from concluded Quarterms.
             </p>
           </div>
           {!activeQuarter && (
             <button
               type="button"
               onClick={onRequestOpenNewQuarter}
-              className="self-start sm:self-auto py-2 px-4 bg-[#A6192E] hover:bg-[#881325] text-white text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
+              className="self-start sm:self-auto py-1.5 px-3 bg-[#A6192E] hover:bg-[#881325] text-white text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
             >
-              <CalendarPlus className="w-4 h-4 shrink-0" />
+              <CalendarPlus className="w-3.5 h-3.5 shrink-0" />
               <span>Open New Quarterm</span>
             </button>
           )}

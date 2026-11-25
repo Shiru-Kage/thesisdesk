@@ -722,27 +722,6 @@ export function AdminPortal({
       {/* TAB 1: SCHEDULE OVERVIEW */}
       {activeTab === 'overview' && (
         <div className="space-y-4 sm:space-y-5">
-          <div className="pb-2.5 border-b border-stone-300/60">
-            <p className="text-xs font-semibold text-[#9A6E00]">
-              {user.department} · Coordinator Console
-              {activeQuarter && (
-                <>
-                  <span className="mx-1.5 text-zinc-400" aria-hidden="true">
-                    ·
-                  </span>
-                  <span className="font-mono tabular-nums font-bold">
-                    {activeQuarter.code}
-                  </span>
-                </>
-              )}
-            </p>
-            <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight mt-0.5">
-              {activeQuarter
-                ? `${activeQuarter.code} Defense Operations & Scheduling Dashboard`
-                : 'Quarterm Transition Console'}
-            </h1>
-          </div>
-
           {/* Mapua Quarterm Open / Close / Archive Lifecycle Card */}
           <section
             aria-label="Mapúa Quarterm lifecycle controls"
@@ -1324,22 +1303,21 @@ export function AdminPortal({
 
       {/* TAB 2: SUBMITTED FILES (STUDENT FOLDERS + PDF PREVIEW) */}
       {activeTab === 'submissions' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-stone-300/60">
+        <div className="space-y-4 sm:space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-stone-300/60">
             <div>
-              <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight">
+              <h1 className="text-lg sm:text-xl font-semibold text-zinc-900 tracking-tight">
                 Student Submitted Files
               </h1>
-              <p className="text-sm text-zinc-600 mt-1">
-                Browse submissions organized by student folder, preview each PDF inline, and
-                approve files to unlock defense scheduling.
+              <p className="text-xs text-zinc-600 mt-0.5">
+                Browse submissions organized by student folder, preview PDFs inline, and verify clearances.
               </p>
             </div>
             {activeFolder && (
               <button
                 type="button"
                 onClick={() => setOpenFolderKey(null)}
-                className="self-start sm:self-auto py-2 px-3.5 bg-white/75 hover:bg-white border border-stone-300/80 text-zinc-800 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
+                className="self-start sm:self-auto py-1.5 px-3 bg-white/75 hover:bg-white border border-stone-300/80 text-zinc-800 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
               >
                 <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
                 <span>All Student Folders</span>
@@ -1737,15 +1715,14 @@ export function AdminPortal({
 
       {/* TAB 3: MANAGE SLOTS */}
       {activeTab === 'slots' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="space-y-4 sm:space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-stone-300/60">
             <div>
-              <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight">
+              <h1 className="text-lg sm:text-xl font-semibold text-zinc-900 tracking-tight">
                 UOx Zoom Slot Inventory
               </h1>
-              <p className="text-sm text-zinc-600 mt-1">
-                Create online defense windows, set or update Zoom meeting links, and manage panel
-                schedules.
+              <p className="text-xs text-zinc-600 mt-0.5">
+                Create online defense windows, update Zoom links, and manage panel schedules.
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -1758,7 +1735,7 @@ export function AdminPortal({
                     'success'
                   );
                 }}
-                className="py-2 px-3.5 bg-white border border-zinc-300 hover:bg-zinc-50 text-zinc-800 text-xs font-medium rounded-lg transition-colors whitespace-nowrap"
+                className="py-1.5 px-3 bg-white border border-zinc-300 hover:bg-zinc-50 text-zinc-800 text-xs font-medium rounded-lg transition-colors whitespace-nowrap"
               >
                 Generate Day Blocks
               </button>
@@ -1976,15 +1953,14 @@ export function AdminPortal({
 
       {/* TAB 4: DEFENSE REQUESTS TABLE */}
       {activeTab === 'requests' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="space-y-4 sm:space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-stone-300/60">
             <div>
-              <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight">
+              <h1 className="text-lg sm:text-xl font-semibold text-zinc-900 tracking-tight">
                 All Defense Requests
               </h1>
-              <p className="text-sm text-zinc-600 mt-1">
-                Search, filter, assign Zoom links, and approve UOx student thesis defense
-                reservations.
+              <p className="text-xs text-zinc-600 mt-0.5">
+                Search, filter, assign Zoom links, and approve student thesis defense reservations.
               </p>
             </div>
             <button
@@ -2003,7 +1979,7 @@ export function AdminPortal({
                   'success'
                 );
               }}
-              className="self-start sm:self-auto py-2 px-3.5 bg-white/85 hover:bg-white disabled:opacity-45 disabled:cursor-not-allowed border border-stone-300/80 text-zinc-800 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
+              className="self-start sm:self-auto py-1.5 px-3 bg-white/85 hover:bg-white disabled:opacity-45 disabled:cursor-not-allowed border border-stone-300/80 text-zinc-800 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
             >
               <Download className="w-3.5 h-3.5 text-[#A6192E] shrink-0" />
               <span>Export CSV ({filteredRequests.length})</span>
@@ -2172,14 +2148,13 @@ export function AdminPortal({
 
       {/* TAB 5: ZOOM ROOMS & FACULTY DIRECTORY */}
       {activeTab === 'directory' && (
-        <div className="space-y-5">
-          <div>
-            <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight">
+        <div className="space-y-4 sm:space-y-5">
+          <div className="pb-2 border-b border-stone-300/60">
+            <h1 className="text-lg sm:text-xl font-semibold text-zinc-900 tracking-tight">
               UOx Zoom Defense Rooms & Committee Chairs
             </h1>
-            <p className="text-sm text-zinc-600 mt-1">
-              Configure default Zoom meeting links and passcodes for each Mapúa UOx online channel,
-              or toggle presiding chair availability.
+            <p className="text-xs text-zinc-600 mt-0.5">
+              Configure default Zoom meeting links and passcodes for each Mapúa UOx online channel.
             </p>
           </div>
 
