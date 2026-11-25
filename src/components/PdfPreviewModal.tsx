@@ -257,7 +257,7 @@ export function PdfPreviewModal({
                 ? { duration: 0.01 }
                 : { duration: 0.2, ease: [0.16, 1, 0.3, 1] }
             }
-            className="bg-white border border-stone-300 rounded-xl max-w-5xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[92vh]"
+            className="bg-white border border-stone-300 rounded-xl w-[96vw] max-w-7xl h-[92vh] shadow-2xl overflow-hidden flex flex-col"
           >
         {/* Top Modal Header */}
         <div className="px-5 py-3.5 border-b border-stone-200 bg-white flex items-center justify-between gap-4 shrink-0">
@@ -329,9 +329,9 @@ export function PdfPreviewModal({
         {/* Split Body: PDF Document Preview + Faculty Review Controls */}
         <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
           {/* Left Pane: PDF Viewer */}
-          <div className="lg:col-span-8 bg-zinc-800 flex flex-col min-h-[360px] max-h-[55vh] lg:max-h-none overflow-hidden">
+          <div className="lg:col-span-8 xl:col-span-9 bg-zinc-900 flex flex-col min-h-0 h-full overflow-hidden">
             {/* Viewer Toolbar */}
-            <div className="px-4 py-2 bg-zinc-900 text-zinc-200 border-b border-zinc-700/80 flex items-center justify-between gap-3 text-xs shrink-0">
+            <div className="px-4 py-2 bg-zinc-950 text-zinc-200 border-b border-zinc-800 flex items-center justify-between gap-3 text-xs shrink-0">
               <div className="flex items-center gap-2 min-w-0">
                 <FileText className="w-3.5 h-3.5 text-[#E5B53B] shrink-0" />
                 <span className="font-mono truncate">{submission.fileName}</span>
@@ -433,13 +433,13 @@ export function PdfPreviewModal({
             </div>
 
             {/* Viewer Viewport: Actual Document Contents */}
-            <div className="flex-1 overflow-auto p-4 sm:p-6 flex justify-center items-start">
+            <div className="flex-1 overflow-auto p-4 sm:p-8 flex justify-center items-start">
               {/* 1. Live PDF Viewer */}
               {isPdf && liveUrl ? (
                 <iframe
-                  src={`${liveUrl}#toolbar=1&navpanes=0&view=FitH`}
+                  src={`${liveUrl}#toolbar=1&navpanes=0&zoom=100`}
                   title={`PDF Preview of ${submission.fileName}`}
-                  className="w-full h-full min-h-[520px] bg-white rounded shadow-md border border-zinc-700"
+                  className="w-full h-full min-h-[600px] bg-white rounded shadow-md border border-zinc-700"
                 />
               ) : isDocx && hasLiveDocument ? (
                 /* 2. Live Word Document (.docx) Online Viewer */
@@ -456,7 +456,7 @@ export function PdfPreviewModal({
                       transform: `scale(${zoomPercent / 100})`,
                       transformOrigin: 'top center',
                     }}
-                    className="w-full max-w-3xl bg-white text-zinc-900 rounded-sm shadow-2xl border border-stone-300 p-8 sm:p-12 docx-rendered-content transition-transform space-y-4"
+                    className="w-full max-w-[816px] min-h-[1056px] bg-white text-zinc-900 rounded-sm shadow-2xl border border-stone-300 p-10 sm:p-14 docx-rendered-content transition-transform space-y-4"
                   >
                     <div
                       dangerouslySetInnerHTML={{ __html: docxHtml }}
@@ -501,7 +501,7 @@ export function PdfPreviewModal({
                     transform: `scale(${zoomPercent / 100})`,
                     transformOrigin: 'top center',
                   }}
-                  className="w-full max-w-3xl bg-white text-zinc-900 rounded-sm shadow-2xl border border-stone-300 p-8 font-mono text-xs whitespace-pre-wrap transition-transform"
+                  className="w-full max-w-[816px] min-h-[1056px] bg-white text-zinc-900 rounded-sm shadow-2xl border border-stone-300 p-10 sm:p-14 font-mono text-xs whitespace-pre-wrap transition-transform"
                 >
                   {textContent}
                 </div>
@@ -512,7 +512,7 @@ export function PdfPreviewModal({
                     transform: `scale(${zoomPercent / 100})`,
                     transformOrigin: 'top center',
                   }}
-                  className="w-full max-w-[560px] bg-white text-zinc-900 rounded-sm shadow-xl border border-stone-300 p-7 sm:p-9 space-y-5 transition-transform"
+                  className="w-full max-w-[816px] min-h-[1056px] bg-white text-zinc-900 rounded-sm shadow-xl border border-stone-300 p-10 sm:p-14 space-y-6 flex flex-col justify-between transition-transform"
                 >
                   {/* Document Letterhead */}
                   <div className="border-b border-stone-300 pb-4 flex items-start justify-between gap-4">
@@ -747,7 +747,7 @@ export function PdfPreviewModal({
           </div>
 
           {/* Right Pane: Review Metadata & Approval Controls */}
-          <div className="lg:col-span-4 bg-white border-t lg:border-t-0 lg:border-l border-stone-200 p-5 flex flex-col justify-between overflow-y-auto">
+          <div className="lg:col-span-4 xl:col-span-3 bg-white border-t lg:border-t-0 lg:border-l border-stone-200 p-5 flex flex-col justify-between overflow-y-auto">
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-2 pb-3 border-b border-stone-200">
                 <span className="text-xs font-medium text-zinc-500">Review Status</span>
