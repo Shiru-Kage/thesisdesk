@@ -49,7 +49,7 @@ import {
 } from './services/firebase';
 
 const TODAY_ISO = new Date().toISOString().split('T')[0];
-const STORAGE_KEY = 'thesisdesk_portal_state_v3';
+const STORAGE_KEY = 'thesisdesk_portal_state_v4';
 
 interface PersistedPortalState {
   slots: DefenseSlot[];
@@ -66,9 +66,10 @@ interface PersistedPortalState {
 
 function loadPersistedState(): Partial<PersistedPortalState> | null {
   try {
-    // Clear out legacy demo state if present
+    // Clear out legacy demo and test state
     window.localStorage.removeItem('thesisdesk_soit_state_v1');
     window.localStorage.removeItem('thesisdesk_portal_state_v2');
+    window.localStorage.removeItem('thesisdesk_portal_state_v3');
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<PersistedPortalState>;
@@ -202,6 +203,18 @@ export default function App() {
     }
   }, [slots.length, activeQuarter, zoomRooms]);
 
+  // One-time clean purge of prior test request data per user request
+  useEffect(() => {
+    const hasPurged = window.localStorage.getItem('thesisdesk_purged_test_requests_v3');
+    if (!hasPurged) {
+      window.localStorage.setItem('thesisdesk_purged_test_requests_v3', 'true');
+      setAppointments((prev) => {
+        prev.forEach((a) => removeDocument('appointments', a.id).catch(() => {}));
+        return [];
+      });
+    }
+  }, []);
+
   // --------------------------------------------------------------------------
   // Firebase Real-time Subscriptions & Cloud Persistence
   // --------------------------------------------------------------------------
@@ -224,6 +237,15 @@ export default function App() {
     // 2. Subscribe to Appointments (Option 1: Clean purge of cancelled/superseded records)
     const unsubAppointments = subscribeToCollection<DefenseAppointment>('appointments', (records) => {
       if (records) {
+        const hasPurged = window.localStorage.getItem('thesisdesk_purged_test_requests_v3');
+        if (!hasPurged) {
+          window.localStorage.setItem('thesisdesk_purged_test_requests_v3', 'true');
+          records.forEach((a) => {
+            removeDocument('appointments', a.id).catch(() => {});
+          });
+          setAppointments([]);
+          return;
+        }
         const activeOnly = records.filter((a) => a.status !== 'Cancelled');
         records.forEach((a) => {
           if (a.status === 'Cancelled') {
@@ -489,6 +511,12 @@ export default function App() {
   ) => {
     if (!currentUser || !isQuarterOpen || !isStudentClearedToSchedule(currentUser)) return;
 
+    // Safety guard: Ensure target slot exists, is not locked, and belongs to active quarter
+    const liveSlot = slots.find((s) => s.id === slot.id);
+    if (!liveSlot || liveSlot.isBlocked) {
+      return;
+    }
+
     // First-Come, First-Served: Prevent student from holding multiple simultaneous active defense requests
     const existingActiveRequest = appointments.find(
       (a) =>
@@ -720,8 +748,15 @@ export default function App() {
   };
 
   const handleDeleteSlot = (slotId: string) => {
+    // Safety guard: Prevent deleting slot if currently booked by an active defense
+    const hasBookedAppointment = appointments.some(
+      (a) => a.slotId === slotId && a.status !== 'Cancelled'
+    );
+    if (hasBookedAppointment) {
+      return;
+    }
     setSlots((prev) => prev.filter((s) => s.id !== slotId));
-    removeDocument('slots', slotId);
+    removeDocument('slots', slotId).catch(() => {});
   };
 
   const handleToggleChecklist = (id: string) => {
