@@ -253,7 +253,7 @@ export function PortalLayout({
       </div>
 
       {/* Desktop Sidebar */}
-      <aside className="relative z-20 hidden lg:block w-[260px] shrink-0 sticky top-0 h-screen">
+      <aside className="hidden lg:block w-[260px] shrink-0 sticky top-0 h-screen z-20">
         {renderSidebarContent()}
       </aside>
 
@@ -291,8 +291,8 @@ export function PortalLayout({
       </AnimatePresence>
 
       {/* Main Content Area */}
-      <div className="relative z-10 flex-1 min-w-0 flex flex-col">
-        <header className="sticky top-0 z-20 h-16 bg-white/65 backdrop-blur-xl border-b border-stone-300/70 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+      <div className="flex-1 min-w-0 flex flex-col">
+        <header className="sticky top-0 z-10 h-16 bg-white/65 backdrop-blur-xl border-b border-stone-300/70 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             <button
               type="button"

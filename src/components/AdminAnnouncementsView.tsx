@@ -49,9 +49,21 @@ export function AdminAnnouncementsView({
   const [editingItem, setEditingItem] = useState<Announcement | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
+  const availableCategories = useMemo(() => {
+    const set = new Set<string>(CATEGORY_PRESETS);
+    announcements.forEach((a) => {
+      if (a.category && a.category.trim()) {
+        set.add(a.category.trim());
+      }
+    });
+    return Array.from(set);
+  }, [announcements]);
+
   // Form states
   const [formTitle, setFormTitle] = useState('');
   const [formCategory, setFormCategory] = useState('Defense Schedule');
+  const [isCustomCategory, setIsCustomCategory] = useState(false);
+  const [customCategoryInput, setCustomCategoryInput] = useState('');
   const [formPriority, setFormPriority] = useState<AnnouncementPriority>('normal');
   const [formPinned, setFormPinned] = useState(false);
   const [formContent, setFormContent] = useState('');
@@ -60,6 +72,8 @@ export function AdminAnnouncementsView({
     setEditingItem(null);
     setFormTitle('');
     setFormCategory('Defense Schedule');
+    setIsCustomCategory(false);
+    setCustomCategoryInput('');
     setFormPriority('normal');
     setFormPinned(false);
     setFormContent('');
@@ -70,6 +84,8 @@ export function AdminAnnouncementsView({
     setEditingItem(item);
     setFormTitle(item.title);
     setFormCategory(item.category);
+    setIsCustomCategory(false);
+    setCustomCategoryInput('');
     setFormPriority(item.priority);
     setFormPinned(Boolean(item.pinned));
     setFormContent(item.content);
@@ -87,11 +103,20 @@ export function AdminAnnouncementsView({
       return;
     }
 
+    const finalCategory = (
+      isCustomCategory ? customCategoryInput.trim() : formCategory.trim()
+    ) || 'General';
+
+    if (isCustomCategory && !customCategoryInput.trim()) {
+      onNotify('Please enter a name for the new category tag.', 'warning');
+      return;
+    }
+
     if (editingItem) {
       const updated: Announcement = {
         ...editingItem,
         title: formTitle.trim(),
-        category: formCategory.trim() || 'General',
+        category: finalCategory,
         priority: formPriority,
         pinned: formPinned,
         content: formContent.trim(),
@@ -101,7 +126,7 @@ export function AdminAnnouncementsView({
     } else {
       onCreateAnnouncement({
         title: formTitle.trim(),
-        category: formCategory.trim() || 'General',
+        category: finalCategory,
         priority: formPriority,
         pinned: formPinned,
         content: formContent.trim(),
@@ -415,22 +440,59 @@ export function AdminAnnouncementsView({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-700 mb-1">
-                      Category / Topic
-                    </label>
-                    <input
-                      type="text"
-                      list="category-suggestions"
-                      value={formCategory}
-                      onChange={(e) => setFormCategory(e.target.value)}
-                      placeholder="e.g., Defense Schedule"
-                      className="w-full px-3 py-2 text-xs bg-stone-50 border border-stone-300 rounded-lg text-zinc-900 focus:outline-none focus:ring-1 focus:ring-[#A6192E] focus:bg-white"
-                    />
-                    <datalist id="category-suggestions">
-                      {CATEGORY_PRESETS.map((p) => (
-                        <option key={p} value={p} />
-                      ))}
-                    </datalist>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-semibold text-zinc-700">
+                        Category / Topic
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsCustomCategory((prev) => !prev);
+                          if (!isCustomCategory) {
+                            setCustomCategoryInput('');
+                          }
+                        }}
+                        className="text-[11px] font-medium text-[#881325] hover:text-[#6B0F1D] hover:underline cursor-pointer"
+                      >
+                        {isCustomCategory ? '← Choose Existing Tag' : '+ New Custom Tag'}
+                      </button>
+                    </div>
+
+                    {!isCustomCategory ? (
+                      <select
+                        value={formCategory}
+                        onChange={(e) => {
+                          if (e.target.value === '__CUSTOM__') {
+                            setIsCustomCategory(true);
+                            setCustomCategoryInput('');
+                          } else {
+                            setFormCategory(e.target.value);
+                          }
+                        }}
+                        className="w-full px-3 py-2 text-xs bg-stone-50 border border-stone-300 rounded-lg text-zinc-900 focus:outline-none focus:ring-1 focus:ring-[#A6192E] focus:bg-white cursor-pointer"
+                      >
+                        <optgroup label="Select Existing Tag">
+                          {availableCategories.map((cat) => (
+                            <option key={cat} value={cat}>
+                              {cat}
+                            </option>
+                          ))}
+                        </optgroup>
+                        <option value="__CUSTOM__" className="font-semibold text-[#A6192E]">
+                          + Add new custom topic / tag...
+                        </option>
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        required
+                        autoFocus
+                        value={customCategoryInput}
+                        onChange={(e) => setCustomCategoryInput(e.target.value)}
+                        placeholder="Type new topic or tag name..."
+                        className="w-full px-3 py-2 text-xs bg-stone-50 border border-[#A6192E] rounded-lg text-zinc-900 focus:outline-none focus:ring-1 focus:ring-[#A6192E] focus:bg-white"
+                      />
+                    )}
                   </div>
 
                   <div>
